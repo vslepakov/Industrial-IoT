@@ -24,6 +24,9 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin {
     using Newtonsoft.Json;
     using System;
     using ILogger = Serilog.ILogger;
+    using Prometheus;
+    using System.Linq;
+    using System.Threading;
 
     /// <summary>
     /// Webservice startup
@@ -136,7 +139,14 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin {
 
             app.UseCorrelation();
             app.UseSwagger();
-
+            app.UseMetricServer();
+            Random random = new Random();
+            foreach (var i in Enumerable.Range(0, 2)) {
+                // do something
+                _testTwinCounter.Inc();
+                _testTwinGuage.Set(random.NextDouble() * (100 - 10) + 10);
+                Thread.Sleep(1000);
+            }
             app.UseEndpoints(endpoints => {
                 endpoints.MapControllers();
                 endpoints.MapHealthChecks("/healthz");
@@ -184,5 +194,8 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin {
             // Edge clients
             builder.RegisterModule<TwinModuleClients>();
         }
+
+        private static readonly Counter _testTwinCounter = Metrics.CreateCounter("iiot_twin_startup_counter", "twin random counter");
+        private static readonly Gauge _testTwinGuage = Metrics.CreateGauge("iiot_twin_startup_guage", "twin random guage");
     }
 }

@@ -36,6 +36,9 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry {
     using Newtonsoft.Json;
     using System;
     using ILogger = Serilog.ILogger;
+    using Prometheus;
+    using System.Linq;
+    using System.Threading;
 
     /// <summary>
     /// Webservice startup
@@ -134,7 +137,14 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry {
 
             app.UseRouting();
             app.EnableCors();
-
+            app.UseMetricServer();
+            Random random = new Random();
+            foreach (var i in Enumerable.Range(0, 5)) {
+                // do something
+                _testRegistryCounter.Inc();
+                _testRegistryGuage.Set(random.NextDouble() * (10 - 1) + 1);
+                Thread.Sleep(1000);
+            }
             if (Config.AuthRequired) {
                 app.UseAuthentication();
             }
@@ -247,5 +257,8 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry {
             builder.RegisterType<OnboardingClient>()
                 .AsImplementedInterfaces().SingleInstance();
         }
+
+        private static readonly Counter _testRegistryCounter = Metrics.CreateCounter("iiot_registry_startup_counter", "registry random counter");
+        private static readonly Gauge _testRegistryGuage = Metrics.CreateGauge("iiot_registry_startup_guage", "registry random guage");
     }
 }
