@@ -67,7 +67,7 @@ namespace Microsoft.Azure.IIoT.Auth.IdentityServer4.Storage {
 
         /// <inheritdoc/>
         public async Task RemoveAsync(string key) {
-            await _documents.DeleteAsync(key);
+            await _documents.DeleteAsync<GrantDocumentModel>(key);
         }
 
         /// <inheritdoc/>
@@ -80,7 +80,7 @@ namespace Microsoft.Azure.IIoT.Auth.IdentityServer4.Storage {
                 { "@subjectId", subjectId },
                 { "@clientId", clientId }
             };
-            await client.DropAsync(queryString, queryParameters);
+            await client.DropAsync<GrantDocumentModel>(queryString, queryParameters);
         }
 
         /// <inheritdoc/>
@@ -95,7 +95,7 @@ namespace Microsoft.Azure.IIoT.Auth.IdentityServer4.Storage {
                 { "@type", type },
                 { "@clientId", clientId }
             };
-            await client.DropAsync(queryString, queryParameters);
+            await client.DropAsync<GrantDocumentModel>(queryString, queryParameters);
         }
 
         private readonly IDocuments _documents;

@@ -68,7 +68,7 @@ namespace Microsoft.Azure.IIoT.Auth.IdentityServer4.Storage {
         /// <inheritdoc/>
         public async Task DeleteAsync(string resourceName, string etag,
             CancellationToken ct) {
-            await _documents.DeleteAsync(resourceName, ct, null, etag);
+            await _documents.DeleteAsync<ResourceDocumentModel>(resourceName, ct, null, etag);
         }
 
         /// <inheritdoc/>

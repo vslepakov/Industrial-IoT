@@ -75,7 +75,7 @@ namespace Microsoft.Azure.IIoT.Auth.IdentityServer4.Storage {
         public async Task<IdentityResult> DeleteAsync(RoleModel role,
             CancellationToken ct) {
             try {
-                await _documents.DeleteAsync(role.Id, ct, null,
+                await _documents.DeleteAsync<RoleDocumentModel>(role.Id, ct, null,
                     role.ConcurrencyStamp);
                 return IdentityResult.Success;
             }
