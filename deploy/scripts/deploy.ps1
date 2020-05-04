@@ -668,8 +668,8 @@ Function New-Deployment() {
         }
         else {
             $templateParameters.Add("dockerServer", "mcr.microsoft.com")
-            $templateParameters.Add("imagesTag", "preview")
-            Write-Host "Using preview images from mcr.microsoft.com."
+            $templateParameters.Add("imagesTag", "2.6.146")
+            Write-Host "Using 2.6.146 images from mcr.microsoft.com."
         }
 
         if ($script:type -eq "all") {
