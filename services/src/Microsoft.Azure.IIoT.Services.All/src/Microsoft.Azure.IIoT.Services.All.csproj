@@ -21,6 +21,7 @@
     <ProjectReference Include="..\..\Microsoft.Azure.IIoT.Services.Processor.Onboarding\src\Microsoft.Azure.IIoT.Services.Processor.Onboarding.csproj" />
     <ProjectReference Include="..\..\Microsoft.Azure.IIoT.Services.Processor.Telemetry.Cdm\src\Microsoft.Azure.IIoT.Services.Processor.Telemetry.Cdm.csproj" />
     <ProjectReference Include="..\..\Microsoft.Azure.IIoT.Services.Processor.Telemetry\src\Microsoft.Azure.IIoT.Services.Processor.Telemetry.csproj" />
+    <ProjectReference Include="..\..\Microsoft.Azure.IIoT.Services.Processor.Tunnel\src\Microsoft.Azure.IIoT.Services.Processor.Tunnel.csproj" />
     <ProjectReference Include="..\..\Microsoft.Azure.IIoT.Services.OpcUa.Registry\src\Microsoft.Azure.IIoT.Services.OpcUa.Registry.csproj" />
     <ProjectReference Include="..\..\Microsoft.Azure.IIoT.Services.OpcUa.Events\src\Microsoft.Azure.IIoT.Services.OpcUa.Events.csproj" />
     <ProjectReference Include="..\..\Microsoft.Azure.IIoT.Services.OpcUa.Publisher\src\Microsoft.Azure.IIoT.Services.OpcUa.Publisher.csproj" />
@@ -28,7 +29,8 @@
     <ProjectReference Include="..\..\Microsoft.Azure.IIoT.Services.OpcUa.Twin.History\src\Microsoft.Azure.IIoT.Services.OpcUa.Twin.History.csproj" />
     <ProjectReference Include="..\..\Microsoft.Azure.IIoT.Services.OpcUa.Twin\src\Microsoft.Azure.IIoT.Services.OpcUa.Twin.csproj" />
     <ProjectReference Include="..\..\Microsoft.Azure.IIoT.Services.OpcUa.Vault\src\Microsoft.Azure.IIoT.Services.OpcUa.Vault.csproj" />
-    <ProjectReference Include="..\..\Microsoft.Azure.IIoT.Services.Processor.Tunnel\src\Microsoft.Azure.IIoT.Services.Processor.Tunnel.csproj" />
+    <ProjectReference Include="..\..\Microsoft.Azure.IIoT.Services.Common.Auth\src\Microsoft.Azure.IIoT.Services.Common.Auth.csproj" />
+    <ProjectReference Include="..\..\Microsoft.Azure.IIoT.Services.Common.Users\src\Microsoft.Azure.IIoT.Services.Common.Users.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="container.json" />

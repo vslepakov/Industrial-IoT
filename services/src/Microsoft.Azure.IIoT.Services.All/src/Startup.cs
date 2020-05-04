@@ -96,6 +96,8 @@ namespace Microsoft.Azure.IIoT.Services.All {
             app.AddStartupBranch<OpcUa.Publisher.Startup>("/publisher");
             app.AddStartupBranch<OpcUa.Publisher.Edge.Startup>("/edge/publisher");
             app.AddStartupBranch<OpcUa.Events.Startup>("/events");
+            app.AddStartupBranch<Common.Auth.Startup>("/auth");
+            app.AddStartupBranch<Common.Users.Startup>("/users");
 
             if (!Config.IsMinimumDeployment) {
                 app.AddStartupBranch<OpcUa.Twin.Gateway.Startup>("/ua");
