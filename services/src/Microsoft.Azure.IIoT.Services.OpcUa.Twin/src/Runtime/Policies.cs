@@ -27,10 +27,10 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.Auth {
             nameof(CanControl);
 
         /// <summary>
-        /// Allowed to request publish
+        /// Allowed to request uploads
         /// </summary>
-        public const string CanPublish =
-            nameof(CanPublish);
+        public const string CanUpload =
+            nameof(CanUpload);
 
         /// <summary>
         /// Get rights for policy
@@ -45,7 +45,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.Auth {
                         context.User.IsInRole(Roles.Admin) ||
                         context.User.IsInRole(Roles.Sign) ||
                         context.User.HasClaim(c => c.Type == Claims.Execute);
-                case CanPublish:
+                case CanUpload:
                     return context =>
                         context.User.IsInRole(Roles.Admin) ||
                         context.User.IsInRole(Roles.Sign) ||

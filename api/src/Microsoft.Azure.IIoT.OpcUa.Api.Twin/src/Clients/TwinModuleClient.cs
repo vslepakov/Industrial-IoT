@@ -241,6 +241,26 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
             return _serializer.Deserialize<MethodCallResponseApiModel>(response);
         }
 
+        /// <inheritdoc/>
+        public async Task<ModelUploadStartResponseApiModel> ModelUploadStartAsync(
+            EndpointApiModel endpoint, ModelUploadStartRequestApiModel request, CancellationToken ct) {
+            if (endpoint == null) {
+                throw new ArgumentNullException(nameof(endpoint));
+            }
+            if (string.IsNullOrEmpty(endpoint.Url)) {
+                throw new ArgumentNullException(nameof(endpoint.Url));
+            }
+            if (request == null) {
+                throw new ArgumentNullException(nameof(request));
+            }
+            var response = await _methodClient.CallMethodAsync(_deviceId, _moduleId,
+                "UploadModel_V2", _serializer.SerializeToString(new {
+                    endpoint,
+                    request
+                }), null, ct);
+            return _serializer.Deserialize<ModelUploadStartResponseApiModel>(response);
+        }
+
         private readonly IJsonSerializer _serializer;
         private readonly IMethodClient _methodClient;
         private readonly string _moduleId;

@@ -6,8 +6,7 @@
 namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
     using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Models;
     using Microsoft.Azure.IIoT.OpcUa.Publisher;
-    using Microsoft.Azure.IIoT.Agent.Framework;
-    using Microsoft.Azure.IIoT.Agent.Framework.Models;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
     using Microsoft.Azure.IIoT.Exceptions;
     using Microsoft.Azure.IIoT.Serializers;
     using Serilog;
@@ -52,7 +51,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
                     (int)engineConfiguration.DiagnosticsInterval.Value.TotalMilliseconds);
             }
 
-            if (engineConfiguration.BatchSize.HasValue && 
+            if (engineConfiguration.BatchSize.HasValue &&
                 engineConfiguration.BatchSize.Value > 1) {
                 _dataSetMessageBufferSize = engineConfiguration.BatchSize.Value;
             }

@@ -223,6 +223,23 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
             return _serializer.DeserializeResponse<MethodCallResponseApiModel>(response);
         }
 
+        /// <inheritdoc/>
+        public async Task<ModelUploadStartResponseApiModel> ModelUploadStartAsync(
+            string endpointId, ModelUploadStartRequestApiModel content, CancellationToken ct) {
+            if (string.IsNullOrEmpty(endpointId)) {
+                throw new ArgumentNullException(nameof(endpointId));
+            }
+            if (content == null) {
+                throw new ArgumentNullException(nameof(content));
+            }
+            var request = _httpClient.NewRequest($"{_serviceUri}/v2/transfer/{endpointId}/model",
+                Resource.Platform);
+            _serializer.SerializeToRequest(request, content);
+            var response = await _httpClient.PostAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<ModelUploadStartResponseApiModel>(response);
+        }
+
         private readonly IHttpClient _httpClient;
         private readonly ISerializer _serializer;
         private readonly string _serviceUri;

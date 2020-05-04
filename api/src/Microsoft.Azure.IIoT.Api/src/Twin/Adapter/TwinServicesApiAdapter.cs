@@ -14,7 +14,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin {
     /// Implements node services as adapter on top of api.
     /// </summary>
     public sealed class TwinServicesApiAdapter : IBrowseServices<string>,
-        INodeServices<string> {
+        INodeServices<string>, ITransferServices<string> {
 
         /// <summary>
         /// Create adapter
@@ -92,6 +92,14 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin {
         public async Task<WriteResultModel> NodeWriteAsync(
             string endpoint, WriteRequestModel request) {
             var result = await _client.NodeWriteAsync(endpoint,
+                request.ToApiModel());
+            return result.ToServiceModel();
+        }
+
+        /// <inheritdoc/>
+        public async Task<ModelUploadStartResultModel> ModelUploadStartAsync(
+            string endpoint, ModelUploadStartRequestModel request) {
+            var result = await _client.ModelUploadStartAsync(endpoint,
                 request.ToApiModel());
             return result.ToServiceModel();
         }

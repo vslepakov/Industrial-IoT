@@ -5,9 +5,11 @@
     <Description>Azure Industrial IoT OPC Publisher component</Description>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Microsoft.Azure.IIoT.OpcUa.Protocol\src\Microsoft.Azure.IIoT.OpcUa.Protocol.csproj" />
     <ProjectReference Include="..\..\Microsoft.Azure.IIoT.OpcUa\src\Microsoft.Azure.IIoT.OpcUa.csproj" />
+    <ProjectReference Include="..\..\Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs\src\Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\common\src\Microsoft.Azure.IIoT.Agent.Framework\src\Microsoft.Azure.IIoT.Agent.Framework.csproj" />
+    <Folder Include="Clients\" />
   </ItemGroup>
 </Project>

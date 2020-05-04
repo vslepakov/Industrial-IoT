@@ -11,9 +11,9 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime {
     using Microsoft.Azure.IIoT.AspNetCore.OpenApi.Runtime;
     using Microsoft.Azure.IIoT.AspNetCore.ForwardedHeaders;
     using Microsoft.Azure.IIoT.AspNetCore.ForwardedHeaders.Runtime;
-    using Microsoft.Azure.IIoT.Agent.Framework;
-    using Microsoft.Azure.IIoT.Agent.Framework.Jobs.Runtime;
-    using Microsoft.Azure.IIoT.Agent.Framework.Storage.Database;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs.Runtime;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Database;
     using Microsoft.Azure.IIoT.Hosting;
     using Microsoft.Azure.IIoT.Auth.Runtime;
     using Microsoft.Azure.IIoT.Diagnostics;

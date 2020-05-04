@@ -12,13 +12,23 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Models {
     public class ModelUploadStartRequestModel {
 
         /// <summary>
-        /// Desired content encoding
-        /// </summary>
-        public string ContentEncoding { get; set; }
-
-        /// <summary>
         /// Optional diagnostics configuration
         /// </summary>
         public DiagnosticsModel Diagnostics { get; set; }
+
+        /// <summary>
+        /// Desired content type
+        /// </summary>
+        public string ContentMimeType { get; set; }
+
+        /// <summary>
+        /// Desired endpoint to http put result to
+        /// </summary>
+        public string UploadEndpointUrl { get; set; }
+
+        /// <summary>
+        /// Authorization header if required
+        /// </summary>
+        public string AuthorizationHeader { get; set; }
     }
 }

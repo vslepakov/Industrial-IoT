@@ -14,12 +14,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Models {
         /// <summary>
         /// File name
         /// </summary>
-        public string BlobName { get; set; }
+        public string FileName { get; set; }
 
         /// <summary>
-        /// Content encoding
+        /// Content type
         /// </summary>
-        public string ContentEncoding { get; set; }
+        public string ContentMimeType { get; set; }
 
         /// <summary>
         /// Timestamp

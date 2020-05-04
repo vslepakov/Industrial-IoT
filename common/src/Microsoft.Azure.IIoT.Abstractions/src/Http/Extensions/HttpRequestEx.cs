@@ -5,6 +5,7 @@
 
 namespace Microsoft.Azure.IIoT.Http {
     using System;
+    using System.IO;
     using System.Net.Http;
     using System.Net.Http.Headers;
     using System.Text;
@@ -62,6 +63,27 @@ namespace Microsoft.Azure.IIoT.Http {
                 headerValue.CharSet = encoding.WebName;
             }
             request.Content = new ByteArrayContent(content);
+            request.Content.Headers.ContentType = headerValue;
+            return request;
+        }
+
+        /// <summary>
+        /// Set content from stream
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="content"></param>
+        /// <param name="mediaType"></param>
+        /// <param name="encoding"></param>
+        /// <returns>this</returns>
+        public static IHttpRequest SetStreamContent(this IHttpRequest request, Stream content,
+            string mediaType = null, Encoding encoding = null) {
+
+            var headerValue = new MediaTypeHeaderValue(
+                string.IsNullOrEmpty(mediaType) ? ContentMimeType.Binary : mediaType);
+            if (encoding != null) {
+                headerValue.CharSet = encoding.WebName;
+            }
+            request.Content = new StreamContent(content);
             request.Content.Headers.ContentType = headerValue;
             return request;
         }

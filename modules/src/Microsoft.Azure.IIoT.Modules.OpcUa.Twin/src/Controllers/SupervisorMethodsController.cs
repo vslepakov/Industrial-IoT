@@ -37,12 +37,14 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
         /// <param name="nodes"></param>
         /// <param name="historian"></param>
         /// <param name="browse"></param>
+        /// <param name="upload"></param>
         public SupervisorMethodsController(ISupervisorServices supervisor,
             IActivationServices<string> activator, ICertificateServices<EndpointModel> discovery,
             INodeServices<EndpointModel> nodes, IHistoricAccessServices<EndpointModel> historian,
-            IBrowseServices<EndpointModel> browse) {
+            IBrowseServices<EndpointModel> browse, ITransferServices<EndpointModel> upload) {
             _discovery = discovery ?? throw new ArgumentNullException(nameof(discovery));
             _supervisor = supervisor ?? throw new ArgumentNullException(nameof(supervisor));
+            _upload = upload ?? throw new ArgumentNullException(nameof(upload));
             _browse = browse ?? throw new ArgumentNullException(nameof(browse));
             _historian = historian ?? throw new ArgumentNullException(nameof(historian));
             _nodes = nodes ?? throw new ArgumentNullException(nameof(nodes));
@@ -281,6 +283,25 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
         }
 
         /// <summary>
+        /// Start model upload
+        /// </summary>
+        /// <param name="endpoint"></param>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        public async Task<ModelUploadStartResponseApiModel> UploadModelAsync(
+            EndpointApiModel endpoint, ModelUploadStartRequestApiModel request) {
+            if (request == null) {
+                throw new ArgumentNullException(nameof(request));
+            }
+            if (endpoint == null) {
+                throw new ArgumentNullException(nameof(endpoint));
+            }
+            var result = await _upload.ModelUploadStartAsync(
+                endpoint.ToServiceModel(), request.ToServiceModel());
+            return result.ToApiModel();
+        }
+
+        /// <summary>
         /// Get endpoint certificate
         /// </summary>
         /// <param name="endpoint"></param>
@@ -331,6 +352,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
         private readonly IActivationServices<string> _activator;
         private readonly ICertificateServices<EndpointModel> _discovery;
         private readonly ISupervisorServices _supervisor;
+        private readonly ITransferServices<EndpointModel> _upload;
         private readonly IBrowseServices<EndpointModel> _browse;
         private readonly IHistoricAccessServices<EndpointModel> _historian;
         private readonly INodeServices<EndpointModel> _nodes;

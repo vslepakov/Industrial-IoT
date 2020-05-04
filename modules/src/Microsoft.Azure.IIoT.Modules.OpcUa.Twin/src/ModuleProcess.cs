@@ -150,6 +150,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin {
                 .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<AddressSpaceServices>()
                 .AsImplementedInterfaces();
+            builder.RegisterType<DataTransferServices>()
+                .AsImplementedInterfaces();
             builder.RegisterType<VariantEncoderFactory>()
                 .AsImplementedInterfaces();
             builder.RegisterType<StackLogger>()
@@ -220,7 +222,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin {
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
                 builder.RegisterType<AddressSpaceServices>()
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
-                builder.RegisterType<DataUploadServices>()
+                builder.RegisterType<DataTransferServices>()
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
 
                 // Register module framework

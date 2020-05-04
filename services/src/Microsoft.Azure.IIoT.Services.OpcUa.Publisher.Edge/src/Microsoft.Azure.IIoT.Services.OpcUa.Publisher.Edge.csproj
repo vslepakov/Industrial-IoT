@@ -14,10 +14,10 @@
     <ProjectReference Include="..\..\..\..\common\src\Microsoft.Azure.IIoT.AspNetCore.OpenApi\src\Microsoft.Azure.IIoT.AspNetCore.OpenApi.csproj" />
     <ProjectReference Include="..\..\..\..\common\src\Microsoft.Azure.IIoT.AspNetCore\src\Microsoft.Azure.IIoT.AspNetCore.csproj" />
     <ProjectReference Include="..\..\..\..\common\src\Microsoft.Azure.IIoT.Storage.CosmosDb\src\Microsoft.Azure.IIoT.Storage.CosmosDb.csproj" />
-    <ProjectReference Include="..\..\..\..\common\src\Microsoft.Azure.IIoT.Agent.Framework\src\Microsoft.Azure.IIoT.Agent.Framework.csproj" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\api\src\Microsoft.Azure.IIoT.Api\src\Microsoft.Azure.IIoT.Api.csproj" />
+    <ProjectReference Include="..\..\..\..\components\opc-ua\src\Microsoft.Azure.IIoT.OpcUa.Publisher\src\Microsoft.Azure.IIoT.OpcUa.Publisher.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Update="appSettings.Development.json">

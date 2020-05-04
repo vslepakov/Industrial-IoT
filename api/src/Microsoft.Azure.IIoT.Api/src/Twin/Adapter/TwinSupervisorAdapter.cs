@@ -15,7 +15,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin {
     /// Implements node services as adapter on top of supervisor api.
     /// </summary>
     public sealed class TwinSupervisorAdapter : IBrowseServices<EndpointApiModel>,
-        INodeServices<EndpointApiModel> {
+        INodeServices<EndpointApiModel>, ITransferServices<EndpointApiModel> {
 
         /// <summary>
         /// Create adapter
@@ -93,6 +93,14 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin {
         public async Task<WriteResultModel> NodeWriteAsync(
             EndpointApiModel endpoint, WriteRequestModel request) {
             var result = await _client.NodeWriteAsync(endpoint,
+                request.ToApiModel());
+            return result.ToServiceModel();
+        }
+
+        /// <inheritdoc/>
+        public async Task<ModelUploadStartResultModel> ModelUploadStartAsync(
+            EndpointApiModel endpoint, ModelUploadStartRequestModel request) {
+            var result = await _client.ModelUploadStartAsync(endpoint,
                 request.ToApiModel());
             return result.ToServiceModel();
         }

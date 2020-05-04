@@ -27,26 +27,27 @@ namespace Microsoft.Azure.IIoT.AspNetCore.Auth.Clients {
         /// <param name="logger"></param>
         /// <param name="encoder"></param>
         /// <param name="clock"></param>
-        /// <param name="httpContextAccessor"></param>
-        /// <param name="accessTokenValidator"></param>
+        /// <param name="context"></param>
+        /// <param name="validator"></param>
         public IdentityTokenAuthHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock,
-            IHttpContextAccessor httpContextAccessor, IIdentityTokenValidator accessTokenValidator) :
+            IHttpContextAccessor context, IIdentityTokenValidator validator) :
             base(options, logger, encoder, clock) {
-            _httpContextAccessor = httpContextAccessor;
-            _accessTokenValidator = accessTokenValidator;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _validator = validator ?? throw new ArgumentNullException(nameof(validator));
         }
 
         /// <inheritdoc/>
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync() {
-            var request = _httpContextAccessor.HttpContext.Request;
+            var request = _context.HttpContext.Request;
             if (!request.Headers.ContainsKey("Authorization")) {
                 return AuthenticateResult.Fail("Missing Authorization header");
             }
             try {
-                var authorization = request.Headers["Authorization"][0].Split(' ')[1];
-                var token = authorization.Trim().ToIdentityToken();
-                await _accessTokenValidator.ValidateToken(token);
+                var authorization = request.Headers["Authorization"][0].Split(' ');
+                var scheme = authorization[0].Trim();
+                var token = authorization[1].Trim().ToIdentityToken();
+                await _validator.ValidateToken(scheme, token);
 
                 var claims = new[] { new Claim(ClaimTypes.NameIdentifier, token.Identity) };
                 var identity = new ClaimsIdentity(claims, Scheme.Name);
@@ -59,7 +60,7 @@ namespace Microsoft.Azure.IIoT.AspNetCore.Auth.Clients {
             }
         }
 
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IIdentityTokenValidator _accessTokenValidator;
+        private readonly IHttpContextAccessor _context;
+        private readonly IIdentityTokenValidator _validator;
     }
 }

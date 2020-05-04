@@ -314,11 +314,6 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
             }
 
             /// <inheritdoc />
-            public Task UploadToBlobAsync(string blobName, Stream source) {
-                throw new NotSupportedException("Module client does not support upload");
-            }
-
-            /// <inheritdoc />
             public Task<MethodResponse> InvokeMethodAsync(string deviceId, string moduleId,
                 MethodRequest methodRequest, CancellationToken cancellationToken) {
                 return _client.InvokeMethodAsync(deviceId, moduleId, methodRequest, cancellationToken);
@@ -514,14 +509,6 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
                     return;
                 }
                 await _client.UpdateReportedPropertiesAsync(reportedProperties);
-            }
-
-            /// <inheritdoc />
-            public async Task UploadToBlobAsync(string blobName, Stream source) {
-                if (IsClosed) {
-                    return;
-                }
-                await _client.UploadToBlobAsync(blobName, source);
             }
 
             /// <inheritdoc />

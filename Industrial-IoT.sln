@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29201.188
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Azure.IIoT.Agent.Framework", "common\src\Microsoft.Azure.IIoT.Agent.Framework\src\Microsoft.Azure.IIoT.Agent.Framework.csproj", "{5FEB2030-5C23-4274-BFA2-2FF184ADD230}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs", "components\opc-ua\src\Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs\src\Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs.csproj", "{5FEB2030-5C23-4274-BFA2-2FF184ADD230}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Azure.IIoT.Modules.OpcUa.Publisher", "modules\src\Microsoft.Azure.IIoT.Modules.OpcUa.Publisher\src\Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.csproj", "{F0B9B85E-9D2E-46B2-9986-5D98B21904EE}"
 EndProject
@@ -1007,7 +1007,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{5FEB2030-5C23-4274-BFA2-2FF184ADD230} = {FEE95825-2E34-45AF-BDED-52F9C7412BF5}
+		{5FEB2030-5C23-4274-BFA2-2FF184ADD230} = {A6028EDB-3331-48D2-8C7D-8D681172A61A}
 		{F0B9B85E-9D2E-46B2-9986-5D98B21904EE} = {3A2DB744-69F3-488E-8CD5-45B921385B76}
 		{4073F4E2-FAA8-4509-A47A-855D527588FC} = {ADB416A3-C375-4362-B2C0-3A35DA4CB5F8}
 		{7FEE3528-FE99-4F1A-91C0-DCFBC9236871} = {C8D79D8A-D92E-4AE3-BA54-0C927BEBCEBF}

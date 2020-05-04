@@ -16,9 +16,9 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher {
     using Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients;
     using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Deploy;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Clients;
-    using Microsoft.Azure.IIoT.Agent.Framework.Jobs;
-    using Microsoft.Azure.IIoT.Agent.Framework.Storage.Database;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Services;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Database;
     using Microsoft.Azure.IIoT.Storage.CosmosDb.Services;
     using Microsoft.Azure.IIoT.Http.Ssl;
     using Microsoft.Azure.IIoT.Http.Default;
@@ -187,22 +187,23 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher {
             builder.RegisterType<CorsSetup>()
                 .AsImplementedInterfaces();
 
-            // Twin services for browsing and tag selection ...
-            builder.RegisterType<TwinServicesApiAdapter>()
-                .AsImplementedInterfaces();
-            builder.RegisterType<TwinServiceClient>()
-                .AsImplementedInterfaces();
-
             // Registry services to lookup endpoints.
             builder.RegisterType<RegistryServicesApiAdapter>()
                 .AsImplementedInterfaces();
             builder.RegisterType<RegistryServiceClient>()
+                .AsImplementedInterfaces();
+            // Twin services for browsing and model transfer ...
+            builder.RegisterType<TwinServicesApiAdapter>()
+                .AsImplementedInterfaces();
+            builder.RegisterType<TwinServiceClient>()
                 .AsImplementedInterfaces();
 
             // Create Publish jobs using ...
             builder.RegisterType<PublisherJobService>()
                 .AsImplementedInterfaces();
             builder.RegisterType<PublisherJobSerializer>()
+                .AsImplementedInterfaces();
+            builder.RegisterType<BulkPublishService<string>>()
                 .AsImplementedInterfaces();
 
             // ... job services and dependencies

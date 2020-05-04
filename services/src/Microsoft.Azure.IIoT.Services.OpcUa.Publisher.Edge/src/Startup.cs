@@ -5,14 +5,20 @@
 
 namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge {
     using Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime;
-    using Microsoft.Azure.IIoT.Agent.Framework.Jobs;
-    using Microsoft.Azure.IIoT.Agent.Framework.Storage.Database;
-    using Microsoft.Azure.IIoT.Hub.Client;
-    using Microsoft.Azure.IIoT.Hub.Auth;
-    using Microsoft.Azure.IIoT.AspNetCore.Auth.Clients;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Database;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Services;
+    using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients;
+    using Microsoft.Azure.IIoT.OpcUa.Api.Registry;
+    using Microsoft.Azure.IIoT.OpcUa.Api.Registry.Clients;
+    using Microsoft.Azure.IIoT.OpcUa.Protocol.Services;
+    using Microsoft.Azure.IIoT.AspNetCore.Storage;
     using Microsoft.Azure.IIoT.AspNetCore.Cors;
     using Microsoft.Azure.IIoT.AspNetCore.Correlation;
     using Microsoft.Azure.IIoT.AspNetCore.Auth;
+    using Microsoft.Azure.IIoT.AspNetCore.Auth.Clients;
+    using Microsoft.Azure.IIoT.Hub.Client;
+    using Microsoft.Azure.IIoT.Hub.Auth;
     using Microsoft.Azure.IIoT.Http.Default;
     using Microsoft.Azure.IIoT.Http.Ssl;
     using Microsoft.Azure.IIoT.Serializers;
@@ -177,24 +183,51 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge {
             builder.RegisterType<CorsSetup>()
                 .AsImplementedInterfaces();
 
-            // TODO: Use job database service api
-            builder.RegisterType<CosmosDbServiceClient>()
+            // Registry services to lookup endpoints.
+            builder.RegisterType<RegistryServicesApiAdapter>()
                 .AsImplementedInterfaces();
+            builder.RegisterType<RegistryServiceClient>()
+                .AsImplementedInterfaces();
+
+            // Create Publish jobs using ...
+            builder.RegisterType<PublisherJobService>()
+                .AsImplementedInterfaces();
+            builder.RegisterType<PublisherJobSerializer>()
+                .AsImplementedInterfaces();
+
+            // ... job services and dependencies
+            builder.RegisterType<DefaultJobService>()
+                .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<JobDatabase>()
                 .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<WorkerDatabase>()
                 .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<CosmosDbServiceClient>()
+                .AsImplementedInterfaces();
+            builder.RegisterType<DefaultJobService>()
+                .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<IoTHubJobConfigurationHandler>()
+                .AsImplementedInterfaces();
+            builder.RegisterType<IoTHubServiceHttpClient>()
+                .AsImplementedInterfaces();
+
+            // Orchestrator
             builder.RegisterType<DefaultJobOrchestrator>()
                 .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<DefaultDemandMatcher>()
                 .AsImplementedInterfaces();
-
             builder.RegisterType<IdentityTokenValidator>()
                 .AsImplementedInterfaces();
-            builder.RegisterType<IoTHubServiceHttpClient>()
+            builder.RegisterType<DistributedProtectedCache>()
                 .AsImplementedInterfaces();
             builder.RegisterType<TwinIdentityTokenStore>()
                 .AsImplementedInterfaces().SingleInstance();
+
+            // Bulk loading from edge
+            builder.RegisterType<NodeSetProcessor>()
+                .AsImplementedInterfaces();
+            builder.RegisterType<BulkPublishHandler>()
+                .AsImplementedInterfaces();
 
             // Activate all hosts
             builder.RegisterType<HostAutoStart>()

@@ -7,7 +7,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Controllers {
     using Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Auth;
     using Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Filters;
     using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models;
-    using Microsoft.Azure.IIoT.Agent.Framework;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher;
     using Microsoft.Azure.IIoT.Http;
     using Microsoft.Azure.IIoT.AspNetCore.OpenApi;
     using Microsoft.AspNetCore.Authorization;

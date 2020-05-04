@@ -10,8 +10,8 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry.Sync.Runtime {
     using Microsoft.Azure.IIoT.Messaging.ServiceBus.Runtime;
     using Microsoft.Azure.IIoT.Hub.Client;
     using Microsoft.Azure.IIoT.Hub.Client.Runtime;
-    using Microsoft.Azure.IIoT.Agent.Framework.Jobs;
-    using Microsoft.Azure.IIoT.Agent.Framework.Jobs.Runtime;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs.Runtime;
     using Microsoft.Azure.IIoT.Diagnostics;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Azure.IIoT.Auth;

@@ -15,8 +15,9 @@ namespace Microsoft.Azure.IIoT.Auth {
         /// <summary>
         /// Validate token and throw if not valid
         /// </summary>
+        /// <param name="scheme"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        Task ValidateToken(IdentityTokenModel token);
+        Task ValidateToken(string scheme, IdentityTokenModel token);
     }
 }

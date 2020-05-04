@@ -6,7 +6,7 @@
 namespace Microsoft.Azure.IIoT.AspNetCore.Auth.Clients {
     using Microsoft.Azure.IIoT.Auth;
     using Microsoft.Azure.IIoT.Auth.Models;
-    using Microsoft.Extensions.Caching.Distributed;
+    using Microsoft.Azure.IIoT.Storage;
     using System;
     using System.Threading.Tasks;
 
@@ -21,13 +21,15 @@ namespace Microsoft.Azure.IIoT.AspNetCore.Auth.Clients {
         /// <param name="identityTokenRetriever"></param>
         /// <param name="distributedCache"></param>
         public IdentityTokenValidator(IIdentityTokenStore identityTokenRetriever,
-            IDistributedCache distributedCache) { // TODO: Must encrypt in cache
-            _distributedCache = distributedCache;
-            _identityTokenRetriever = identityTokenRetriever;
+            ICache distributedCache) {
+            _distributedCache = distributedCache ??
+                throw new ArgumentNullException(nameof(distributedCache));
+            _identityTokenRetriever = identityTokenRetriever ??
+                throw new ArgumentNullException(nameof(identityTokenRetriever));
         }
 
         /// <inheritdoc/>
-        public async Task ValidateToken(IdentityTokenModel token) {
+        public async Task ValidateToken(string scheme, IdentityTokenModel token) {
             if (token?.Identity == null) {
                 throw new UnauthorizedAccessException();
             }
@@ -35,11 +37,10 @@ namespace Microsoft.Azure.IIoT.AspNetCore.Auth.Clients {
             if (originalKey == token.Key) {
                 return;
             }
-            var currentToken = await _identityTokenRetriever.GetIdentityTokenAsync(token.Identity);
-            await _distributedCache.SetStringAsync(token.Identity, currentToken.Key,
-                new DistributedCacheEntryOptions {
-                    AbsoluteExpiration = currentToken.Expires
-                });
+            var currentToken = await _identityTokenRetriever.GetIdentityTokenAsync(
+                token.Identity);
+            await _distributedCache.SetStringAsync(token.Identity,
+                currentToken.Key, currentToken.Expires);
             if (currentToken.Expires != token.Expires ||
                 currentToken.Expires < DateTime.UtcNow ||
                 currentToken.Key != token.Key) {
@@ -47,7 +48,7 @@ namespace Microsoft.Azure.IIoT.AspNetCore.Auth.Clients {
             }
         }
 
-        private readonly IDistributedCache _distributedCache;
+        private readonly ICache _distributedCache;
         private readonly IIdentityTokenStore _identityTokenRetriever;
     }
 }

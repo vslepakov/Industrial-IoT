@@ -48,7 +48,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.History {
                 .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<AddressSpaceServices>()
                 .AsImplementedInterfaces();
-            builder.RegisterType<UploadServicesStub<EndpointModel>>()
+            builder.RegisterType<TransferServicesStub<EndpointModel>>()
                 .AsImplementedInterfaces();
             builder.RegisterType<VariantEncoderFactory>()
                 .AsImplementedInterfaces().SingleInstance();

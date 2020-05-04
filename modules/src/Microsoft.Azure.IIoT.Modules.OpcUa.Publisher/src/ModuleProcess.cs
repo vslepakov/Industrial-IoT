@@ -15,19 +15,19 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
     using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine;
     using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Models;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Services;
-    using Microsoft.Azure.IIoT.Agent.Framework;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Agent;
     using Microsoft.Azure.IIoT.Hub;
     using Microsoft.Azure.IIoT.Serializers;
+    using Microsoft.Azure.IIoT.Module;
+    using Microsoft.Extensions.Configuration;
+    using Autofac;
+    using Serilog;
     using System;
     using System.Diagnostics;
     using System.Runtime.Loader;
     using System.Threading;
     using System.Threading.Tasks;
-    using Autofac;
-    using Microsoft.Extensions.Configuration;
-    using Serilog;
-    using Prometheus;
-    using Microsoft.Azure.IIoT.Module;
 
     /// <summary>
     /// Publisher module
@@ -142,10 +142,14 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
 
             builder.RegisterModule<PublisherJobsConfiguration>();
 
-            // Register module and agent framework ...
-            builder.RegisterModule<AgentFramework>();
+            // Register module and publisher framework ...
             builder.RegisterModule<ModuleFramework>();
             builder.RegisterModule<NewtonSoftJsonModule>();
+
+            builder.RegisterType<WorkerSupervisor>()
+                .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<Worker>()
+                .AsImplementedInterfaces();
 
             if (legacyCliOptions.RunInLegacyMode) {
                 builder.AddDiagnostics(config,

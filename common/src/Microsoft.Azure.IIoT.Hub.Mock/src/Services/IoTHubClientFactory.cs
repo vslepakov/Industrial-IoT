@@ -5,14 +5,13 @@
 
 namespace Microsoft.Azure.IIoT.Hub.Mock {
     using Microsoft.Azure.IIoT.Module.Framework.Client;
+    using Microsoft.Azure.IIoT.Exceptions;
     using Microsoft.Azure.Devices.Client;
     using Microsoft.Azure.Devices.Shared;
     using System;
     using System.Collections.Generic;
-    using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
-    using Microsoft.Azure.IIoT.Exceptions;
 
     /// <summary>
     /// Injectable factory that creates clients from device sdk
@@ -148,14 +147,6 @@ namespace Microsoft.Azure.IIoT.Hub.Mock {
             }
 
             /// <inheritdoc />
-            public Task UploadToBlobAsync(string blobName, Stream source) {
-                if (!IsClosed) {
-                    Connection.SendBlob(blobName, source.ReadAsBuffer());
-                }
-                return Task.CompletedTask;
-            }
-
-            /// <inheritdoc />
             public Task<MethodResponse> InvokeMethodAsync(string deviceId, string moduleId,
                 MethodRequest methodRequest, CancellationToken cancellationToken) {
                 return Task.FromResult(IsClosed ? null :
@@ -167,24 +158,6 @@ namespace Microsoft.Azure.IIoT.Hub.Mock {
                 MethodRequest methodRequest, CancellationToken cancellationToken) {
                 return Task.FromResult(IsClosed ? null :
                     Connection.Call(deviceId, null, methodRequest));
-            }
-
-            /// <inheritdoc />
-            public Task SetStreamsDefaultHandlerAsync(StreamCallback streamHandler,
-                object userContext) {
-                throw new NotSupportedException("Test client does not support streams yet");
-            }
-
-            /// <inheritdoc />
-            public Task SetStreamHandlerAsync(string streamName, StreamCallback
-                streamHandler, object userContext) {
-                throw new NotSupportedException("Test client does not support streams yet");
-            }
-
-            /// <inheritdoc />
-            public Task<Stream> CreateStreamAsync(string streamName, string hostName,
-                ushort port, CancellationToken cancellationToken) {
-                throw new NotSupportedException("Test client does not support streams yet");
             }
 
             /// <inheritdoc />

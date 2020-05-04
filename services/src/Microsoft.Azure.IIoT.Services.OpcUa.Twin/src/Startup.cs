@@ -101,7 +101,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin {
                 Policies.RoleMapping,
                 Policies.CanBrowse,
                 Policies.CanControl,
-                Policies.CanPublish);
+                Policies.CanUpload);
 
             // TODO: Remove http client factory and use
             // services.AddHttpClient();

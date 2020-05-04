@@ -9,7 +9,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     using Microsoft.Azure.IIoT.OpcUa.Core.Models;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
     using Microsoft.Azure.IIoT.OpcUa.Subscriber.Models;
-    using Microsoft.Azure.IIoT.Agent.Framework.Models;
     using Microsoft.Azure.IIoT.Auth.Models;
     using System.Linq;
 
@@ -47,7 +46,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
             }
             return new DemandModel {
                 Key = model.Key,
-                Operator = (Agent.Framework.Models.DemandOperators?)model.Operator,
+                Operator = (OpcUa.Publisher.Models.DemandOperators?)model.Operator,
                 Value = model.Value
             };
         }
@@ -112,7 +111,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new HeartbeatResultModel {
-                HeartbeatInstruction = (Agent.Framework.Models.HeartbeatInstruction)model.HeartbeatInstruction,
+                HeartbeatInstruction = (OpcUa.Publisher.Models.HeartbeatInstruction)model.HeartbeatInstruction,
                 LastActiveHeartbeat = model.LastActiveHeartbeat,
                 UpdatedJob = model.UpdatedJob.ToServiceModel()
             };
@@ -149,10 +148,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
             }
             return new JobHeartbeatModel {
                 State = model.State?.Copy(),
-                ProcessMode = (Agent.Framework.Models.ProcessMode)model.ProcessMode,
+                ProcessMode = (OpcUa.Publisher.Models.ProcessMode)model.ProcessMode,
                 JobHash = model.JobHash,
                 JobId = model.JobId,
-                Status = (Agent.Framework.Models.JobStatus)model.Status
+                Status = (OpcUa.Publisher.Models.JobStatus)model.Status
             };
         }
 
@@ -227,7 +226,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new JobProcessingInstructionModel {
-                ProcessMode = (Agent.Framework.Models.ProcessMode?)model.ProcessMode,
+                ProcessMode = (OpcUa.Publisher.Models.ProcessMode?)model.ProcessMode,
                 Job = model.Job.ToServiceModel()
             };
         }
@@ -290,7 +289,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new JobLifetimeDataModel {
-                Status = (Agent.Framework.Models.JobStatus)model.Status,
+                Status = (OpcUa.Publisher.Models.JobStatus)model.Status,
                 Updated = model.Updated,
                 Created = model.Created,
                 ProcessingStatus = model.ProcessingStatus?
@@ -326,7 +325,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
             return new ProcessingStatusModel {
                 LastKnownHeartbeat = model.LastKnownHeartbeat,
                 LastKnownState = model.LastKnownState?.Copy(),
-                ProcessMode = (Agent.Framework.Models.ProcessMode?)model.ProcessMode
+                ProcessMode = (OpcUa.Publisher.Models.ProcessMode?)model.ProcessMode
             };
         }
 
@@ -422,7 +421,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
             return new WorkerHeartbeatModel {
                 WorkerId = model.WorkerId,
                 AgentId = model.AgentId,
-                Status = (Agent.Framework.Models.WorkerStatus)model.Status
+                Status = (OpcUa.Publisher.Models.WorkerStatus)model.Status
             };
         }
 
@@ -454,7 +453,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
             return new JobInfoQueryModel {
                 Name = model.Name,
                 JobConfigurationType = model.JobConfigurationType,
-                Status = (Agent.Framework.Models.JobStatus?)model.Status
+                Status = (OpcUa.Publisher.Models.JobStatus?)model.Status
             };
         }
 
@@ -487,7 +486,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
             return new WorkerInfoModel {
                 WorkerId = model.WorkerId,
                 AgentId = model.AgentId,
-                Status = (Agent.Framework.Models.WorkerStatus)model.Status,
+                Status = (OpcUa.Publisher.Models.WorkerStatus)model.Status,
                 LastSeen = model.LastSeen
             };
         }

@@ -1199,5 +1199,69 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Models {
                     .ToList()
             };
         }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <param name="model"></param>
+        public static ModelUploadStartRequestApiModel ToApiModel(
+            this ModelUploadStartRequestModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new ModelUploadStartRequestApiModel {
+                ContentMimeType = model.ContentMimeType,
+                UploadEndpointUrl = model.UploadEndpointUrl,
+                AuthorizationHeader = model.AuthorizationHeader,
+                Diagnostics = model.Diagnostics.ToApiModel()
+            };
+        }
+
+        /// <summary>
+        /// Create service model from api model
+        /// </summary>
+        public static ModelUploadStartRequestModel ToServiceModel(
+            this ModelUploadStartRequestApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new ModelUploadStartRequestModel {
+                ContentMimeType = model.ContentMimeType,
+                UploadEndpointUrl = model.UploadEndpointUrl,
+                AuthorizationHeader = model.AuthorizationHeader,
+                Diagnostics = model.Diagnostics.ToServiceModel()
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <param name="model"></param>
+        public static ModelUploadStartResponseApiModel ToApiModel(
+            this ModelUploadStartResultModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new ModelUploadStartResponseApiModel {
+                FileName = model.FileName,
+                ContentMimeType = model.ContentMimeType,
+                TimeStamp = model.TimeStamp
+            };
+        }
+
+        /// <summary>
+        /// Create service model from api model
+        /// </summary>
+        public static ModelUploadStartResultModel ToServiceModel(
+            this ModelUploadStartResponseApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new ModelUploadStartResultModel {
+                FileName = model.FileName,
+                ContentMimeType = model.ContentMimeType,
+                TimeStamp = model.TimeStamp
+            };
+        }
     }
 }

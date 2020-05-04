@@ -85,14 +85,6 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
         Task UpdateReportedPropertiesAsync(TwinCollection reportedProperties);
 
         /// <summary>
-        /// Upload to blob
-        /// </summary>
-        /// <param name="blobName"></param>
-        /// <param name="source"></param>
-        /// <returns></returns>
-        Task UploadToBlobAsync(string blobName, Stream source);
-
-        /// <summary>
         /// Interactively invokes a method on module
         /// </summary>
         /// <param name="deviceId"></param>
@@ -121,10 +113,4 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
         /// <returns></returns>
         Task CloseAsync();
     }
-
-    /// <summary>
-    /// Stream callback definition
-    /// </summary>
-    /// <param name="userContext"></param>
-    public delegate void StreamCallback(object userContext);
 }

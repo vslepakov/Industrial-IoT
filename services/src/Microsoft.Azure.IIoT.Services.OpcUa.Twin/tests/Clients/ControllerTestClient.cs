@@ -134,6 +134,11 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.Controllers.Test {
             return Task.FromException<BrowsePathResponseApiModel>(new NotImplementedException());
         }
 
+        public Task<ModelUploadStartResponseApiModel> ModelUploadStartAsync(string endpointId,
+            ModelUploadStartRequestApiModel content, CancellationToken ct = default) {
+            return Task.FromException<ModelUploadStartResponseApiModel>(new NotImplementedException());
+        }
+
         private readonly IHttpClient _httpClient;
         private readonly ISerializer _serializer;
         private readonly string _serviceUri;

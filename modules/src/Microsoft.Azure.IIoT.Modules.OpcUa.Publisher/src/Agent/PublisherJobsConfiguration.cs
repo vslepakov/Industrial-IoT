@@ -7,8 +7,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Agent {
     using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models;
     using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Runtime;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
-    using Microsoft.Azure.IIoT.Agent.Framework;
-    using Microsoft.Azure.IIoT.Agent.Framework.Exceptions;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Exceptions;
     using Microsoft.Azure.IIoT.Serializers;
     using Autofac;
 

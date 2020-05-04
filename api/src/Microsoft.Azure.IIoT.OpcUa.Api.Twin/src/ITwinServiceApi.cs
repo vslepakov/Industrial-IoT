@@ -109,5 +109,15 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin {
         /// <returns></returns>
         Task<WriteResponseApiModel> NodeWriteAsync(string endpointId,
             WriteRequestApiModel request, CancellationToken ct = default);
+
+        /// <summary>
+        /// Start model upload
+        /// </summary>
+        /// <param name="endpointId"></param>
+        /// <param name="content"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        Task<ModelUploadStartResponseApiModel> ModelUploadStartAsync(string endpointId,
+            ModelUploadStartRequestApiModel content, CancellationToken ct = default);
     }
 }

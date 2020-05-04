@@ -35,14 +35,15 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
         /// <param name="historian"></param>
         /// <param name="export"></param>
         /// <param name="twin"></param>
-        public EndpointMethodsController(IBrowseServices<EndpointModel> browse,
+        /// <param name="upload"></param>
+        public EndpointMethodsController(ITwinServices twin, IBrowseServices<EndpointModel> browse,
             INodeServices<EndpointModel> nodes, IHistoricAccessServices<EndpointModel> historian,
-            IUploadServices<EndpointModel> export, ITwinServices twin) {
+            TransferServices<EndpointModel> upload) {
             _browse = browse ?? throw new ArgumentNullException(nameof(browse));
+            _upload = upload ?? throw new ArgumentNullException(nameof(upload));
             _historian = historian ?? throw new ArgumentNullException(nameof(historian));
             _nodes = nodes ?? throw new ArgumentNullException(nameof(nodes));
             _twin = twin ?? throw new ArgumentNullException(nameof(twin));
-            _export = export ?? throw new ArgumentNullException(nameof(export));
         }
 
         /// <summary>
@@ -56,7 +57,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
             if (request == null) {
                 throw new ArgumentNullException(nameof(request));
             }
-            var result = await _export.ModelUploadStartAsync(
+            var result = await _upload.ModelUploadStartAsync(
                 await _twin.GetEndpointAsync(), request.ToServiceModel());
             return result.ToApiModel();
         }
@@ -261,10 +262,11 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
         }
 
         private readonly IBrowseServices<EndpointModel> _browse;
+        private readonly ITransferServices<EndpointModel> _upload;
         private readonly IHistoricAccessServices<EndpointModel> _historian;
         private readonly INodeServices<EndpointModel> _nodes;
         private readonly ITwinServices _twin;
-        private readonly IUploadServices<EndpointModel> _export;
+
         private static readonly string kTwinMetricsPrefix = "iiot_edge_twin_";
         private static readonly Counter kBrowseAsync = Metrics
             .CreateCounter(kTwinMetricsPrefix + "browse", "call to browseAsync");

@@ -20,7 +20,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry.Sync {
     using Microsoft.Azure.IIoT.Crypto.Default;
     using Microsoft.Azure.IIoT.Auth.Clients;
     using Microsoft.Azure.IIoT.Auth.IoTHub;
-    using Microsoft.Azure.IIoT.Agent.Framework.Jobs;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs;
     using Microsoft.Azure.IIoT.Module.Default;
     using Microsoft.Azure.IIoT.Messaging.Default;
     using Microsoft.Azure.IIoT.Messaging.ServiceBus.Services;
