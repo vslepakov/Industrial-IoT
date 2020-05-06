@@ -49,7 +49,7 @@
 #>
 
 param(
-    [ValidateSet("minimum", "local", "services", "app", "all")] [string] $type = "all",
+    [ValidateSet("minimum", "local", "services", "simulation", "app", "all")] [string] $type = "all",
     [string] $version,
     [string] $applicationName,
     [string] $resourceGroupName,
