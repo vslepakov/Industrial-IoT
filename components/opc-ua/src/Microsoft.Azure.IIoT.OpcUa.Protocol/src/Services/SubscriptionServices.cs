@@ -623,10 +623,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Protocol.Services {
             private readonly SemaphoreSlim _lock;
             private readonly Timer _timer;
             private List<MonitoredItemWrapper> _currentlyMonitored;
-            private static readonly Gauge kMonitoredItems = Metrics.CreateGauge("iiot_edge_publisher_monitored_items", "monitored items count",
-                new GaugeConfiguration {
-                    LabelNames = new[] { "subscription" }
-                });
+            private static readonly Gauge kMonitoredItems = Metrics
+                .CreateGauge("iiot_edge_publisher_monitored_items", "monitored items count",
+                    new GaugeConfiguration {
+                        LabelNames = new[] { "subscription" }
+                    });
         }
 
         /// <summary>

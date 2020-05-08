@@ -13,6 +13,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin {
     using Microsoft.Azure.IIoT.AspNetCore.Cors;
     using Microsoft.Azure.IIoT.AspNetCore.Correlation;
     using Microsoft.Azure.IIoT.Auth;
+    using Microsoft.Azure.IIoT.Diagnostics.Runtime;
     using Microsoft.Azure.IIoT.Http.Default;
     using Microsoft.Azure.IIoT.Http.Ssl;
     using Microsoft.Azure.IIoT.Hub.Client;
@@ -128,6 +129,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin {
             app.UseHeaderForwarding();
 
             app.UseRouting();
+            app.UseHttpMetrics();
             app.EnableCors();
 
             app.UseJwtBearerAuthentication();
@@ -136,8 +138,8 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin {
 
             app.UseCorrelation();
             app.UseSwagger();
-            app.UseMetricServer();
             app.UseEndpoints(endpoints => {
+                endpoints.MapMetrics();
                 endpoints.MapControllers();
                 endpoints.MapHealthChecks("/healthz");
             });
@@ -202,6 +204,8 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin {
             // Edge deployment
             builder.RegisterType<IoTHubConfigurationClient>()
                 .AsImplementedInterfaces();
+            builder.RegisterType<LogAnalyticsConfig>()
+                .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<IoTHubSupervisorDeployment>()
                 .AsImplementedInterfaces().SingleInstance();
 

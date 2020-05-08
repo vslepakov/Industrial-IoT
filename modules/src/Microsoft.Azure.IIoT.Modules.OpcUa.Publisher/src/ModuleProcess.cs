@@ -28,6 +28,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
     using System.Runtime.Loader;
     using System.Threading;
     using System.Threading.Tasks;
+    using Prometheus;
 
     /// <summary>
     /// Publisher module
@@ -87,16 +88,17 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                     var workerSupervisor = hostScope.Resolve<IWorkerSupervisor>();
                     var logger = hostScope.Resolve<ILogger>();
                     var config = new Config(_config);
-                    logger.Information("Initiating prometheus at port {0}/metrics", kPublisherPrometheusPort);
-                    var server = new MetricServer(port: kPublisherPrometheusPort);
+                    IMetricServer server = null;
                     try {
-                        server.StartWhenEnabled(config, logger);
                         var product = "OpcPublisher_" +
                             GetType().Assembly.GetReleaseVersion().ToString();
-                        kPublisherModuleStart.Inc();
                         // Start module
                         await module.StartAsync(IdentityType.Publisher, SiteId,
                             product, this);
+                        if (hostScope.TryResolve(out server)) {
+                            server.Start();
+                        }
+                        kPublisherModuleStart.Inc();
                         await workerSupervisor.StartAsync();
                         OnRunning?.Invoke(this, true);
                         await Task.WhenAny(_reset.Task, _exit.Task);
@@ -104,7 +106,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                             logger.Information("Module exits...");
                             return _exitCode;
                         }
-
                         _reset = new TaskCompletionSource<bool>();
                         logger.Information("Module reset...");
                     }
@@ -112,10 +113,12 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                         logger.Error(ex, "Error during module execution - restarting!");
                     }
                     finally {
-                        await workerSupervisor.StopAsync();
-                        await module.StopAsync();
                         kPublisherModuleStart.Set(0);
-                        server.Stop();
+                        await workerSupervisor.StopAsync();
+                        if (server != null) {
+                            await server.StopAsync();
+                        }
+                        await module.StopAsync();
                         OnRunning?.Invoke(this, false);
                     }
                 }
@@ -190,6 +193,9 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                 // plug as configuration into the orchestrator client.
             }
 
+            builder.RegisterType<PublisherSettingsController>()
+                .AsImplementedInterfaces().SingleInstance();
+
             // Opc specific parts
             builder.RegisterType<DefaultSessionManager>()
                 .AsImplementedInterfaces().SingleInstance();
@@ -205,7 +211,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
         private readonly TaskCompletionSource<bool> _exit;
         private int _exitCode;
         private TaskCompletionSource<bool> _reset;
-        private const int kPublisherPrometheusPort = 9702;
+
         private static readonly Gauge kPublisherModuleStart = Metrics
             .CreateGauge("iiot_edge_publisher_module_start", "publisher module started");
     }

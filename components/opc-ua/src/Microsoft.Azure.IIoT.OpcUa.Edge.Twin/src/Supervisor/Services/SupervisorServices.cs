@@ -240,8 +240,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Supervisor.Services {
             /// <inheritdoc/>
             public bool BypassCertVerification { get; }
             /// <inheritdoc/>
-            public bool EnableMetrics { get; }
-            /// <inheritdoc/>
             public TransportOption Transport { get; }
 
             /// <summary>
@@ -265,7 +263,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Supervisor.Services {
                 Transport = config.Transport;
                 EdgeHubConnectionString = GetEdgeHubConnectionString(config,
                     endpointId, secret);
-                EnableMetrics = config.EnableMetrics;
 
                 // Create twin scoped component context for the host
                 _container = outer._factory.Create(builder => {

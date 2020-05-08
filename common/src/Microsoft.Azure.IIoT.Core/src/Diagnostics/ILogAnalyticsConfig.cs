@@ -3,12 +3,12 @@
 //  Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-namespace Microsoft.Azure.IIoT.Deploy {
+namespace Microsoft.Azure.IIoT.Diagnostics {
 
     /// <summary>
     /// Azure Log Analytics Workspace configuration
     /// </summary>
-    public interface ILogWorkspaceConfig {
+    public interface ILogAnalyticsConfig {
 
         /// <summary>
         /// Log Analytics Workspace Id
@@ -19,5 +19,10 @@ namespace Microsoft.Azure.IIoT.Deploy {
         /// Log Analytics Workspace Key
         /// </summary>
         string LogWorkspaceKey { get; }
+
+        /// <summary>
+        /// Log Analytics table
+        /// </summary>
+        string LogType { get; }
     }
 }

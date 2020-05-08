@@ -8,6 +8,7 @@ namespace Microsoft.Azure.IIoT.Services.All {
     using Microsoft.Extensions.Hosting;
     using Autofac.Extensions.Hosting;
     using Serilog;
+    using Prometheus;
 
     /// <summary>
     /// Main entry point
@@ -19,11 +20,13 @@ namespace Microsoft.Azure.IIoT.Services.All {
         /// </summary>
         /// <param name="args"></param>
         public static void Main(string[] args) {
+            using (var source = DiagnosticSourceAdapter.StartListening()) {
 #if DEBUG
-            Log.Logger = Diagnostics.ConsoleLogger.Create();
-            Diagnostics.LogControl.Level.MinimumLevel = Serilog.Events.LogEventLevel.Debug;
+                Log.Logger = Diagnostics.ConsoleLogger.Create();
+                Diagnostics.LogControl.Level.MinimumLevel = Serilog.Events.LogEventLevel.Debug;
 #endif
-            CreateHostBuilder(args).Build().Run();
+                CreateHostBuilder(args).Build().Run();
+            }
         }
 
         /// <summary>

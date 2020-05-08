@@ -17,6 +17,7 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
     using System.Text;
     using System.Threading.Tasks;
     using Xunit;
+    using Microsoft.Azure.IIoT.Diagnostics;
 
     public class ModuleHostHarness {
 
@@ -90,7 +91,7 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
                         Encoding.UTF8.GetBytes(Guid.NewGuid().ToString()))).ToString();
         }
 
-        public class TestModuleConfig : IModuleConfig {
+        public class TestModuleConfig : IModuleConfig, IDiagnosticsConfig {
 
             public TestModuleConfig(DeviceModel device) {
                 _device = device;
@@ -104,7 +105,11 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
 
             public TransportOption Transport => TransportOption.Any;
 
-            public bool EnableMetrics => false;
+            public DiagnosticsLevel DiagnosticsLevel => DiagnosticsLevel.Disabled;
+
+            public TimeSpan? MetricsCollectionInterval => null;
+
+            public string InstrumentationKey => null;
 
             private readonly DeviceModel _device;
         }

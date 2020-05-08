@@ -121,14 +121,15 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.Gateway {
             app.UseHeaderForwarding();
 
             app.UseRouting();
+            app.UseHttpMetrics();
             app.EnableCors();
 
             app.UseJwtBearerAuthentication();
             app.UseAuthorization();
             app.UseHttpsRedirect();
 
-            app.UseMetricServer();
             app.UseEndpoints(endpoints => {
+                endpoints.MapMetrics();
                 endpoints.MapControllers();
                 endpoints.MapHealthChecks("/healthz");
             });

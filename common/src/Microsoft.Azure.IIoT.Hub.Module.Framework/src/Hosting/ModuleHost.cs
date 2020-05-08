@@ -517,7 +517,8 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
         private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
         private readonly Dictionary<string, VariantValue> _reported =
             new Dictionary<string, VariantValue>();
-        private static readonly Gauge kModuleStart = Metrics.CreateGauge("iiot_edge_module_start", "starting module",
+        private static readonly Gauge kModuleStart = Metrics
+            .CreateGauge("iiot_edge_module_start", "starting module",
                 new GaugeConfiguration {
                     LabelNames = new[] { "module", "device", "guid", "timestamp_utc" }
                 });

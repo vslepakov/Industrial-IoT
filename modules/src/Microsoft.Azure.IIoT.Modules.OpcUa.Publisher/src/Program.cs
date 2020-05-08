@@ -19,7 +19,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
         /// </summary>
         /// <param name="args"></param>
         public static void Main(string[] args) {
-
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", true)

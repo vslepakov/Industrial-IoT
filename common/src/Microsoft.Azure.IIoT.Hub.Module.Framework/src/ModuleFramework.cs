@@ -28,6 +28,14 @@ namespace Microsoft.Azure.IIoT.Module.Framework {
             builder.RegisterType<ModuleHost>()
                 .AsImplementedInterfaces().InstancePerLifetimeScope();
 
+            // Edge metrics collection
+            builder.RegisterType<PrometheusCollectorHost>()
+                .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<LogAnalyticsMetricsHandler>()
+                .AsImplementedInterfaces().InstancePerLifetimeScope()
+                .PropertiesAutowired(
+                    PropertyWiringOptions.AllowCircularDependencies);
+
             // Auto wire property for circular dependency resolution
             builder.RegisterType<MethodRouter>()
                 .AsImplementedInterfaces().InstancePerLifetimeScope()

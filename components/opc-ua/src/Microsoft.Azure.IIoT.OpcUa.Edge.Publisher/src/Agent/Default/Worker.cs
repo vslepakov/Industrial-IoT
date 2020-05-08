@@ -189,7 +189,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Agent {
                     _logger.Information("Worker cancelled...");
                 }
                 catch (Exception ex) {
-                    // TODO: we should notify the exception 
+                    // TODO: we should notify the exception
                     _logger.Error(ex, "Worker: {Id}, exception during worker processing, wait {delay}...",
                         WorkerId, _jobCheckerInterval);
                     kModuleExceptions.WithLabels(AgentId, ex.Source, ex.GetType().FullName, ex.Message, ex.StackTrace, "Exception during worker processing").Inc();
@@ -500,9 +500,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Agent {
         private JobProcess _jobProcess;
         private Task _worker;
         private CancellationTokenSource _cts;
-        private static readonly Counter kModuleExceptions = Metrics.CreateCounter("iiot_edge_publisher_exceptions", "module exceptions",
-            new CounterConfiguration {
-                LabelNames = new[] { "agent", "source", "type", "message", "stacktrace", "custom_message" }
-            });
+
+        private static readonly Counter kModuleExceptions = Metrics
+            .CreateCounter("iiot_edge_publisher_exceptions", "module exceptions",
+                new CounterConfiguration {
+                    LabelNames = new[] { "agent", "source", "type", "message", "stacktrace", "custom_message" }
+                });
     }
 }

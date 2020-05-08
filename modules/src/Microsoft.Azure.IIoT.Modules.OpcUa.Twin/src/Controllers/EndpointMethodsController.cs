@@ -17,7 +17,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
     using System;
     using System.Threading.Tasks;
     using Prometheus;
-    using Microsoft.Azure.IIoT.Module;
 
     /// <summary>
     /// Endpoint methods controller
@@ -33,12 +32,11 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
         /// <param name="browse"></param>
         /// <param name="nodes"></param>
         /// <param name="historian"></param>
-        /// <param name="export"></param>
         /// <param name="twin"></param>
         /// <param name="upload"></param>
         public EndpointMethodsController(ITwinServices twin, IBrowseServices<EndpointModel> browse,
             INodeServices<EndpointModel> nodes, IHistoricAccessServices<EndpointModel> historian,
-            TransferServices<EndpointModel> upload) {
+            ITransferServices<EndpointModel> upload) {
             _browse = browse ?? throw new ArgumentNullException(nameof(browse));
             _upload = upload ?? throw new ArgumentNullException(nameof(upload));
             _historian = historian ?? throw new ArgumentNullException(nameof(historian));

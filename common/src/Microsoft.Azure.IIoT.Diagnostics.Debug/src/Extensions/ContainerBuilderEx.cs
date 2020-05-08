@@ -30,8 +30,6 @@ namespace Autofac {
                 throw new ArgumentNullException(nameof(builder));
             }
             // Register metrics logger
-            builder.RegisterType<MetricsLogger>()
-                .AsImplementedInterfaces();
             builder.RegisterType<HealthCheckRegistrar>()
                 .AsImplementedInterfaces().SingleInstance();
             return builder.RegisterModule(

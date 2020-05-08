@@ -18,6 +18,7 @@ namespace Microsoft.Azure.IIoT.Modules.Diagnostic {
     using System.Diagnostics;
     using System.Threading;
     using Serilog;
+    using Prometheus;
 
     /// <summary>
     /// Module Process
@@ -76,11 +77,15 @@ namespace Microsoft.Azure.IIoT.Modules.Diagnostic {
                     _reset = new TaskCompletionSource<bool>();
                     var module = hostScope.Resolve<IModuleHost>();
                     var logger = hostScope.Resolve<ILogger>();
+                    IMetricServer server = null;
                     try {
                         // Start module
                         var product = "Diagnostic_" +
                             GetType().Assembly.GetReleaseVersion().ToString();
                         await module.StartAsync("diagnostic", SiteId, product, this);
+                        if (hostScope.TryResolve(out server)) {
+                            server.Start();
+                        }
                         OnRunning?.Invoke(this, true);
                         await Task.WhenAny(_reset.Task, _exit.Task);
                         if (_exit.Task.IsCompleted) {
@@ -94,6 +99,9 @@ namespace Microsoft.Azure.IIoT.Modules.Diagnostic {
                         logger.Error(ex, "Error during module execution - restarting!");
                     }
                     finally {
+                        if (server != null) {
+                            await server.StopAsync();
+                        }
                         await module.StopAsync();
                         OnRunning?.Invoke(this, false);
                     }

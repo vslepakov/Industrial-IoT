@@ -5,6 +5,7 @@
 
 namespace Microsoft.Azure.IIoT.OpcUa.Twin.Deploy {
     using Microsoft.Azure.IIoT.Deploy;
+    using Microsoft.Azure.IIoT.Diagnostics;
     using Microsoft.Azure.IIoT.Hub;
     using Microsoft.Azure.IIoT.Hub.Models;
     using Microsoft.Azure.IIoT.Serializers;
@@ -23,34 +24,28 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Deploy {
         /// </summary>
         /// <param name="service"></param>
         /// <param name="config"></param>
+        /// <param name="diagnostics"></param>
         /// <param name="serializer"></param>
         /// <param name="logger"></param>
         public IoTHubSupervisorDeployment(IIoTHubConfigurationServices service,
-            IContainerRegistryConfig config, IJsonSerializer serializer, ILogger logger) {
+            IContainerRegistryConfig config, ILogAnalyticsConfig diagnostics,
+            IJsonSerializer serializer, ILogger logger) {
+            _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
+            _diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
             _service = service ?? throw new ArgumentNullException(nameof(service));
             _config = config ?? throw new ArgumentNullException(nameof(service));
-            _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <inheritdoc/>
         public async Task StartAsync() {
             await _service.CreateOrUpdateConfigurationAsync(new ConfigurationModel {
-                Id = "__default-opctwin-linux",
+                Id = "__default-opctwin",
                 Content = new ConfigurationContentModel {
-                    ModulesContent = CreateLayeredDeployment(true)
+                    ModulesContent = CreateLayeredDeployment()
                 },
                 SchemaVersion = kDefaultSchemaVersion,
-                TargetCondition = $"tags.__type__ = '{IdentityType.Gateway}' AND tags.os = 'Linux'",
-                Priority = 1
-            }, true);
-            await _service.CreateOrUpdateConfigurationAsync(new ConfigurationModel {
-                Id = "__default-opctwin-windows",
-                Content = new ConfigurationContentModel {
-                    ModulesContent = CreateLayeredDeployment(false)
-                },
-                SchemaVersion = kDefaultSchemaVersion,
-                TargetCondition = $"tags.__type__ = '{IdentityType.Gateway}' AND tags.os = 'Windows'",
+                TargetCondition = $"tags.__type__ = '{IdentityType.Gateway}'",
                 Priority = 1
             }, true);
         }
@@ -64,7 +59,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Deploy {
         /// Get base edge configuration
         /// </summary>
         /// <returns></returns>
-        private IDictionary<string, IDictionary<string, object>> CreateLayeredDeployment(bool isLinux) {
+        private IDictionary<string, IDictionary<string, object>> CreateLayeredDeployment() {
 
             var registryCredentials = "";
             if (!string.IsNullOrEmpty(_config.DockerServer) &&
@@ -78,22 +73,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Deploy {
                     },
                 ";
             }
-
-
-            // Configure create options per os specified
-            string createOptions;
-            if (isLinux) {
-                // Linux
-                createOptions = "{}";
-            }
-            else {
-                // Windows
-                createOptions = _serializer.SerializeToString(new {
-                    User = "ContainerAdministrator",
-                    Hostname = "opctwin"
-                });
-            }
-            createOptions = createOptions.Replace("\"", "\\\"");
 
             var server = string.IsNullOrEmpty(_config.DockerServer) ?
                 "mcr.microsoft.com" : _config.DockerServer;
@@ -112,7 +91,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Deploy {
                     ""properties.desired.modules.twin"": {
                         ""settings"": {
                             ""image"": """ + image + @""",
-                            ""createOptions"": """ + createOptions + @"""
+                            ""createOptions"": {
+                            }
                         },
                         ""type"": ""docker"",
                         ""status"": ""running"",
@@ -122,6 +102,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Deploy {
                 },
                 ""$edgeHub"": {
                     ""properties.desired.routes.upstream"": ""FROM /messages/* INTO $upstream""
+                },
+                ""twin"": {
+                    ""properties.desired"": {
+                        ""LogWorkspaceId"": """ + _diagnostics.LogWorkspaceId + @""",
+                        ""LogWorkspaceKey"": """ + _diagnostics.LogWorkspaceKey + @"""
+                    }
                 }
             }";
             return _serializer.Deserialize<IDictionary<string, IDictionary<string, object>>>(content);
@@ -130,6 +116,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Deploy {
         private const string kDefaultSchemaVersion = "1.0";
         private readonly IIoTHubConfigurationServices _service;
         private readonly IContainerRegistryConfig _config;
+        private readonly ILogAnalyticsConfig _diagnostics;
         private readonly IJsonSerializer _serializer;
         private readonly ILogger _logger;
     }

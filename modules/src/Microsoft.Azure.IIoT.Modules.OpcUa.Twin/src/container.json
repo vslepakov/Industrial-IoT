@@ -1,5 +1,4 @@
 {
     "name": "iotedge/opc-twin",
-    "buildAlways": true,
-    "exposes": [ 9701 ]
+    "buildAlways": true
 }

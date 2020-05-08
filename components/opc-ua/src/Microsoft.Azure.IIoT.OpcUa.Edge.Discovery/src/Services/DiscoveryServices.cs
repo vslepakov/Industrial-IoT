@@ -664,14 +664,15 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Discovery.Services {
         private readonly CancellationTokenSource _cts =
             new CancellationTokenSource();
         private DiscoveryRequest _request = new DiscoveryRequest();
-        private static readonly string kDiscoveryMetricsPrefix = "iiot_edge_discovery_";
 #pragma warning restore IDE0069 // Disposable fields should be disposed
+        private static readonly string kDiscoveryMetricsPrefix = "iiot_edge_discovery_";
+
         private static readonly Counter kDiscoverAsync = Metrics
-    .CreateCounter(kDiscoveryMetricsPrefix + "discover", "call to discover");
+            .CreateCounter(kDiscoveryMetricsPrefix + "discover", "call to discover");
         private static readonly Counter kCancelAsync = Metrics
-    .CreateCounter(kDiscoveryMetricsPrefix + "cancel", "call to cancel");
+            .CreateCounter(kDiscoveryMetricsPrefix + "cancel", "call to cancel");
         private static readonly Counter kDiscoverServersAsync = Metrics
-    .CreateCounter(kDiscoveryMetricsPrefix + "discover_servers", "call to discoverServersAsync");
+            .CreateCounter(kDiscoveryMetricsPrefix + "discover_servers", "call to discoverServersAsync");
         private static readonly Counter kScanAsync = Metrics
             .CreateCounter(kDiscoveryMetricsPrefix + "scan", "call to scanAsync");
     }

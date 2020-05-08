@@ -5,6 +5,7 @@
 
 namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Deploy {
     using Microsoft.Azure.IIoT.Deploy;
+    using Microsoft.Azure.IIoT.Diagnostics;
     using Microsoft.Azure.IIoT.Hub;
     using Microsoft.Azure.IIoT.Hub.Models;
     using Microsoft.Azure.IIoT.Serializers;
@@ -23,11 +24,14 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Deploy {
         /// </summary>
         /// <param name="service"></param>
         /// <param name="config"></param>
+        /// <param name="diagnostics"></param>
         /// <param name="serializer"></param>
         /// <param name="logger"></param>
         public IoTHubPublisherDeployment(IIoTHubConfigurationServices service,
-            IContainerRegistryConfig config, IJsonSerializer serializer, ILogger logger) {
+            IContainerRegistryConfig config, ILogAnalyticsConfig diagnostics,
+            IJsonSerializer serializer, ILogger logger) {
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
+            _diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
             _service = service ?? throw new ArgumentNullException(nameof(service));
             _config = config ?? throw new ArgumentNullException(nameof(service));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -35,23 +39,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Deploy {
 
         /// <inheritdoc/>
         public async Task StartAsync() {
-
             await _service.CreateOrUpdateConfigurationAsync(new ConfigurationModel {
-                Id = "__default-opcpublisher-linux",
+                Id = "__default-opcpublisher",
                 Content = new ConfigurationContentModel {
-                    ModulesContent = CreateLayeredDeployment(true)
+                    ModulesContent = CreateLayeredDeployment()
                 },
                 SchemaVersion = kDefaultSchemaVersion,
-                TargetCondition = $"tags.__type__ = '{IdentityType.Gateway}' AND tags.os = 'Linux'",
-                Priority = 1
-            }, true);
-            await _service.CreateOrUpdateConfigurationAsync(new ConfigurationModel {
-                Id = "__default-opcpublisher-windows",
-                Content = new ConfigurationContentModel {
-                    ModulesContent = CreateLayeredDeployment(false)
-                },
-                SchemaVersion = kDefaultSchemaVersion,
-                TargetCondition = $"tags.__type__ = '{IdentityType.Gateway}' AND tags.os = 'Windows'",
+                TargetCondition = $"tags.__type__ = '{IdentityType.Gateway}'",
                 Priority = 1
             }, true);
         }
@@ -65,7 +59,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Deploy {
         /// Get base edge configuration
         /// </summary>
         /// <returns></returns>
-        private IDictionary<string, IDictionary<string, object>> CreateLayeredDeployment(bool isLinux) {
+        private IDictionary<string, IDictionary<string, object>> CreateLayeredDeployment() {
 
             var registryCredentials = "";
             if (!string.IsNullOrEmpty(_config.DockerServer) &&
@@ -79,26 +73,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Deploy {
                     },
                 ";
             }
-
-            // Configure create options per os specified
-            string createOptions;
-            if (isLinux) {
-                createOptions = _serializer.SerializeToString(new {
-                    Hostname = "opcpublisher",
-                    Cmd = new[] {
-                    "--aa"
-                    }
-                }).Replace("\"", "\\\"");
-            } else {
-                createOptions = _serializer.SerializeToString(new {
-                    User = "ContainerAdministrator",
-                    Hostname = "opcpublisher",
-                    Cmd = new[] {
-                    "--aa"
-                }
-                }).Replace("\"", "\\\"");
-            }
-
 
             var server = string.IsNullOrEmpty(_config.DockerServer) ?
                 "mcr.microsoft.com" : _config.DockerServer;
@@ -117,7 +91,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Deploy {
                     ""properties.desired.modules.publisher"": {
                         ""settings"": {
                             ""image"": """ + image + @""",
-                            ""createOptions"": """ + createOptions + @"""
+                            ""createOptions"": {
+                            }
                         },
                         ""type"": ""docker"",
                         ""status"": ""running"",
@@ -127,6 +102,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Deploy {
                 },
                 ""$edgeHub"": {
                     ""properties.desired.routes.upstream"": ""FROM /messages/* INTO $upstream""
+                },
+                ""publisher"": {
+                    ""properties.desired"": {
+                        ""LogWorkspaceId"": """ + _diagnostics.LogWorkspaceId + @""",
+                        ""LogWorkspaceKey"": """ + _diagnostics.LogWorkspaceKey + @"""
+                    }
                 }
             }";
             return _serializer.Deserialize<IDictionary<string, IDictionary<string, object>>>(content);
@@ -136,6 +117,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Deploy {
         private readonly IJsonSerializer _serializer;
         private readonly IIoTHubConfigurationServices _service;
         private readonly IContainerRegistryConfig _config;
+        private readonly ILogAnalyticsConfig _diagnostics;
         private readonly ILogger _logger;
     }
 }

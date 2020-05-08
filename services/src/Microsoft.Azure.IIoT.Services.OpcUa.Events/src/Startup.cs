@@ -134,6 +134,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events {
             app.UseHeaderForwarding();
 
             app.UseRouting();
+            app.UseHttpMetrics();
             app.EnableCors();
 
             app.UseJwtBearerAuthentication();
@@ -142,8 +143,8 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events {
 
             app.UseCorrelation();
             app.UseSwagger();
-            app.UseMetricServer();
             app.UseEndpoints(endpoints => {
+                endpoints.MapMetrics();
                 endpoints.MapHubs();
                 endpoints.MapControllers();
                 endpoints.MapHealthChecks("/healthz");

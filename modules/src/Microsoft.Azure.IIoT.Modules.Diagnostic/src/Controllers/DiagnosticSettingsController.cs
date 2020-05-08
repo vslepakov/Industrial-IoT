@@ -20,7 +20,7 @@ namespace Microsoft.Azure.IIoT.Modules.Diagnostic.v2.Supervisor {
     /// </summary>
     [Version(1)]
     [Version(2)]
-    public class DiagnosticSettingsController : ISettingsController {
+    public class DiagnosticSettingsController : ISettingsController, ILogAnalyticsConfig {
 
         /// <summary>
         /// Send frequency in seconds
@@ -54,6 +54,13 @@ namespace Microsoft.Azure.IIoT.Modules.Diagnostic.v2.Supervisor {
             // The enum values are the same as in serilog
             get => LogControl.Level.MinimumLevel.ToString();
         }
+
+        /// <inheritdoc/>
+        public string LogWorkspaceId { get; set; }
+        /// <inheritdoc/>
+        public string LogWorkspaceKey { get; set; }
+        /// <inheritdoc/>
+        public string LogType { get; set; }
 
         /// <summary>
         /// Test settings

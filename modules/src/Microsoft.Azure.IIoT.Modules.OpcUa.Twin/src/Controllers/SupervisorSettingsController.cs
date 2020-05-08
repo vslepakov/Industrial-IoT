@@ -20,7 +20,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
     /// </summary>
     [Version(1)]
     [Version(2)]
-    public class SupervisorSettingsController : ISettingsController {
+    public class SupervisorSettingsController : ISettingsController, ILogAnalyticsConfig {
 
         /// <summary>
         /// Called based on the reported connected property.
@@ -51,6 +51,13 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
             // The enum values are the same as in serilog
             get => LogControl.Level.MinimumLevel.ToString();
         }
+
+        /// <inheritdoc/>
+        public string LogWorkspaceId { get; set; }
+        /// <inheritdoc/>
+        public string LogWorkspaceKey { get; set; }
+        /// <inheritdoc/>
+        public string LogType { get; set; }
 
         /// <summary>
         /// Called to start or remove twins

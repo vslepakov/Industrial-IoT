@@ -6,16 +6,33 @@
 namespace Microsoft.Azure.IIoT.Diagnostics {
     using Microsoft.Azure.IIoT.Utils;
     using Microsoft.Extensions.Configuration;
+    using System;
 
     /// <summary>
-    /// Metric logger configuration
+    /// Diagnostics configuration
     /// </summary>
     public class DiagnosticsConfig : ConfigBase, IDiagnosticsConfig {
 
-        private const string kInstrumentationKey = PcsVariable.PCS_APPINSIGHTS_INSTRUMENTATIONKEY;
+        /// <summary>
+        /// Configuration keys
+        /// </summary>
+        private const string kInstrumentationKeyKey = "Diagnostics:InstrumentationKey";
+        private const string kDiagnosticsLevelKey = "Diagnostics:DiagnosticsLevel";
+        private const string kMetricsCollectionIntervalKey = "Diagnostics:MetricsCollectionInterval";
 
         /// <inheritdoc/>
-        public string InstrumentationKey => GetStringOrDefault(kInstrumentationKey);
+        public string InstrumentationKey =>
+            GetStringOrDefault(kInstrumentationKeyKey,
+                () => GetStringOrDefault(PcsVariable.PCS_APPINSIGHTS_INSTRUMENTATIONKEY,
+                () => null));
+        /// <inheritdoc/>
+        public DiagnosticsLevel DiagnosticsLevel => (DiagnosticsLevel)
+            GetIntOrDefault(kDiagnosticsLevelKey,
+                () => GetIntOrDefault(PcsVariable.PCS_DIAGNOSTICS_LEVEL,
+                () => 0));
+        /// <inheritdoc/>
+        public TimeSpan? MetricsCollectionInterval =>
+            GetDurationOrNull(kMetricsCollectionIntervalKey);
 
         /// <summary>
         /// Configuration constructor

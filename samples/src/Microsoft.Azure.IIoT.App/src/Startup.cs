@@ -37,6 +37,7 @@ namespace Microsoft.Azure.IIoT.App {
     using System;
     using Blazored.SessionStorage;
     using Blazored.Modal;
+    using Prometheus;
 
     /// <summary>
     /// Webapp startup
@@ -103,11 +104,13 @@ namespace Microsoft.Azure.IIoT.App {
             app.UseHttpsRedirect();
             app.UseStaticFiles();
             app.UseRouting();
+            app.UseHttpMetrics();
 
             app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints => {
+                endpoints.MapMetrics();
                 endpoints.MapControllers();
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host");
@@ -164,7 +167,10 @@ namespace Microsoft.Azure.IIoT.App {
              //   .AddAzureSignalRService(Config)
                 ;
 
-            services.AddServerSideBlazor();
+            services.AddServerSideBlazor()
+                .AddCircuitOptions(options => {
+                    options.DetailedErrors = true;
+                });
             services.AddBlazoredSessionStorage();
             services.AddBlazoredModal();
             services.AddScoped<AuthenticationStateProvider, BlazorAuthStateProvider>();

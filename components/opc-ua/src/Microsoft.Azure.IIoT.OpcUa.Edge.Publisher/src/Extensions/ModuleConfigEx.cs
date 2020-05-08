@@ -38,8 +38,6 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
             /// <inheritdoc/>
             public bool BypassCertVerification { get; }
             /// <inheritdoc/>
-            public bool EnableMetrics { get; }
-            /// <inheritdoc/>
             public TransportOption Transport { get; }
 
             /// <summary>

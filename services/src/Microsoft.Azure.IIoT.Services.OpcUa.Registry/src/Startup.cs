@@ -17,6 +17,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry {
     using Microsoft.Azure.IIoT.AspNetCore.Auth.Clients;
     using Microsoft.Azure.IIoT.AspNetCore.Cors;
     using Microsoft.Azure.IIoT.AspNetCore.Correlation;
+    using Microsoft.Azure.IIoT.Diagnostics.Runtime;
     using Microsoft.Azure.IIoT.Utils;
     using Microsoft.Azure.IIoT.Http.Default;
     using Microsoft.Azure.IIoT.Http.Ssl;
@@ -138,6 +139,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry {
             app.UseHeaderForwarding();
 
             app.UseRouting();
+            app.UseHttpMetrics();
             app.EnableCors();
 
             app.UseJwtBearerAuthentication();
@@ -146,8 +148,8 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry {
 
             app.UseCorrelation();
             app.UseSwagger();
-            app.UseMetricServer();
             app.UseEndpoints(endpoints => {
+                endpoints.MapMetrics();
                 endpoints.MapControllers();
                 endpoints.MapHealthChecks("/healthz");
             });
@@ -252,9 +254,9 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry {
                 .AsImplementedInterfaces();
             builder.RegisterType<IoTHubEdgeBaseDeployment>()
                 .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<IoTHubDiscovererDeployment>()
+            builder.RegisterType<LogAnalyticsConfig>()
                 .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<IoTHubMetricsCollectorDeployment>()
+            builder.RegisterType<IoTHubDiscovererDeployment>()
                 .AsImplementedInterfaces().SingleInstance();
 
             // ... and auto start

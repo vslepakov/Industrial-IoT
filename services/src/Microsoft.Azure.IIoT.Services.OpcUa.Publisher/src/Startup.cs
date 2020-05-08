@@ -10,6 +10,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher {
     using Microsoft.Azure.IIoT.AspNetCore.Auth.Clients;
     using Microsoft.Azure.IIoT.AspNetCore.Cors;
     using Microsoft.Azure.IIoT.AspNetCore.Correlation;
+    using Microsoft.Azure.IIoT.Diagnostics.Runtime;
     using Microsoft.Azure.IIoT.OpcUa.Api.Registry;
     using Microsoft.Azure.IIoT.OpcUa.Api.Registry.Clients;
     using Microsoft.Azure.IIoT.OpcUa.Api.Twin;
@@ -132,6 +133,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher {
             app.UseHeaderForwarding();
 
             app.UseRouting();
+            app.UseHttpMetrics();
             app.EnableCors();
 
             app.UseJwtBearerAuthentication();
@@ -140,8 +142,8 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher {
 
             app.UseCorrelation();
             app.UseSwagger();
-            app.UseMetricServer();
             app.UseEndpoints(endpoints => {
+                endpoints.MapMetrics();
                 endpoints.MapControllers();
                 endpoints.MapHealthChecks("/healthz");
             });
@@ -226,6 +228,8 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher {
 
             builder.RegisterType<IoTHubConfigurationClient>()
                 .AsImplementedInterfaces();
+            builder.RegisterType<LogAnalyticsConfig>()
+                .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<IoTHubPublisherDeployment>()
                 .AsImplementedInterfaces().SingleInstance();
 

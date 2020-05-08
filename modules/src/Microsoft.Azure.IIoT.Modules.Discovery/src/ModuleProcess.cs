@@ -23,7 +23,6 @@ namespace Microsoft.Azure.IIoT.Modules.Discovery {
     using System.Threading;
     using Serilog;
     using Prometheus;
-    using System.Net;
 
     /// <summary>
     /// Module Process
@@ -84,16 +83,17 @@ namespace Microsoft.Azure.IIoT.Modules.Discovery {
                     var module = hostScope.Resolve<IModuleHost>();
                     var logger = hostScope.Resolve<ILogger>();
                     var config = new Config(_config);
-                    logger.Information("Initiating prometheus at port {0}/metrics", kDiscoveryPrometheusPort);
-                    var server = new MetricServer(port: kDiscoveryPrometheusPort);
+                    IMetricServer server = null;
                     try {
-                        server.StartWhenEnabled(config, logger);
                         // Start module
                         var product = "OpcDiscovery_" +
                             GetType().Assembly.GetReleaseVersion().ToString();
-                        kDiscoveryModuleStart.Inc();
                         await module.StartAsync(IdentityType.Discoverer, SiteId,
                             product, this);
+                        if (hostScope.TryResolve(out server)) {
+                            server.Start();
+                        }
+                        kDiscoveryModuleStart.Inc();
                         OnRunning?.Invoke(this, true);
                         await Task.WhenAny(_reset.Task, _exit.Task);
                         if (_exit.Task.IsCompleted) {
@@ -107,9 +107,11 @@ namespace Microsoft.Azure.IIoT.Modules.Discovery {
                         logger.Error(ex, "Error during module execution - restarting!");
                     }
                     finally {
+                        if (server != null) {
+                            await server.StopAsync();
+                        }
                         await module.StopAsync();
                         kDiscoveryModuleStart.Set(0);
-                        server.StopWhenEnabled(config, logger);
                         OnRunning?.Invoke(this, false);
                     }
                 }
@@ -168,9 +170,7 @@ namespace Microsoft.Azure.IIoT.Modules.Discovery {
         private readonly TaskCompletionSource<bool> _exit;
         private TaskCompletionSource<bool> _reset;
         private int _exitCode;
-        private const int kDiscoveryPrometheusPort = 9700;
         private static readonly Gauge kDiscoveryModuleStart = Metrics
             .CreateGauge("iiot_edge_discovery_module_start", "discovery module started");
-
     }
 }

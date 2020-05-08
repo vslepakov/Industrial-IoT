@@ -5,6 +5,7 @@
 
 namespace Microsoft.Azure.IIoT.Modules.Diagnostic.Cli {
     using Microsoft.Azure.IIoT.Diagnostics;
+    using Microsoft.Azure.IIoT.Diagnostics.Runtime;
     using Microsoft.Azure.IIoT.Exceptions;
     using Microsoft.Azure.IIoT.Http.Default;
     using Microsoft.Azure.IIoT.Hub;
@@ -51,6 +52,7 @@ namespace Microsoft.Azure.IIoT.Modules.Diagnostic.Cli {
             if (string.IsNullOrEmpty(cs)) {
                 cs = configuration.GetValue<string>("_HUB_CS", null);
             }
+            var diagnostics = new LogAnalyticsConfig(configuration);
             IIoTHubConfig config = null;
             try {
                 for (var i = 0; i < args.Length; i++) {
@@ -171,7 +173,7 @@ Arguments:
                 try {
                     if (standalone) {
                         // Start diagnostic module process standalone
-                        runner = Task.Run(() => HostAsync(config, logger, deviceId,
+                        runner = Task.Run(() => HostAsync(config, diagnostics, logger, deviceId,
                             moduleId, args), cts.Token);
                     }
 
@@ -289,12 +291,12 @@ Arguments:
         /// <summary>
         /// Host the diagnostic module giving it its connection string.
         /// </summary>
-        private static async Task HostAsync(IIoTHubConfig config, ILogger logger,
-            string deviceId, string moduleId, string[] args) {
+        private static async Task HostAsync(IIoTHubConfig config, ILogAnalyticsConfig diagnostics,
+            ILogger logger, string deviceId, string moduleId, string[] args) {
             logger.Information("Create or retrieve connection string...");
 
             var cs = await Retry.WithExponentialBackoff(logger,
-                () => AddOrGetAsync(config, deviceId, moduleId, logger));
+                () => AddOrGetAsync(config, diagnostics, deviceId, moduleId, logger));
 
             logger.Information("Starting diagnostic module...");
             var arguments = args.ToList();
@@ -308,7 +310,7 @@ Arguments:
         /// Add or get module identity
         /// </summary>
         private static async Task<ConnectionString> AddOrGetAsync(IIoTHubConfig config,
-            string deviceId, string moduleId, ILogger logger) {
+            ILogAnalyticsConfig diagnostics, string deviceId, string moduleId, ILogger logger) {
             var registry = new IoTHubServiceHttpClient(new HttpClient(logger),
                 config, new NewtonSoftJsonSerializer(), logger);
             try {
@@ -328,7 +330,13 @@ Arguments:
             try {
                 await registry.CreateAsync(new DeviceTwinModel {
                     Id = deviceId,
-                    ModuleId = moduleId
+                    ModuleId = moduleId,
+                    Properties = new TwinPropertiesModel {
+                        Desired = new Dictionary<string, VariantValue> {
+                            [nameof(diagnostics.LogWorkspaceId)] = diagnostics?.LogWorkspaceId,
+                            [nameof(diagnostics.LogWorkspaceKey)] = diagnostics?.LogWorkspaceKey
+                        }
+                    }
                 }, false, CancellationToken.None);
             }
             catch (ConflictingResourceException) {

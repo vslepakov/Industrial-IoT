@@ -29,8 +29,6 @@
     <ProjectReference Include="..\..\Microsoft.Azure.IIoT.Services.OpcUa.Twin.History\src\Microsoft.Azure.IIoT.Services.OpcUa.Twin.History.csproj" />
     <ProjectReference Include="..\..\Microsoft.Azure.IIoT.Services.OpcUa.Twin\src\Microsoft.Azure.IIoT.Services.OpcUa.Twin.csproj" />
     <ProjectReference Include="..\..\Microsoft.Azure.IIoT.Services.OpcUa.Vault\src\Microsoft.Azure.IIoT.Services.OpcUa.Vault.csproj" />
-    <ProjectReference Include="..\..\Microsoft.Azure.IIoT.Services.Common.Auth\src\Microsoft.Azure.IIoT.Services.Common.Auth.csproj" />
-    <ProjectReference Include="..\..\Microsoft.Azure.IIoT.Services.Common.Users\src\Microsoft.Azure.IIoT.Services.Common.Users.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="container.json" />
