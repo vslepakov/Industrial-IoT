@@ -455,7 +455,7 @@ Options:
                             [nameof(diagnostics.LogWorkspaceKey)] = diagnostics?.LogWorkspaceKey
                         }
                     }
-                }, false, CancellationToken.None);
+                }, true, CancellationToken.None);
             }
             catch (ConflictingResourceException) {
                 logger.Information("Module {moduleId} exists...", moduleId);

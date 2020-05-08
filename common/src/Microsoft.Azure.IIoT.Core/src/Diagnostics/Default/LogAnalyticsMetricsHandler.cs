@@ -68,18 +68,17 @@ namespace Microsoft.Azure.IIoT.Diagnostics {
             if (string.IsNullOrEmpty(workspaceId) || string.IsNullOrEmpty(workspaceKey)) {
                 return;  // id or key was updated after collection
             }
-            var request = HttpClient.NewRequest(
-                $"https://{workspaceId}.ods.opinsights.azure.com/api/logs?api-version={kApiVersion}");
+            var request = HttpClient.NewRequest($"https://{workspaceId}.ods.opinsights.azure.com" +
+                $"/api/logs?api-version={kApiVersion}");
             request.AddHeader("Log-Type", _config.LogType ?? "promMetrics");
             // Set authorization
             var dateString = DateTime.UtcNow.ToString("r");
+            request.AddHeader("x-ms-date", dateString);
             var content = _serializer.SerializeToBytes(batch).ToArray();
             var signature = GetSignature(workspaceId, workspaceKey, "POST", content.Length,
                 ContentMimeType.Json, dateString, "/api/logs");
-            request.AddHeader("x-ms-date", dateString);
             request.AddHeader("Authorization", signature);
-            // Set content
-            request.SetByteArrayContent(content, ContentMimeType.Json, _serializer.ContentEncoding);
+            request.SetByteArrayContent(content, ContentMimeType.Json);
             var response = await HttpClient.PostAsync(request, ct);
             response.Validate();
         }
@@ -95,9 +94,10 @@ namespace Microsoft.Azure.IIoT.Diagnostics {
         /// <param name="date"></param>
         /// <param name="resource"></param>
         /// <returns></returns>
-        private static string GetSignature(string workspaceId, string workspaceKey, string method,
-            int contentLength, string contentType, string date, string resource) {
-            var message = $"{method}\n{contentLength}\n{contentType}\nx-ms-date:{date}\n{resource}";
+        private static string GetSignature(string workspaceId, string workspaceKey,
+            string method, int contentLength, string contentType, string date, string resource) {
+            var message =
+                $"{method}\n{contentLength}\n{contentType}\nx-ms-date:{date}\n{resource}";
             var bytes = Encoding.UTF8.GetBytes(message);
             using (var encryptor = new HMACSHA256(Convert.FromBase64String(workspaceKey))) {
                 var hash = encryptor.ComputeHash(bytes);

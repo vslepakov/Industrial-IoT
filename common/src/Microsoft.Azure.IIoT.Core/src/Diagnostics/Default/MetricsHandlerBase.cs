@@ -10,6 +10,7 @@ namespace Microsoft.Azure.IIoT.Diagnostics {
     using System.IO;
     using System.Linq;
     using System.Runtime.Serialization;
+    using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
@@ -65,11 +66,11 @@ namespace Microsoft.Azure.IIoT.Diagnostics {
         /// <summary>
         /// Parse records from prometheus log.
         /// </summary>
-        /// <param name="prometheusMessage"></param>
+        /// <param name="logstream"></param>
         /// <returns></returns>
-        private IEnumerable<List<MetricsRecord>> GetMetricsRecords(Stream prometheusMessage) {
+        private IEnumerable<List<MetricsRecord>> GetMetricsRecords(Stream logstream) {
             var metricsDataList = new List<MetricsRecord>();
-            using (var sr = new StreamReader(prometheusMessage)) {
+            using (var sr = new StreamReader(logstream, Encoding.UTF8, false, 4096, true)) {
                 string line;
                 while ((line = sr.ReadLine()) != null) {
                     if (line.Trim().StartsWith('#')) {

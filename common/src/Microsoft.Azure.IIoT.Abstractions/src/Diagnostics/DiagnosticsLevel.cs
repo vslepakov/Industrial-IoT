@@ -32,6 +32,8 @@ namespace Microsoft.Azure.IIoT.Diagnostics {
         /// </summary>
         NoLogs = 0x40,
 
+        // ...
+
         /// <summary>
         /// Disable all
         /// </summary>

@@ -26,6 +26,7 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
     using Microsoft.Azure.IIoT.Utils;
     using Microsoft.Azure.IIoT.Auth.Runtime;
     using Microsoft.Azure.IIoT.Serializers;
+    using Microsoft.Azure.IIoT.Diagnostics;
     using Microsoft.Extensions.Configuration;
     using Autofac;
     using System;
@@ -34,6 +35,7 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
+    using Prometheus;
 
     /// <summary>
     /// Api command line interface
@@ -59,6 +61,8 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
 
             // Register logger
             builder.AddDiagnostics(config, addConsole: false);
+            builder.RegisterModule<PrometheusCollector>();
+
             builder.RegisterModule<NewtonSoftJsonModule>();
             if (useMsgPack) {
                 builder.RegisterModule<MessagePackModule>();
@@ -133,10 +137,14 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
             _vault = _scope.Resolve<IVaultServiceApi>();
             _jobs = _scope.Resolve<IPublisherJobServiceApi>();
             _serializer = _scope.Resolve<IJsonSerializer>();
+            if (_scope.TryResolve(out _diagnostics)) {
+                _diagnostics.Start();
+            }
         }
 
         /// <inheritdoc/>
         public void Dispose() {
+            _diagnostics?.Stop();
             _scope.Dispose();
         }
 
@@ -3581,6 +3589,7 @@ Commands and Options
         private readonly IRegistryServiceApi _registry;
         private readonly IHistoryServiceApi _history;
         private readonly IVaultServiceApi _vault;
+        private readonly IMetricServer _diagnostics;
         private readonly IJsonSerializer _serializer;
     }
 }

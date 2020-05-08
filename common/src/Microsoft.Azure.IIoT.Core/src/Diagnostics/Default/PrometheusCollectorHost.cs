@@ -69,20 +69,21 @@ namespace Microsoft.Azure.IIoT.Diagnostics {
 
                         foreach (var handler in _handlers) {
                             stream.Position = 0;
-                            await Try.Async(() => handler.PushAsync(stream, default));
+                            await Try.Async(() => handler.PushAsync(
+                                new NoCloseAdapter(stream), default));
                         }
                     }
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception ex) {
-                    _logger.Information(ex, "Failed to collect metrics.");
+                    _logger.Debug(ex, "Failed to collect metrics.");
                 }
 
                 var elapsed = duration.Elapsed;
-                var interval = _config?.MetricsCollectionInterval ?? TimeSpan.FromMinutes(1);
+                var interval = _config?.MetricsCollectionInterval ?? kDefaultInterval;
 
                 // Stop only here so that latest state is flushed on exit.
-                if (!ct.IsCancellationRequested) {
+                if (ct.IsCancellationRequested) {
                     break;
                 }
 
@@ -101,6 +102,12 @@ namespace Microsoft.Azure.IIoT.Diagnostics {
             _logger.Information("Metrics publishing stopped.");
         }
 
+        private static readonly TimeSpan kDefaultInterval =
+#if DEBUG
+            TimeSpan.FromSeconds(10);
+#else
+            TimeSpan.FromMinutes(1);
+#endif
         private readonly IDiagnosticsConfig _config;
         private readonly List<IMetricsHandler> _handlers;
         private readonly ILogger _logger;

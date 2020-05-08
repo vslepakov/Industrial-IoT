@@ -15,6 +15,7 @@ namespace Microsoft.Azure.IIoT.Diagnostics {
         /// <summary>
         /// Level switcher
         /// </summary>
-        public static LoggingLevelSwitch Level { get; } = new LoggingLevelSwitch(LogEventLevel.Information);
+        public static LoggingLevelSwitch Level { get; } =
+            new LoggingLevelSwitch(LogEventLevel.Information);
     }
 }

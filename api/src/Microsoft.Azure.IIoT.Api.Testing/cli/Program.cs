@@ -20,6 +20,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
     using Microsoft.Azure.IIoT.Auth.Clients.Default;
     using Microsoft.Azure.IIoT.Http.Default;
     using Microsoft.Azure.IIoT.Http.SignalR;
+    using Microsoft.Azure.IIoT.Diagnostics;
     using Microsoft.Azure.IIoT.Utils;
     using Microsoft.Azure.IIoT.Auth.Runtime;
     using Microsoft.Azure.IIoT.Serializers;
@@ -32,6 +33,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
+    using Prometheus;
 
     /// <summary>
     /// Api command line interface
@@ -59,6 +61,8 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
 
             // Register logger
             builder.AddDiagnostics(config, addConsole: false);
+            builder.RegisterModule<PrometheusCollector>();
+
             builder.RegisterModule<NewtonSoftJsonModule>();
             if (useMsgPack) {
                 builder.RegisterModule<MessagePackModule>();
@@ -124,10 +128,14 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
             _publisher = _scope.Resolve<IPublisherServiceApi>();
             _vault = _scope.Resolve<IVaultServiceApi>();
             _jobs = _scope.Resolve<IPublisherJobServiceApi>();
+            if (_scope.TryResolve(out _diagnostics)) {
+                _diagnostics.Start();
+            }
         }
 
         /// <inheritdoc/>
         public void Dispose() {
+            _diagnostics?.Stop();
             _scope.Dispose();
         }
 
@@ -695,6 +703,7 @@ Commands and Options
         }
 
         private readonly Random _rand = new Random();
+        private readonly IMetricServer _diagnostics;
         private readonly ILifetimeScope _scope;
         private readonly ITwinServiceApi _twin;
         private readonly IPublisherJobServiceApi _jobs;

@@ -15,7 +15,7 @@ namespace Autofac {
     public static class DebugContainerBuilderEx {
 
         /// <summary>
-        /// Register trace logger
+        /// Register default diagnostics
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="config"></param>
@@ -29,9 +29,10 @@ namespace Autofac {
             if (builder == null) {
                 throw new ArgumentNullException(nameof(builder));
             }
-            // Register metrics logger
+
             builder.RegisterType<HealthCheckRegistrar>()
                 .AsImplementedInterfaces().SingleInstance();
+
             return builder.RegisterModule(
                 new LoggerProviderModule(new TraceLogger(log, addConsole)));
         }
