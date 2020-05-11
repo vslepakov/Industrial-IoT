@@ -128,14 +128,14 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
             _publisher = _scope.Resolve<IPublisherServiceApi>();
             _vault = _scope.Resolve<IVaultServiceApi>();
             _jobs = _scope.Resolve<IPublisherJobServiceApi>();
-            if (_scope.TryResolve(out _diagnostics)) {
-                _diagnostics.Start();
+            if (_scope.TryResolve(out _metrics)) {
+                _metrics.Start();
             }
         }
 
         /// <inheritdoc/>
         public void Dispose() {
-            _diagnostics?.Stop();
+            _metrics?.Stop();
             _scope.Dispose();
         }
 
@@ -703,7 +703,7 @@ Commands and Options
         }
 
         private readonly Random _rand = new Random();
-        private readonly IMetricServer _diagnostics;
+        private readonly IMetricServer _metrics;
         private readonly ILifetimeScope _scope;
         private readonly ITwinServiceApi _twin;
         private readonly IPublisherJobServiceApi _jobs;

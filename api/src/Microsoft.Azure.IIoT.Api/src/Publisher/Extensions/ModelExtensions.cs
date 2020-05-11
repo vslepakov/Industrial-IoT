@@ -1117,39 +1117,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
         }
 
         /// <summary>
-        /// Create twin model
-        /// </summary>
-        /// <param name="model"></param>
-        public static IdentityTokenApiModel ToApiModel(
-            this IdentityTokenModel model) {
-            if (model == null) {
-                return null;
-            }
-            return new IdentityTokenApiModel {
-                Identity = model.Identity,
-                Key = model.Key,
-                Expires = model.Expires
-            };
-        }
-
-        /// <summary>
-        /// Convert to service model
-        /// </summary>
-        /// <returns></returns>
-        public static IdentityTokenModel ToServiceModel(
-            this IdentityTokenApiModel model) {
-            if (model == null) {
-                return null;
-            }
-            return new IdentityTokenModel {
-                Identity = model.Identity,
-                Key = model.Key,
-                Expires = model.Expires
-            };
-        }
-
-
-        /// <summary>
         /// Create api model from service model
         /// </summary>
         /// <param name="model"></param>

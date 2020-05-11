@@ -4,16 +4,21 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.Auth {
+    using System.Threading;
+    using System.Threading.Tasks;
 
     /// <summary>
-    /// Common constants
+    /// Creates shared access tokens
     /// </summary>
-    public static class Constants {
+    public interface ISasTokenGenerator {
 
         /// <summary>
-        /// Twin property name
+        /// Generate token for specified resource
         /// </summary>
-        public const string IdentityTokenPropertyName =
-            nameof(IIdentityTokenProvider.IdentityToken);
+        /// <param name="audience"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        Task<string> GenerateTokenAsync(string audience,
+            CancellationToken ct = default);
     }
 }

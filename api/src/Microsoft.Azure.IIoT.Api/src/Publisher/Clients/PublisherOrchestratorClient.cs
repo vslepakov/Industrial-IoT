@@ -8,7 +8,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients {
     using Microsoft.Azure.IIoT.OpcUa.Publisher;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
     using Microsoft.Azure.IIoT.Auth;
-    using Microsoft.Azure.IIoT.Auth.Models;
     using Microsoft.Azure.IIoT.Exceptions;
     using Microsoft.Azure.IIoT.Serializers;
     using Microsoft.Azure.IIoT.Http;
@@ -30,7 +29,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients {
         /// <param name="tokenProvider"></param>
         /// <param name="serializer"></param>
         public PublisherOrchestratorClient(IHttpClient httpClient, IAgentConfigProvider config,
-            IIdentityTokenProvider tokenProvider, ISerializer serializer) {
+            ISasTokenGenerator tokenProvider, ISerializer serializer) {
             _tokenProvider = tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider));
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
             _config = config ?? throw new ArgumentNullException(nameof(config));
@@ -43,27 +42,21 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients {
             if (string.IsNullOrEmpty(workerId)) {
                 throw new ArgumentNullException(nameof(workerId));
             }
-            while (true) {
-                var uri = _config?.Config?.JobOrchestratorUrl?.TrimEnd('/');
-                if (uri == null) {
-                    throw new InvalidConfigurationException("Job orchestrator not configured");
-                }
-                var request = _httpClient.NewRequest($"{uri}/v2/workers/{workerId}");
-                request.Headers.Authorization = new AuthenticationHeaderValue("Basic",
-                    _tokenProvider.IdentityToken.ToAuthorizationValue());
-                _serializer.SerializeToRequest(request, jobRequest.ToApiModel());
-                var response = await _httpClient.PostAsync(request, ct)
-                    .ConfigureAwait(false);
-                try {
-                    response.Validate();
-                    var result = _serializer.DeserializeResponse<JobProcessingInstructionApiModel>(
-                        response);
-                    return result.ToServiceModel();
-                }
-                catch (UnauthorizedAccessException) {
-                    await _tokenProvider.ForceUpdate();
-                }
+            var uri = _config?.Config?.JobOrchestratorUrl?.TrimEnd('/');
+            if (uri == null) {
+                throw new InvalidConfigurationException("Job orchestrator not configured");
             }
+
+            var request = _httpClient.NewRequest($"{uri}/v2/workers/{workerId}");
+            var token = await _tokenProvider.GenerateTokenAsync(request.Uri.ToString());
+            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
+            _serializer.SerializeToRequest(request, jobRequest.ToApiModel());
+            var response = await _httpClient.PostAsync(request, ct)
+                .ConfigureAwait(false);
+            response.Validate();
+            var result = _serializer.DeserializeResponse<JobProcessingInstructionApiModel>(
+                response);
+            return result.ToServiceModel();
         }
 
         /// <inheritdoc/>
@@ -72,30 +65,23 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients {
             if (heartbeat == null) {
                 throw new ArgumentNullException(nameof(heartbeat));
             }
-            while (true) {
-                var uri = _config?.Config?.JobOrchestratorUrl?.TrimEnd('/');
-                if (uri == null) {
-                    throw new InvalidConfigurationException("Job orchestrator not configured");
-                }
-                var request = _httpClient.NewRequest($"{uri}/v2/heartbeat");
-                request.Headers.Authorization = new AuthenticationHeaderValue("Basic",
-                    _tokenProvider.IdentityToken.ToAuthorizationValue());
-                _serializer.SerializeToRequest(request, heartbeat.ToApiModel());
-                var response = await _httpClient.PostAsync(request, ct)
-                    .ConfigureAwait(false);
-                try {
-                    response.Validate();
-                    var result = _serializer.DeserializeResponse<HeartbeatResponseApiModel>(
-                        response);
-                    return result.ToServiceModel();
-                }
-                catch (UnauthorizedAccessException) {
-                    await _tokenProvider.ForceUpdate();
-                }
+            var uri = _config?.Config?.JobOrchestratorUrl?.TrimEnd('/');
+            if (uri == null) {
+                throw new InvalidConfigurationException("Job orchestrator not configured");
             }
+            var request = _httpClient.NewRequest($"{uri}/v2/heartbeat");
+            var token = await _tokenProvider.GenerateTokenAsync(request.Uri.ToString());
+            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
+            _serializer.SerializeToRequest(request, heartbeat.ToApiModel());
+            var response = await _httpClient.PostAsync(request, ct)
+                .ConfigureAwait(false);
+            response.Validate();
+            var result = _serializer.DeserializeResponse<HeartbeatResponseApiModel>(
+                response);
+            return result.ToServiceModel();
         }
 
-        private readonly IIdentityTokenProvider _tokenProvider;
+        private readonly ISasTokenGenerator _tokenProvider;
         private readonly ISerializer _serializer;
         private readonly IAgentConfigProvider _config;
         private readonly IHttpClient _httpClient;

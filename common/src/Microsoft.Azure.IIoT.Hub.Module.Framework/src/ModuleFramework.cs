@@ -7,6 +7,7 @@ namespace Microsoft.Azure.IIoT.Module.Framework {
     using Microsoft.Azure.IIoT.Module.Framework.Hosting;
     using Microsoft.Azure.IIoT.Module.Framework.Client;
     using Microsoft.Azure.IIoT.Module.Default;
+    using Microsoft.Azure.IIoT.Storage.Default;
     using Microsoft.Azure.IIoT.Diagnostics;
     using Microsoft.Azure.IIoT.Tasks.Default;
     using Microsoft.Azure.IIoT.Tasks;
@@ -59,8 +60,12 @@ namespace Microsoft.Azure.IIoT.Module.Framework {
             // Register http (tunnel) client module
             builder.RegisterModule<HttpTunnelClient>();
 
-            // Register edgelet client (uses http)
+            // Registers edgelet client and token generators
             builder.RegisterType<EdgeletClient>()
+                .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<TokenGenerator>()
+                .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<MemoryCache>()
                 .AsImplementedInterfaces().SingleInstance();
 
             base.Load(builder);

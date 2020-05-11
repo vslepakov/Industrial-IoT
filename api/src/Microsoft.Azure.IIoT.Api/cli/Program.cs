@@ -137,14 +137,14 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
             _vault = _scope.Resolve<IVaultServiceApi>();
             _jobs = _scope.Resolve<IPublisherJobServiceApi>();
             _serializer = _scope.Resolve<IJsonSerializer>();
-            if (_scope.TryResolve(out _diagnostics)) {
-                _diagnostics.Start();
+            if (_scope.TryResolve(out _metrics)) {
+                _metrics.Start();
             }
         }
 
         /// <inheritdoc/>
         public void Dispose() {
-            _diagnostics?.Stop();
+            _metrics?.Stop();
             _scope.Dispose();
         }
 
@@ -3589,7 +3589,7 @@ Commands and Options
         private readonly IRegistryServiceApi _registry;
         private readonly IHistoryServiceApi _history;
         private readonly IVaultServiceApi _vault;
-        private readonly IMetricServer _diagnostics;
+        private readonly IMetricServer _metrics;
         private readonly IJsonSerializer _serializer;
     }
 }

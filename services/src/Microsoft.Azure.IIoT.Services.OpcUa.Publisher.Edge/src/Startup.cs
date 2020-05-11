@@ -18,7 +18,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge {
     using Microsoft.Azure.IIoT.AspNetCore.Auth;
     using Microsoft.Azure.IIoT.AspNetCore.Auth.Clients;
     using Microsoft.Azure.IIoT.Hub.Client;
-    using Microsoft.Azure.IIoT.Hub.Auth;
     using Microsoft.Azure.IIoT.Http.Default;
     using Microsoft.Azure.IIoT.Http.Ssl;
     using Microsoft.Azure.IIoT.Serializers;
@@ -107,7 +106,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge {
 
             services.AddHttpContextAccessor();
             services.AddAuthentication("DeviceTokenAuth")
-                .AddScheme<AuthenticationSchemeOptions, IdentityTokenAuthHandler>(
+                .AddScheme<AuthenticationSchemeOptions, SasTokenAuthHandler>(
                     "DeviceTokenAuth", null);
 
             // Add controllers as services so they'll be resolved.
@@ -219,12 +218,10 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge {
                 .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<DefaultDemandMatcher>()
                 .AsImplementedInterfaces();
-            builder.RegisterType<IdentityTokenValidator>()
+            builder.RegisterType<IoTHubSasTokenValidator>()
                 .AsImplementedInterfaces();
             builder.RegisterType<DistributedProtectedCache>()
                 .AsImplementedInterfaces();
-            builder.RegisterType<TwinIdentityTokenStore>()
-                .AsImplementedInterfaces().SingleInstance();
 
             // Bulk loading from edge
             builder.RegisterType<NodeSetProcessor>()

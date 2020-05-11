@@ -4,23 +4,19 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.Auth {
-    using Microsoft.Azure.IIoT.Auth.Models;
     using System.Threading.Tasks;
 
     /// <summary>
-    /// Provides an identity token
+    /// Validates shared access token
     /// </summary>
-    public interface IIdentityTokenProvider {
+    public interface ISasTokenValidator {
 
         /// <summary>
-        /// Current Token
+        /// Validate token and return identity.
+        /// Throws if not valid.
         /// </summary>
-        IdentityTokenModel IdentityToken { get; }
-
-        /// <summary>
-        /// Force token update
-        /// </summary>
+        /// <param name="token"></param>
         /// <returns></returns>
-        Task ForceUpdate();
+        Task<string> ValidateToken(string token);
     }
 }

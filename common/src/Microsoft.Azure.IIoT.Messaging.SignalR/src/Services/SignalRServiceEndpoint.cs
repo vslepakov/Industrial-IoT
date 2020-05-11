@@ -5,7 +5,6 @@
 
 namespace Microsoft.Azure.IIoT.Messaging.SignalR.Services {
     using Microsoft.Azure.IIoT.Messaging.SignalR;
-    using Microsoft.Azure.IIoT.Auth.Models;
     using Microsoft.Azure.SignalR.Management;
     using Microsoft.AspNetCore.SignalR;
     using System;
@@ -40,7 +39,7 @@ namespace Microsoft.Azure.IIoT.Messaging.SignalR.Services {
         }
 
         /// <inheritdoc/>
-        public IdentityTokenModel GenerateIdentityToken(string userId,
+        public string GenerateAccessToken(string userId,
             IList<Claim> claims, TimeSpan? lifeTime) {
             if (_serviceManager == null) {
                 return null;
@@ -48,12 +47,8 @@ namespace Microsoft.Azure.IIoT.Messaging.SignalR.Services {
             if (lifeTime == null) {
                 lifeTime = TimeSpan.FromMinutes(5);
             }
-            return new IdentityTokenModel {
-                Identity = userId,
-                Key = _serviceManager.GenerateClientAccessToken(
-                    Resource, userId, claims, lifeTime),
-                Expires = DateTime.UtcNow + lifeTime.Value
-            };
+            return _serviceManager.GenerateClientAccessToken(
+                Resource, userId, claims, lifeTime);
         }
 
         /// <summary> Service manager </summary>

@@ -17,9 +17,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry.Sync {
     using Microsoft.Azure.IIoT.Exceptions;
     using Microsoft.Azure.IIoT.Utils;
     using Microsoft.Azure.IIoT.Tasks.Default;
-    using Microsoft.Azure.IIoT.Crypto.Default;
     using Microsoft.Azure.IIoT.Auth.Clients;
-    using Microsoft.Azure.IIoT.Auth.IoTHub;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs;
     using Microsoft.Azure.IIoT.Module.Default;
     using Microsoft.Azure.IIoT.Messaging.Default;
@@ -152,12 +150,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry.Sync {
             builder.RegisterType<DiscovererModuleClient>()
                 .AsImplementedInterfaces();
             builder.RegisterType<DiscoveryMultiplexer>()
-                .AsImplementedInterfaces().SingleInstance();
-
-            // Identity token updater
-            builder.RegisterType<PasswordGenerator>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<TwinIdentityTokenUpdater>()
                 .AsImplementedInterfaces().SingleInstance();
 
             // and service endpoint sync
