@@ -205,7 +205,7 @@ namespace Microsoft.Azure.IIoT.Utils {
                     StringSplitOptions.RemoveEmptyEntries);
                 deviceId = elements2[0];
                 if (elements.Length == 2) {
-                    moduleId = elements[1];
+                    moduleId = elements2[1];
                 }
                 else {
                     moduleId = null;

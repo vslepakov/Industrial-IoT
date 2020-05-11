@@ -49,7 +49,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients {
 
             var request = _httpClient.NewRequest($"{uri}/v2/workers/{workerId}");
             var token = await _tokenProvider.GenerateTokenAsync(request.Uri.ToString());
-            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
+            request.Headers.Authorization = AuthenticationHeaderValue.Parse(token);
             _serializer.SerializeToRequest(request, jobRequest.ToApiModel());
             var response = await _httpClient.PostAsync(request, ct)
                 .ConfigureAwait(false);
@@ -71,7 +71,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients {
             }
             var request = _httpClient.NewRequest($"{uri}/v2/heartbeat");
             var token = await _tokenProvider.GenerateTokenAsync(request.Uri.ToString());
-            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
+            request.Headers.Authorization = AuthenticationHeaderValue.Parse(token);
             _serializer.SerializeToRequest(request, heartbeat.ToApiModel());
             var response = await _httpClient.PostAsync(request, ct)
                 .ConfigureAwait(false);

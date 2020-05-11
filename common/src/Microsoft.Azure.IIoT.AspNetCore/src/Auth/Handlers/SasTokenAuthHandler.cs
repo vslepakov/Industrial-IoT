@@ -43,9 +43,7 @@ namespace Microsoft.Azure.IIoT.AspNetCore.Auth.Clients {
                 return AuthenticateResult.Fail("Missing Authorization header");
             }
             try {
-                var authorization = request.Headers["Authorization"][0].Split(' ');
-                var scheme = authorization[0].Trim();
-                var token = authorization[1].Trim();
+                var token = request.Headers["Authorization"][0].Trim();
                 var identity = await _validator.ValidateToken(token);
 
                 var principal = new ClaimsPrincipal(new ClaimsIdentity(

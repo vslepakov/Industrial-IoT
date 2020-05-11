@@ -98,16 +98,15 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge {
             services.AddHealthChecks();
             services.AddDistributedMemoryCache();
             services.AddHttpsRedirect();
-            // services.AddJwtBearerAuthentication(); // TODO
+
+            services.AddAuthentication("SharedAccessSignature")
+                .AddScheme<AuthenticationSchemeOptions, SasTokenAuthHandler>(
+                    "SharedAccessSignature", null);
             services.AddAuthorizationPolicies();
 
             // TODO: Remove http client factory and use
             // services.AddHttpClient();
-
             services.AddHttpContextAccessor();
-            services.AddAuthentication("DeviceTokenAuth")
-                .AddScheme<AuthenticationSchemeOptions, SasTokenAuthHandler>(
-                    "DeviceTokenAuth", null);
 
             // Add controllers as services so they'll be resolved.
             services.AddControllers().AddSerializers();
@@ -131,7 +130,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge {
             app.UseHttpMetrics();
             app.EnableCors();
 
-            // app.UseJwtBearerAuthentication(); // TODO
+            app.UseAuthentication();
             app.UseAuthorization();
             app.UseHttpsRedirect();
 
