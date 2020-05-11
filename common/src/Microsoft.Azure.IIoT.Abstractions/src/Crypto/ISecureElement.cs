@@ -45,5 +45,16 @@ namespace Microsoft.Azure.IIoT.Crypto {
         /// <returns></returns>
         Task<byte[]> EncryptAsync(string initializationVector,
             byte[] plaintext, CancellationToken ct = default);
+
+        /// <summary>
+        /// Sign data into digest using algorithm and key.
+        /// </summary>
+        /// <param name="keyId"></param>
+        /// <param name="algo"></param>
+        /// <param name="data"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        Task<byte[]> SignAsync(byte[] data, string keyId,
+            string algo = null, CancellationToken ct = default);
     }
 }

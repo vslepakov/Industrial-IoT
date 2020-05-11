@@ -12,12 +12,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Export.Services {
     using Opc.Ua.Encoders;
     using Opc.Ua.Extensions;
     using Opc.Ua.Nodeset;
+    using Opc.Ua.Client;
     using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
-    using Opc.Ua.Client;
     using System.Linq;
 
     /// <summary>

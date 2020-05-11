@@ -49,7 +49,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Cli {
         /// </summary>
         public static void Main(string[] args) {
             var op = Op.None;
-            bool verbose = false;
+            var verbose = false;
             string deviceId = null, moduleId = null;
             Console.WriteLine("Twin module command line interface.");
             var configuration = new ConfigurationBuilder()
@@ -467,7 +467,7 @@ Options:
         /// <summary>
         /// Sdk logger event source hook
         /// </summary>
-        sealed class IoTSdkLogger : EventSourceSerilogSink {
+        private sealed class IoTSdkLogger : EventSourceSerilogSink {
             public IoTSdkLogger(ILogger logger) :
                 base(logger.ForContext("SourceContext", EventSource.Replace('-', '.'))) {
             }

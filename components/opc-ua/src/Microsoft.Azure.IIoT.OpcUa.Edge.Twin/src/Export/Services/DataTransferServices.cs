@@ -147,6 +147,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Export.Services {
                         using (var stream = new GZipStream(file, CompressionMode.Compress)) {
                             // TODO: Try read nodeset from namespace metadata!
                             // ...
+
+
                             // Otherwise browse model
                             await BrowseEncodeModelAsync(id.Connection.Endpoint, diagnostics, stream, ct);
                         }

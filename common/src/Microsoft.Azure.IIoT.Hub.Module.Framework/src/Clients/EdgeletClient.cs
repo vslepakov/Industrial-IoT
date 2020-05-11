@@ -76,8 +76,8 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
         }
 
         /// <inheritdoc/>
-        public async Task<byte[]> EncryptAsync(
-            string initializationVector, byte[] plaintext, CancellationToken ct) {
+        public async Task<byte[]> EncryptAsync(string initializationVector, 
+            byte[] plaintext, CancellationToken ct) {
             var request = _client.NewRequest(
                 $"{_workloaduri}/modules/{_moduleId}/genid/{_moduleGenerationId}/" +
                 $"encrypt?api-version={_apiVersion}");
@@ -90,8 +90,8 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
         }
 
         /// <inheritdoc/>
-        public async Task<byte[]> DecryptAsync(
-            string initializationVector, byte[] ciphertext, CancellationToken ct) {
+        public async Task<byte[]> DecryptAsync(string initializationVector, 
+            byte[] ciphertext, CancellationToken ct) {
             var request = _client.NewRequest(
                 $"{_workloaduri}/modules/{_moduleId}/genid/{_moduleGenerationId}/" +
                 $"decrypt?api-version={_apiVersion}");
@@ -101,6 +101,37 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
                 response.Validate();
                 return _serializer.DeserializeResponse<DecryptResponse>(response).Plaintext;
             }, kMaxRetryCount);
+        }
+
+        /// <inheritdoc/>
+        public async Task<byte[]> SignAsync(byte[] data, string keyId, string algo,
+            CancellationToken ct) {
+            if (algo == null) {
+                algo = "HMACSHA256";
+            }
+            if (keyId == null) {
+                keyId = "primary";
+            }
+            var request = _client.NewRequest(
+                $"{_workloaduri}/modules/{_moduleId}/genid/{_moduleGenerationId}/" +
+                $"sign?api-version={_apiVersion}");
+            _serializer.SerializeToRequest(request, new { keyId, algo, data });
+            return await Retry.WithExponentialBackoff(_logger, ct, async () => {
+                var response = await _client.PostAsync(request, ct);
+                response.Validate();
+                return _serializer.DeserializeResponse<SignResponse>(response).Digest;
+            }, kMaxRetryCount);
+        }
+
+        /// <summary>
+        /// Sign response
+        /// </summary>
+        [DataContract]
+        public class SignResponse {
+
+            /// <summary>Signature of the data.</summary>
+            [DataMember(Name = "digest")]
+            public byte[] Digest { get; set; }
         }
 
         /// <summary>

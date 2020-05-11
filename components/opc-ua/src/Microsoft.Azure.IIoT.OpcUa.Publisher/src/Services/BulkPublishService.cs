@@ -26,17 +26,14 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
             _endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
         }
 
-        /// <summary>
-        /// Request model upload to orchestrator
-        /// </summary>
-        /// <param name="endpoint"></param>
-        /// <returns></returns>
+        /// <inhertidoc/>
         public async Task PublishAsync(T endpoint) {
             if (endpoint == null) {
                 throw new ArgumentNullException(nameof(endpoint));
             }
             await _transfer.ModelUploadStartAsync(endpoint, new ModelUploadStartRequestModel {
                 UploadEndpointUrl = _endpoint.JobOrchestratorUrl,
+                AuthorizationHeader = null
             });
         }
 
