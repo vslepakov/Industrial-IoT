@@ -1596,6 +1596,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 ValueRank = (OpcUa.Core.Models.NodeValueRank?)model.ValueRank
             };
         }
+
         /// <summary>
         /// Create api model from service model
         /// </summary>
@@ -1653,6 +1654,71 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                     .Select(s => s.ToServiceModel())
                     .ToList(),
                 PublishingInterval = model.PublishingInterval,
+                SecurityMode = (OpcUa.Core.Models.SecurityMode?)model.SecurityMode
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <param name="model"></param>
+        public static WriterGroupInfoApiModel ToApiModel(
+            this WriterGroupInfoModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new WriterGroupInfoApiModel {
+                WriterGroupId = model.WriterGroupId,
+                HeaderLayoutUri = model.HeaderLayoutUri,
+                KeepAliveTime = model.KeepAliveTime,
+                LocaleIds = model.LocaleIds?.ToList(),
+                MaxNetworkMessageSize = model.MaxNetworkMessageSize,
+                MessageSettings = model.MessageSettings.ToApiModel(),
+                MessageType = (Models.NetworkMessageType?)model.MessageType,
+                Name = model.Name,
+                Priority = model.Priority,
+                SecurityGroupId = model.SecurityGroupId,
+                SecurityKeyServices = model.SecurityKeyServices?
+                    .Select(s => s.ToApiModel())
+                    .ToList(),
+                PublishingInterval = model.PublishingInterval,
+                BatchSize = model.BatchSize,
+                GenerationId = model.GenerationId,
+                Created = model.Created.ToApiModel(),
+                Updated = model.Updated.ToApiModel(),
+                SiteId = model.SiteId,
+                SecurityMode = (Core.Models.SecurityMode?)model.SecurityMode
+            };
+        }
+
+        /// <summary>
+        /// Create service model from api model
+        /// </summary>
+        public static WriterGroupInfoModel ToServiceModel(
+            this WriterGroupInfoApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new WriterGroupInfoModel {
+                WriterGroupId = model.WriterGroupId,
+                HeaderLayoutUri = model.HeaderLayoutUri,
+                KeepAliveTime = model.KeepAliveTime,
+                LocaleIds = model.LocaleIds?.ToList(),
+                MaxNetworkMessageSize = model.MaxNetworkMessageSize,
+                MessageSettings = model.MessageSettings.ToServiceModel(),
+                MessageType = (OpcUa.Publisher.Models.NetworkMessageType?)model.MessageType,
+                Name = model.Name,
+                Priority = model.Priority,
+                SecurityGroupId = model.SecurityGroupId,
+                SecurityKeyServices = model.SecurityKeyServices?
+                    .Select(s => s.ToServiceModel())
+                    .ToList(),
+                PublishingInterval = model.PublishingInterval,
+                BatchSize = model.BatchSize,
+                GenerationId = model.GenerationId,
+                Created = model.Created.ToServiceModel(),
+                Updated = model.Updated.ToServiceModel(),
+                SiteId = model.SiteId,
                 SecurityMode = (OpcUa.Core.Models.SecurityMode?)model.SecurityMode
             };
         }
@@ -1729,6 +1795,711 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
         /// Create api model from service model
         /// </summary>
         /// <returns></returns>
+        public static DataSetAddEventRequestApiModel ToApiModel(
+            this DataSetAddEventRequestModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetAddEventRequestApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetAddEventRequestModel ToServiceModel(
+            this DataSetAddEventRequestApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetAddEventRequestModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetAddEventResponseApiModel ToApiModel(
+            this DataSetAddEventResultModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetAddEventResponseApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetAddEventResultModel ToServiceModel(
+            this DataSetAddEventResponseApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetAddEventResultModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetAddVariableBatchRequestApiModel ToApiModel(
+            this DataSetAddVariableBatchRequestModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetAddVariableBatchRequestApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetAddVariableBatchRequestModel ToServiceModel(
+            this DataSetAddVariableBatchRequestApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetAddVariableBatchRequestModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetAddVariableBatchResponseApiModel ToApiModel(
+            this DataSetAddVariableBatchResultModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetAddVariableBatchResponseApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetAddVariableBatchResultModel ToServiceModel(
+            this DataSetAddVariableBatchResponseApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetAddVariableBatchResultModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetAddVariableRequestApiModel ToApiModel(
+            this DataSetAddVariableRequestModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetAddVariableRequestApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetAddVariableRequestModel ToServiceModel(
+            this DataSetAddVariableRequestApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetAddVariableRequestModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetAddVariableResponseApiModel ToApiModel(
+            this DataSetAddVariableResultModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetAddVariableResponseApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetAddVariableResultModel ToServiceModel(
+            this DataSetAddVariableResponseApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetAddVariableResultModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetRemoveVariableBatchRequestApiModel ToApiModel(
+            this DataSetRemoveVariableBatchRequestModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetRemoveVariableBatchRequestApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetRemoveVariableBatchRequestModel ToServiceModel(
+            this DataSetRemoveVariableBatchRequestApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetRemoveVariableBatchRequestModel {
+            };
+        }
+
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetRemoveVariableBatchResponseApiModel ToApiModel(
+            this DataSetRemoveVariableBatchResultModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetRemoveVariableBatchResponseApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetRemoveVariableBatchResultModel ToServiceModel(
+            this DataSetRemoveVariableBatchResponseApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetRemoveVariableBatchResultModel {
+            };
+        }
+
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetRemoveVariableRequestApiModel ToApiModel(
+            this DataSetRemoveVariableRequestModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetRemoveVariableRequestApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetRemoveVariableRequestModel ToServiceModel(
+            this DataSetRemoveVariableRequestApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetRemoveVariableRequestModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetRemoveVariableResponseApiModel ToApiModel(
+            this DataSetRemoveVariableResultModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetRemoveVariableResponseApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetRemoveVariableResultModel ToServiceModel(
+            this DataSetRemoveVariableResponseApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetRemoveVariableResultModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetUpdateEventRequestApiModel ToApiModel(
+            this DataSetUpdateEventRequestModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetUpdateEventRequestApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetUpdateEventRequestModel ToServiceModel(
+            this DataSetUpdateEventRequestApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetUpdateEventRequestModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetUpdateVariableRequestApiModel ToApiModel(
+            this DataSetUpdateVariableRequestModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetUpdateVariableRequestApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetUpdateVariableRequestModel ToServiceModel(
+            this DataSetUpdateVariableRequestApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetUpdateVariableRequestModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetWriterUpdateRequestApiModel ToApiModel(
+            this DataSetWriterUpdateRequestModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetWriterUpdateRequestApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetWriterUpdateRequestModel ToServiceModel(
+            this DataSetWriterUpdateRequestApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetWriterUpdateRequestModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetWriterAddRequestApiModel ToApiModel(
+            this DataSetWriterAddRequestModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetWriterAddRequestApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetWriterAddRequestModel ToServiceModel(
+            this DataSetWriterAddRequestApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetWriterAddRequestModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetWriterAddResponseApiModel ToApiModel(
+            this DataSetWriterAddResultModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetWriterAddResponseApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetWriterAddResultModel ToServiceModel(
+            this DataSetWriterAddResponseApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetWriterAddResultModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetWriterInfoApiModel ToApiModel(
+            this DataSetWriterInfoModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetWriterInfoApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetWriterInfoModel ToServiceModel(
+            this DataSetWriterInfoApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetWriterInfoModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetWriterInfoListApiModel ToApiModel(
+            this DataSetWriterInfoListModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetWriterInfoListApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetWriterInfoListModel ToServiceModel(
+            this DataSetWriterInfoListApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetWriterInfoListModel {
+            };
+        }
+
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetWriterInfoQueryApiModel ToApiModel(
+            this DataSetWriterInfoQueryModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetWriterInfoQueryApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static DataSetWriterInfoQueryModel ToServiceModel(
+            this DataSetWriterInfoQueryApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new DataSetWriterInfoQueryModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static PublishedDataSetSourceInfoApiModel ToApiModel(
+            this PublishedDataSetSourceInfoModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishedDataSetSourceInfoApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static PublishedDataSetSourceInfoModel ToServiceModel(
+            this PublishedDataSetSourceInfoApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishedDataSetSourceInfoModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static PublishedDataSetVariableListApiModel ToApiModel(
+            this PublishedDataSetVariableListModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishedDataSetVariableListApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static PublishedDataSetVariableListModel ToServiceModel(
+            this PublishedDataSetVariableListApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishedDataSetVariableListModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static PublishedDataSetVariableQueryApiModel ToApiModel(
+            this PublishedDataSetVariableQueryModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishedDataSetVariableQueryApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static PublishedDataSetVariableQueryModel ToServiceModel(
+            this PublishedDataSetVariableQueryApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishedDataSetVariableQueryModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static WriterGroupAddRequestApiModel ToApiModel(
+            this WriterGroupAddRequestModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new WriterGroupAddRequestApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static WriterGroupAddRequestModel ToServiceModel(
+            this WriterGroupAddRequestApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new WriterGroupAddRequestModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static WriterGroupAddResponseApiModel ToApiModel(
+            this WriterGroupAddResultModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new WriterGroupAddResponseApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static WriterGroupAddResultModel ToServiceModel(
+            this WriterGroupAddResponseApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new WriterGroupAddResultModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static WriterGroupInfoListApiModel ToApiModel(
+            this WriterGroupInfoListModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new WriterGroupInfoListApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static WriterGroupInfoListModel ToServiceModel(
+            this WriterGroupInfoListApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new WriterGroupInfoListModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static WriterGroupInfoQueryApiModel ToApiModel(
+            this WriterGroupInfoQueryModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new WriterGroupInfoQueryApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static WriterGroupInfoQueryModel ToServiceModel(
+            this WriterGroupInfoQueryApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new WriterGroupInfoQueryModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static WriterGroupUpdateRequestApiModel ToApiModel(
+            this WriterGroupUpdateRequestModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new WriterGroupUpdateRequestApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static WriterGroupUpdateRequestModel ToServiceModel(
+            this WriterGroupUpdateRequestApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new WriterGroupUpdateRequestModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static PublisherOperationContextApiModel ToApiModel(
+            this PublisherOperationContextModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublisherOperationContextApiModel {
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static PublisherOperationContextModel ToServiceModel(
+            this PublisherOperationContextApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublisherOperationContextModel {
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
         public static RequestHeaderApiModel ToApiModel(
             this RequestHeaderModel model) {
             if (model == null) {
@@ -1788,5 +2559,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 StatusCode = model.StatusCode
             };
         }
+
     }
 }

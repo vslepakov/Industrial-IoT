@@ -59,6 +59,155 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients {
             }
         }
 
+        /// <inheritdoc/>
+        public Task<DataSetWriterAddResponseApiModel> AddDataSetWriterAsync(
+            DataSetWriterAddRequestApiModel request, CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<DataSetWriterApiModel> GetDataSetWriterAsync(string dataSetWriterId,
+            CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task UpdateDataSetWriterAsync(string dataSetWriterId,
+            DataSetWriterUpdateRequestApiModel request, CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<DataSetAddEventResponseApiModel> AddEventDataSetAsync(string dataSetWriterId,
+            DataSetAddEventRequestApiModel request, CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<PublishedDataSetEventsApiModel> GetEventDataSetAsync(string dataSetWriterId,
+            CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task UpdateEventDataSetAsync(string dataSetWriterId,
+            DataSetUpdateEventRequestApiModel request,
+            CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task RemoveEventDataSetAsync(string dataSetWriterId, string generationId,
+            CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<DataSetAddVariableResponseApiModel> AddDataSetVariableAsync(
+            string dataSetWriterId, DataSetAddVariableRequestApiModel request,
+            CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task UpdateDataSetVariableAsync(string dataSetWriterId, string variableId,
+            DataSetUpdateVariableRequestApiModel request,
+            CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<PublishedDataSetVariableListApiModel> ListDataSetVariablesAsync(
+            string dataSetWriterId, string continuation, int? pageSize,
+            CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<PublishedDataSetVariableListApiModel> QueryDataSetVariablesAsync(
+            string dataSetWriterId, PublishedDataSetVariableQueryApiModel query,
+            CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task RemoveDataSetVariableAsync(string dataSetWriterId, string variableId,
+            string generationId, CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<DataSetWriterInfoListApiModel> ListDataSetWritersAsync(string continuation,
+            int? pageSize, CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<DataSetWriterInfoListApiModel> QueryDataSetWritersAsync(
+            DataSetWriterInfoQueryApiModel query, int? pageSize, CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task RemoveDataSetWriterAsync(string dataSetWriterId, string generationId,
+            CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<WriterGroupAddResponseApiModel> AddWriterGroupAsync(
+            WriterGroupAddRequestApiModel request, CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<WriterGroupApiModel> GetWriterGroupAsync(string writerGroupId,
+            CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task UpdateWriterGroupAsync(string writerGroupId,
+            WriterGroupUpdateRequestApiModel request, CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<WriterGroupInfoListApiModel> ListWriterGroupsAsync(string continuation,
+            int? pageSize, CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<WriterGroupInfoListApiModel> QueryWriterGroupsAsync(
+            WriterGroupInfoQueryApiModel query, int? pageSize, CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task RemoveWriterGroupAsync(string writerGroupId, string generationId,
+            CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<DataSetAddVariableBatchResponseApiModel> AddVariablesToDataSetWriterAsync(
+            string dataSetWriterId, DataSetAddVariableBatchRequestApiModel request, CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<DataSetAddVariableBatchResponseApiModel> AddVariablesToDefaultDataSetWriterAsync(
+            string endpointId, DataSetAddVariableBatchRequestApiModel request, CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc/>
+        public Task<DataSetRemoveVariableBatchResponseApiModel> RemoveVariablesFromDataSetWriterAsync(
+            string dataSetWriterId, DataSetRemoveVariableBatchRequestApiModel request, CancellationToken ct) {
+            throw new NotImplementedException();
+        }
+
         private readonly IHttpClient _httpClient;
         private readonly ISerializer _serializer;
         private readonly string _serviceUri;
