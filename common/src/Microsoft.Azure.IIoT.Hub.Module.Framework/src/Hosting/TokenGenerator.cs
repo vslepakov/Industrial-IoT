@@ -48,18 +48,29 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
             if (_hsm.IsPresent || string.IsNullOrEmpty(keyId)) {
                 keyId = "primary";
             }
-            audience = audience.Split('?')[0];
+            audience = FormatAudience(audience);
             var cacheKey = keyId + ":" + audience;
             var rawToken = await _cache.GetStringAsync(cacheKey, ct);
-            if (rawToken == null) {
-                var expiration = DateTime.UtcNow + kDefaultTokenLifetime;
-                var token = await SasToken.CreateAsync(audience, expiration,
-                    SignTokenAsync, _identity.DeviceId, _identity.ModuleId, keyId);
-                rawToken = token.ToString();
-                await _cache.SetStringAsync(audience + keyId, rawToken,
-                    expiration - kTokenCacheRenewal, ct);
+            if (SasToken.IsValid(rawToken)) {
+                return rawToken;
             }
+            // If not found or not valid, create new token with default lifetime...
+            var expiration = DateTime.UtcNow + kDefaultTokenLifetime;
+            var token = await SasToken.CreateAsync(audience, expiration,
+                SignTokenAsync, _identity.DeviceId, _identity.ModuleId, keyId);
+            rawToken = token.ToString();
+            await _cache.SetStringAsync(audience + keyId, rawToken,
+                expiration - kTokenCacheRenewal, ct);
             return rawToken;
+        }
+
+        /// <summary>
+        /// Format audience by stripping off query parameters if any.
+        /// </summary>
+        /// <param name="audience"></param>
+        /// <returns></returns>
+        private static string FormatAudience(string audience) {
+            return audience.Split('?')[0];
         }
 
         /// <summary>
@@ -88,8 +99,8 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
             return Convert.ToBase64String(signature);
         }
 
-        private static readonly TimeSpan kDefaultTokenLifetime = TimeSpan.FromMinutes(5);
-        private static readonly TimeSpan kTokenCacheRenewal = TimeSpan.FromMinutes(3);
+        private static readonly TimeSpan kDefaultTokenLifetime = TimeSpan.FromMinutes(10);
+        private static readonly TimeSpan kTokenCacheRenewal = TimeSpan.FromMinutes(5);
         private readonly ISecureElement _hsm;
         private readonly ICache _cache;
         private readonly IIdentity _identity;

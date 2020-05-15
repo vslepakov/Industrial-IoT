@@ -4,6 +4,7 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs {
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
     using Microsoft.Azure.IIoT.Exceptions;
     using System;
@@ -24,7 +25,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs {
         /// <param name="workerRepository"></param>
         /// <param name="demandMatcher"></param>
         /// <param name="jobOrchestratorConfig"></param>
-        public DefaultJobOrchestrator(IJobRepository jobRepository,
+        public DefaultJobOrchestrator(ILegacyJobRepository jobRepository,
             IWorkerRepository workerRepository, IDemandMatcher demandMatcher,
             IJobOrchestratorConfig jobOrchestratorConfig) {
             _jobRepository = jobRepository;
@@ -93,7 +94,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs {
             }
 
             var job = await _jobRepository.UpdateAsync(heartbeat.Job.JobId, existingJob => {
-                if (existingJob.GetHashSafe() != heartbeat.Job.JobHash) {
+                if (existingJob.GenerationId != heartbeat.Job.GenerationId) {
 
                     // job was updated - instruct worker to reset
                     result.UpdatedJob = new JobProcessingInstructionModel {
@@ -202,6 +203,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs {
         private readonly IDemandMatcher _demandMatcher;
         private readonly IJobOrchestratorConfig _jobOrchestratorConfig;
         private readonly IWorkerRepository _workerRepository;
-        private readonly IJobRepository _jobRepository;
+        private readonly ILegacyJobRepository _jobRepository;
     }
 }

@@ -36,9 +36,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
         /// </summary>
         /// <returns></returns>
         public static string GetHashSafe(this PublishedDataSetSourceModel model) {
-            var id =  model.Connection?.Endpoint?.Url +
+            var id = model.Connection?.Endpoint?.Url +
                 model.Connection?.Endpoint?.SecurityMode.ToString() +
-                model.Connection?.Endpoint?.SecurityPolicy + 
+                model.Connection?.Endpoint?.SecurityPolicy +
                 model.Connection?.User?.Type.ToString() +
                 model.Connection?.User?.Value.ToJson() +
                 model.SubscriptionSettings?.PublishingInterval.ToString() +

@@ -1,7 +1,7 @@
 @*------------------------------------------------------------
-  Copyright (c) Microsoft Corporation.  All rights reserved.
-  Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
- ------------------------------------------------------------*@
+     Copyright (c) Microsoft Corporation.  All rights reserved.
+     Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+    ------------------------------------------------------------*@
 
 @page "/browser/{applicationId}/{endpointId}"
 @page "/browser/{discovererId}/{applicationId}/{supervisorId}/{endpointId}"
@@ -12,6 +12,7 @@
 @using Microsoft.Azure.IIoT.App.Components.ErrorMessage
 @using Microsoft.Azure.IIoT.App.Data
 @using Microsoft.AspNetCore.Components
+@using Microsoft.Azure.IIoT.OpcUa.Api.Twin
 @using Microsoft.Azure.IIoT.OpcUa.Api.Twin.Models
 @using Microsoft.Azure.IIoT.OpcUa.Api.Core.Models
 @using System.Collections.Generic
@@ -38,21 +39,21 @@
 
 @if (EndpointUrl != null)
 {
-    <p>Url: @EndpointUrl</p>
+<p>Url: @EndpointUrl</p>
 }
 
 <div>
     @if (DiscovererId != string.Empty && DiscovererId != RegistryHelper.PathAll)
     {
-        <a href="/discoverers/">/ @DiscovererId</a>
+    <a href="/discoverers/">/ @DiscovererId</a>
     }
     @if (ApplicationId != string.Empty && ApplicationId != RegistryHelper.PathAll)
     {
-        <a href="/applications/">/ @CommonHelper.ApplicationUri[ApplicationId]</a>
+    <a href="/applications/">/ @CommonHelper.ApplicationUri[ApplicationId]</a>
     }
     @if (SupervisorId != string.Empty && SupervisorId != RegistryHelper.PathAll)
     {
-        <a href="/supervisors/">/ @SupervisorId</a>
+    <a href="/supervisors/">/ @SupervisorId</a>
     }
 
     @if (BrowseManager.Path != null)
@@ -63,13 +64,13 @@
             int i = ++index;
             if (item.Equals(BrowseManager.Path.Last()))
             {
-                <span>/ @item.ToString()</span>
+    <span>/ @item.ToString()</span>
             }
             else
             {
-                <a href="javascript: void(0)" @onclick="@(() => GetTreeBackAsync(PagedNodeList.Results[0].NextParentId, PagedNodeList.Results[0].ParentIdList, i))">
-                    / @item.ToString()
-                </a>
+    <a href="javascript: void(0)" @onclick="@(() => GetTreeBackAsync(PagedNodeList.Results[0].NextParentId, PagedNodeList.Results[0].ParentIdList, i))">
+        / @item.ToString()
+    </a>
             }
         }
     }
@@ -89,17 +90,17 @@
                 {
                     if (PagedNodeList.Results[0].ParentName != "Root")
                     {
-                        <a href="javascript: void(0)" @onclick="@(() => GetTreeBackAsync(PagedNodeList.Results[0].NextParentId, PagedNodeList.Results[0].ParentIdList, PagedNodeList.Results[0].ParentIdList.Count - 1))">
-                            <span class="oi oi-arrow-left"></span>
-                        </a>
+                <a href="javascript: void(0)" @onclick="@(() => GetTreeBackAsync(PagedNodeList.Results[0].NextParentId, PagedNodeList.Results[0].ParentIdList, PagedNodeList.Results[0].ParentIdList.Count - 1))">
+                    <span class="oi oi-arrow-left"></span>
+                </a>
                     }
                     else
                     {
                         if (PagedNodeList.Results[0].DiscovererId != null)
                         {
-                            <a href='endpoints/@PagedNodeList.Results[0].DiscovererId/@ApplicationId/@SupervisorId'>
-                                <span class="oi oi-arrow-left"></span>
-                            </a>
+                <a href='endpoints/@PagedNodeList.Results[0].DiscovererId/@ApplicationId/@SupervisorId'>
+                    <span class="oi oi-arrow-left"></span>
+                </a>
                         }
                     }
                 }
@@ -109,88 +110,88 @@
     <tbody>
         @foreach (var node in PagedNodeList.Results)
         {
-            <tr>
-                <td>@node.NodeName</td>
-                <td>@node.Id</td>
-                @if (node.Children && (node.NodeClass != NodeClass.Method))
+        <tr>
+            <td>@node.NodeName</td>
+            <td>@node.Id</td>
+            @if (node.Children && (node.NodeClass != NodeClass.Method))
                 {
-                    <td>
-                        <a href="javascript: void(0)" @onclick="@(() => GetTreeAsync(node.Id, node.ParentIdList))">
-                            @node.NodeClass
-                        </a>
-                    </td>
+            <td>
+                <a href="javascript: void(0)" @onclick="@(() => GetTreeAsync(node.Id, node.ParentIdList))">
+                    @node.NodeClass
+                </a>
+            </td>
                 }
                 else if (node.NodeClass == NodeClass.Method)
                 {
-                    <td>
-                        @{_drawerType = drawer.Action;}
-                        <a href="javascript: void(0)" @onclick="@(() => OpenDrawer(node))">
-                            @node.NodeClass
-                        </a>
-                    </td>
+            <td>
+                @{_drawerType = drawer.Action;}
+                <a href="javascript: void(0)" @onclick="@(() => OpenDrawer(node))">
+                    @node.NodeClass
+                </a>
+            </td>
                 }
                 else
                 {
-                    <td>@node.NodeClass</td>
+            <td>@node.NodeClass</td>
                 }
-                @if (node.NodeClass == NodeClass.Variable && (((node.AccessLevel & NodeAccessLevel.CurrentRead) == NodeAccessLevel.CurrentRead) ||
+            @if (node.NodeClass == NodeClass.Variable && (((node.AccessLevel & NodeAccessLevel.CurrentRead) == NodeAccessLevel.CurrentRead) ||
                     ((node.AccessLevel & NodeAccessLevel.CurrentWrite) == NodeAccessLevel.CurrentWrite)))
                 {
-                    <td>
-                        <div class="td-fixed">
-                            <a href="javascript: void(0)" @onclick="@(() => OpenDrawer(node))">
-                                @{string outputValue = $"{node.Value}";}
-                                @{string outputType = $"({node.DataType})";}
-                                @{string outputStatus = $"({node.Status} -";}
-                                @{string outputTimestamp = $" {node.Timestamp})";}
-                                <span>@outputValue</span>
-                                <span>@outputType</span>
-                                <span>@outputStatus</span>
-                                <span>@outputTimestamp</span>
-                            </a>
-                        </div>
-                    </td>
+            <td>
+                <div class="td-fixed">
+                    <a href="javascript: void(0)" @onclick="@(() => OpenDrawer(node))">
+                        @{string outputValue = $"{node.Value}";}
+                        @{string outputType = $"({node.DataType})";}
+                        @{string outputStatus = $"({node.Status} -";}
+                        @{string outputTimestamp = $" {node.Timestamp})";}
+                        <span>@outputValue</span>
+                        <span>@outputType</span>
+                        <span>@outputStatus</span>
+                        <span>@outputTimestamp</span>
+                    </a>
+                </div>
+            </td>
                 }
                 else
                 {
-                    <td>N/A</td>
+            <td>N/A</td>
                 }
 
-                @if (node.NodeClass == NodeClass.Variable)
+            @if (node.NodeClass == NodeClass.Variable)
                 {
-                    <td>
-                        <input type="checkbox" checked=@node.Publishing @onchange="@((EventArgs) => SetPublishingAsync(EndpointId, node, EventArgs))" />
-                        @{string output = (node.Publishing == true) ? "On" : "Off";}
-                        @output 
-                    </td>
-                    <td>
-                        @{_drawerType = drawer.Publisher;}
-                        @if (node.Publishing == true && node.PublishedItem != null)
+            <td>
+                <input type="checkbox" checked=@node.Publishing @onchange="@((EventArgs) => SetPublishingAsync(EndpointId, node, EventArgs))" />
+                @{string output = (node.Publishing == true) ? "On" : "Off";}
+                @output
+            </td>
+            <td>
+                @{_drawerType = drawer.Publisher;}
+                @if (node.Publishing == true && node.PublishedItem != null)
                         {
-                            <label>Sampling:</label><a href="javascript: void(0)" @onclick="@(() => OpenDrawer(node))">
-                                @(node.PublishedItem.SamplingInterval?.TotalMilliseconds.ToString() ?? "1000") ms<br />
-                            </a>
-                            <label>Publishing: </label><a href="javascript: void(0)" @onclick="@(() => OpenDrawer(node))">
-                                @(node.PublishedItem.PublishingInterval?.TotalMilliseconds.ToString() ?? "1000") ms<br />
-                            </a>
-                            <label>HeartBeat: </label><a href="jpavascript: void(0)" @onclick="@(() => OpenDrawer(node))">
-                                @(node.PublishedItem.HeartbeatInterval == null ? "-" : node.PublishedItem.HeartbeatInterval?.TotalSeconds.ToString() + " sec")
-                               <br />
-                            </a>
+                <label>Sampling:</label><a href="javascript: void(0)" @onclick="@(() => OpenDrawer(node))">
+                    @(node.PublishedItem.SamplingInterval?.TotalMilliseconds.ToString() ?? "1000") ms<br />
+                </a>
+                <label>Publishing: </label><a href="javascript: void(0)" @onclick="@(() => OpenDrawer(node))">
+                    @(node.PublishedItem.PublishingInterval?.TotalMilliseconds.ToString() ?? "1000") ms<br />
+                </a>
+                <label>HeartBeat: </label><a href="jpavascript: void(0)" @onclick="@(() => OpenDrawer(node))">
+                    @(node.PublishedItem.HeartbeatInterval == null ? "-" : node.PublishedItem.HeartbeatInterval?.TotalSeconds.ToString() + " sec")
+                    <br />
+                </a>
                         }
                         else
                         {
-                            <label>N/A</label>
+                <label>N/A</label>
                         }
 
-                    </td>
+            </td>
                 }
                 else
                 {
-                    <td>N/A</td>
-                    <td>N/A</td>
+            <td>N/A</td>
+            <td>N/A</td>
                 }
-            </tr>
+        </tr>
         }
     </tbody>
 </table>
@@ -201,11 +202,11 @@
 <Drawer HeaderText="Select Action" ObjectData="@NodeData" IsOpened="@IsOpened" CloseDrawer="@(() => CloseDrawer())">
     @if (_drawerType == drawer.Action)
     {
-        <_DrawerActionContent NodeData="@NodeData" EndpointId="@EndpointId" PagedNodeList="@PagedNodeList" Credential="@Credential"></_DrawerActionContent>
+    <_DrawerActionContent NodeData="@NodeData" EndpointId="@EndpointId" PagedNodeList="@PagedNodeList" Credential="@Credential"></_DrawerActionContent>
     }
     else
     {
-        <_DrawerPublisherContent NodeData="@NodeData" Onclick="((NodeData) => ClickHandler((ListNode)NodeData))"></_DrawerPublisherContent>
+    <_DrawerPublisherContent NodeData="@NodeData" Onclick="((NodeData) => ClickHandler((ListNode)NodeData))"></_DrawerPublisherContent>
     }
 </Drawer>
 
@@ -290,7 +291,7 @@
     {
         if (firstRender)
         {
-            var endpoint = await registryService.GetEndpointAsync(EndpointId); 
+            var endpoint = await registryService.GetEndpointAsync(EndpointId);
             EndpointUrl = endpoint?.Registration?.EndpointUrl;
             Credential = await GetSecureItemAsync<CredentialModel>(CommonHelper.CredentialKey);
             await BrowseTreeAsync(BrowseDirection.Forward, 0, true, string.Empty, new List<string>());
@@ -408,7 +409,7 @@
         var result = await Publisher.StartPublishingAsync(endpointId, node.Id, node.NodeName, samplingInterval, publishingInterval, heartbeatInterval, Credential);
         if (result)
         {
-            node.PublishedItem = new OpcUa.Api.Publisher.Models.PublishedItemApiModel()
+            node.PublishedItem = new PublishListItemApiModel()
             {
                 NodeId = node.Id,
                 DisplayName = node.NodeName,

@@ -125,6 +125,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
             _scope = container.BeginLifetimeScope();
             _twin = _scope.Resolve<ITwinServiceApi>();
             _registry = _scope.Resolve<IRegistryServiceApi>();
+            _publish = _scope.Resolve<IPublishServiceApi>();
             _publisher = _scope.Resolve<IPublisherServiceApi>();
             _vault = _scope.Resolve<IVaultServiceApi>();
             _jobs = _scope.Resolve<IPublisherJobServiceApi>();
@@ -416,15 +417,15 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
 
             Console.WriteLine($"{endpoint.Id} has {nodes.Count} variables.");
             sw.Restart();
-            await _publisher.NodePublishBulkAsync(endpoint.Id, new PublishBulkRequestApiModel {
-                NodesToAdd = nodes.Select(n => new PublishedItemApiModel {
+            await _publish.NodePublishBulkAsync(endpoint.Id, new PublishBulkRequestApiModel {
+                NodesToAdd = nodes.Select(n => new PublishListItemApiModel {
                     NodeId = n
                 }).ToList()
             });
             Console.WriteLine($"{endpoint.Id} Publishing {nodes.Count} variables took {sw.Elapsed}.");
 
             sw.Restart();
-            await _publisher.NodePublishBulkAsync(endpoint.Id, new PublishBulkRequestApiModel {
+            await _publish.NodePublishBulkAsync(endpoint.Id, new PublishBulkRequestApiModel {
                 NodesToRemove = nodes.ToList()
             });
             Console.WriteLine($"{endpoint.Id} Unpublishing {nodes.Count} variables took {sw.Elapsed}.");
@@ -706,6 +707,7 @@ Commands and Options
         private readonly IMetricServer _metrics;
         private readonly ILifetimeScope _scope;
         private readonly ITwinServiceApi _twin;
+        private readonly IPublishServiceApi _publish;
         private readonly IPublisherJobServiceApi _jobs;
         private readonly IPublisherServiceApi _publisher;
         private readonly IRegistryServiceApi _registry;

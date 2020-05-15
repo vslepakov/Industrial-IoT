@@ -4,7 +4,6 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
-    using Microsoft.Azure.IIoT.Serializers;
     using System.Collections.Generic;
 
     /// <summary>
@@ -23,14 +22,14 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
         public string Name { get; set; }
 
         /// <summary>
-        /// Configuration type
+        /// Job generation
         /// </summary>
-        public string JobConfigurationType { get; set; }
+        public string GenerationId { get; set; }
 
         /// <summary>
         /// Job configuration
         /// </summary>
-        public VariantValue JobConfiguration { get; set; }
+        public WriterGroupJobModel JobConfiguration { get; set; }
 
         /// <summary>
         /// Demands

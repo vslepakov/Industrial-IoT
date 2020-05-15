@@ -17,9 +17,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
         public string JobId { get; set; }
 
         /// <summary>
-        /// Hash
+        /// Generation id
         /// </summary>
-        public string JobHash { get; set; }
+        public string GenerationId { get; set; }
 
         /// <summary>
         /// Status

@@ -133,6 +133,7 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
             _twin = _scope.Resolve<ITwinServiceApi>();
             _registry = _scope.Resolve<IRegistryServiceApi>();
             _history = _scope.Resolve<IHistoryServiceApi>();
+            _publish = _scope.Resolve<IPublishServiceApi>();
             _publisher = _scope.Resolve<IPublisherServiceApi>();
             _vault = _scope.Resolve<IVaultServiceApi>();
             _jobs = _scope.Resolve<IPublisherJobServiceApi>();
@@ -866,10 +867,10 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
         /// Publish node
         /// </summary>
         private async Task PublishAsync(CliOptions options) {
-            var result = await _publisher.NodePublishStartAsync(
+            var result = await _publish.NodePublishStartAsync(
                 GetEndpointId(options),
                 new PublishStartRequestApiModel {
-                    Item = new PublishedItemApiModel {
+                    Item = new PublishListItemApiModel {
                         NodeId = GetNodeId(options),
                         SamplingInterval = TimeSpan.FromMilliseconds(1000),
                         PublishingInterval = TimeSpan.FromMilliseconds(1000)
@@ -902,7 +903,7 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
         /// Unpublish node
         /// </summary>
         private async Task UnpublishAsync(CliOptions options) {
-            var result = await _publisher.NodePublishStopAsync(
+            var result = await _publish.NodePublishStopAsync(
                 GetEndpointId(options),
                 new PublishStopRequestApiModel {
                     NodeId = GetNodeId(options)
@@ -917,12 +918,12 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
         /// </summary>
         private async Task ListPublishedNodesAsync(CliOptions options) {
             if (options.IsSet("-A", "--all")) {
-                var result = await _publisher.NodePublishListAllAsync(GetEndpointId(options));
+                var result = await _publish.NodePublishListAllAsync(GetEndpointId(options));
                 PrintResult(options, result);
                 Console.WriteLine($"{result.Count()} item(s) found...");
             }
             else {
-                var result = await _publisher.NodePublishListAsync(GetEndpointId(options),
+                var result = await _publish.NodePublishListAsync(GetEndpointId(options),
                     options.GetValueOrDefault<string>("-C", "--continuation", null));
                 PrintResult(options, result);
             }
@@ -1388,7 +1389,6 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
         /// </summary>
         private async Task QueryJobAsync(CliOptions options) {
             var query = new JobInfoQueryApiModel {
-                JobConfigurationType = options.GetValueOrDefault<string>("-t", "--type", null),
                 Status = options.GetValueOrDefault<JobStatus>("-s", "--status", null),
                 Name = options.GetValueOrDefault<string>("-n", "--name", null)
             };
@@ -3369,7 +3369,6 @@ Commands and Options
 
      query       Find jobs
         -S, --status    Status of the job
-        -t, --type      Job type.
         -n, --name      Name of the job.
         -P, --page-size Size of page
         -A, --all       Return all jobs (unpaged)
@@ -3584,9 +3583,10 @@ Commands and Options
 
         private readonly ILifetimeScope _scope;
         private readonly ITwinServiceApi _twin;
+        private readonly IPublishServiceApi _publish;
         private readonly IPublisherJobServiceApi _jobs;
-        private readonly IPublisherServiceApi _publisher;
         private readonly IRegistryServiceApi _registry;
+        private readonly IPublisherServiceApi _publisher;
         private readonly IHistoryServiceApi _history;
         private readonly IVaultServiceApi _vault;
         private readonly IMetricServer _metrics;

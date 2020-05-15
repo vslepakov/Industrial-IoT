@@ -4,25 +4,12 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
-    using Microsoft.Azure.IIoT.Serializers;
-    using System;
     using System.Linq;
 
     /// <summary>
     /// Job extensions
     /// </summary>
     public static class JobInfoModelEx {
-
-        /// <summary>
-        /// Create hash
-        /// </summary>
-        /// <returns></returns>
-        public static string GetHashSafe(this JobInfoModel model) {
-            if (model == null || model.JobConfiguration == null) {
-                return "null";
-            }
-            return model.JobConfiguration.ToSha1Hash();
-        }
 
         /// <summary>
         /// Clone
@@ -37,10 +24,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
                 Id = model.Id,
                 Name = model.Name,
                 Demands = model.Demands?.Select(d => d.Clone()).ToList(),
-                JobConfiguration = model.JobConfiguration?.Copy(),
-                JobConfigurationType = model.JobConfigurationType,
+                JobConfiguration = model.JobConfiguration,  // TODO Clone()
+                GenerationId = model.GenerationId,
                 LifetimeData = model.LifetimeData?.Clone(),
-                RedundancyConfig = model.RedundancyConfig?.Clone(),
+                RedundancyConfig = model.RedundancyConfig.Clone(),
             };
         }
     }

@@ -20,16 +20,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
         public string Name { get; set; }
 
         /// <summary>
-        /// Configuration type
-        /// </summary>
-        [DataMember(Name = "jobConfigurationType", Order = 1,
-           EmitDefaultValue = false)]
-        public string JobConfigurationType { get; set; }
-
-        /// <summary>
         /// Job status
         /// </summary>
-        [DataMember(Name = "status", Order = 2,
+        [DataMember(Name = "status", Order = 1,
             EmitDefaultValue = false)]
         public JobStatus? Status { get; set; }
     }

@@ -6,7 +6,7 @@
 namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge {
     using Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Database;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Services;
     using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients;
     using Microsoft.Azure.IIoT.OpcUa.Api.Registry;
@@ -193,13 +193,11 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge {
             // Create Publish jobs using ...
             builder.RegisterType<PublisherJobService>()
                 .AsImplementedInterfaces();
-            builder.RegisterType<PublisherJobSerializer>()
-                .AsImplementedInterfaces();
 
             // ... job services and dependencies
             builder.RegisterType<DefaultJobService>()
                 .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<JobDatabase>()
+            builder.RegisterType<LegacyJobDatabase>()
                 .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<WorkerDatabase>()
                 .AsImplementedInterfaces().SingleInstance();

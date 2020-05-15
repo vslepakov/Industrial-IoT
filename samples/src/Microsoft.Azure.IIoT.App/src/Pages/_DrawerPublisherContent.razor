@@ -1,11 +1,12 @@
 ﻿@*------------------------------------------------------------
-    Copyright (c) Microsoft Corporation.  All rights reserved.
-    Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
-------------------------------------------------------------*@
+        Copyright (c) Microsoft Corporation.  All rights reserved.
+        Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+    ------------------------------------------------------------*@
 
 @using Microsoft.Azure.IIoT.App.Services
 @using Microsoft.AspNetCore.Components;
-@using OpcUa.Api.Publisher.Models;
+@using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models;
+@using Microsoft.Azure.IIoT.OpcUa.Api.Twin.Models;
 
 @inject Registry RegistryHelper
 
@@ -29,7 +30,7 @@
                 <div class="label">Publishing Interval ms</div>
                 <input @bind="@NodeData.RequestedPublishingInterval" aria-label="PublishingInterval" type="text" class="form-control" placeholder="@(NodeData.RequestedPublishingInterval)" />
             </div><br />
-            <div class="form-group"> 
+            <div class="form-group">
                 <div class="label">Sampling Interval ms </div>
                 <input @bind="@NodeData.RequestedSamplingInterval" aria-label="SamplingInterval" type="text" class="form-control" placeholder="@(NodeData.RequestedSamplingInterval)" />
             </div><br />
@@ -59,7 +60,7 @@
     {
         if (NodeData.PublishedItem == null)
         {
-            NodeData.PublishedItem = new PublishedItemApiModel();
+            NodeData.PublishedItem = new PublishListItemApiModel();
         }
     }
 

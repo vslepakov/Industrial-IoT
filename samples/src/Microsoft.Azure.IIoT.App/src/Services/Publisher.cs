@@ -6,8 +6,8 @@
 namespace Microsoft.Azure.IIoT.App.Services {
     using Microsoft.Azure.IIoT.App.Data;
     using Microsoft.Azure.IIoT.App.Models;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Publisher;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models;
+    using Microsoft.Azure.IIoT.OpcUa.Api.Twin;
+    using Microsoft.Azure.IIoT.OpcUa.Api.Twin.Models;
     using Microsoft.Azure.IIoT.OpcUa.Api.Core.Models;
     using Microsoft.Azure.IIoT.Serializers;
     using System;
@@ -25,7 +25,7 @@ namespace Microsoft.Azure.IIoT.App.Services {
         /// <param name="publisherService"></param>
         /// <param name="serializer"></param>
         /// <param name="logger"></param>
-        public Publisher(IPublisherServiceApi publisherService, IJsonSerializer serializer, ILogger logger) {
+        public Publisher(IPublishServiceApi publisherService, IJsonSerializer serializer, ILogger logger) {
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
             _publisherService = publisherService ?? throw new ArgumentNullException(nameof(publisherService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -36,8 +36,8 @@ namespace Microsoft.Azure.IIoT.App.Services {
         /// </summary>
         /// <param name="endpointId"></param>
         /// <returns>PublishedNode</returns>
-        public async Task<PagedResult<PublishedItemApiModel>> PublishedAsync(string endpointId) {
-            var pageResult = new PagedResult<PublishedItemApiModel>();
+        public async Task<PagedResult<PublishListItemApiModel>> PublishedAsync(string endpointId) {
+            var pageResult = new PagedResult<PublishListItemApiModel>();
             try {
                 var continuationToken = string.Empty;
                 do {
@@ -80,7 +80,7 @@ namespace Microsoft.Azure.IIoT.App.Services {
 
             try {
                 var requestApiModel = new PublishStartRequestApiModel() {
-                    Item = new PublishedItemApiModel() {
+                    Item = new PublishListItemApiModel() {
                         NodeId = nodeId,
                         DisplayName = displayName,
                         SamplingInterval = samplingInterval,
@@ -144,7 +144,7 @@ namespace Microsoft.Azure.IIoT.App.Services {
         }
 
         private readonly IJsonSerializer _serializer;
-        private readonly IPublisherServiceApi _publisherService;
+        private readonly IPublishServiceApi _publisherService;
         private readonly ILogger _logger;
     }
 }

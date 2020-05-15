@@ -19,7 +19,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher {
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Deploy;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Services;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Database;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default;
     using Microsoft.Azure.IIoT.Storage.CosmosDb.Services;
     using Microsoft.Azure.IIoT.Http.Ssl;
     using Microsoft.Azure.IIoT.Http.Default;
@@ -205,15 +205,13 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher {
             // Create Publish jobs using ...
             builder.RegisterType<PublisherJobService>()
                 .AsImplementedInterfaces();
-            builder.RegisterType<PublisherJobSerializer>()
-                .AsImplementedInterfaces();
             builder.RegisterType<BulkPublishService<string>>()
                 .AsImplementedInterfaces();
 
             // ... job services and dependencies
             builder.RegisterType<DefaultJobService>()
                 .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<JobDatabase>()
+            builder.RegisterType<LegacyJobDatabase>()
                 .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<WorkerDatabase>()
                 .AsImplementedInterfaces().SingleInstance();

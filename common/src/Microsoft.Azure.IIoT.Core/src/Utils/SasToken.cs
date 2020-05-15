@@ -40,11 +40,6 @@ namespace Microsoft.Azure.IIoT.Utils {
         public string Signature { get; }
 
         /// <summary>
-        /// Expired
-        /// </summary>
-        public bool IsExpired => ExpiresOn + kMaxClockSkew < DateTime.UtcNow;
-
-        /// <summary>
         /// Create sas token
         /// </summary>
         /// <param name="audience"></param>
@@ -109,6 +104,42 @@ namespace Microsoft.Azure.IIoT.Utils {
         }
 
         /// <summary>
+        /// Validate the raw token
+        /// </summary>
+        /// <param name="sharedAccessToken"></param>
+        /// <param name="clockSkew"></param>
+        /// <returns></returns>
+        public static bool IsValid(string sharedAccessToken, TimeSpan? clockSkew = null) {
+            if (string.IsNullOrWhiteSpace(sharedAccessToken)) {
+                return false;
+            }
+            try {
+                var parsedFields = ExtractFieldValues(sharedAccessToken);
+                if (parsedFields == null) {
+                    return false;
+                }
+                if (!parsedFields.TryGetValue(kSignatureFieldName, out var signature)) {
+                    return false;
+                }
+                if (!parsedFields.TryGetValue(kExpiryFieldName, out var expiry)) {
+                    return false;
+                }
+                if (!parsedFields.TryGetValue(kAudienceFieldName, out var encodedAudience)) {
+                    return false;
+                }
+                var expiresOn = kEpochTime +
+                    TimeSpan.FromSeconds(double.Parse(expiry, CultureInfo.InvariantCulture));
+                if (expiresOn + (clockSkew ?? TimeSpan.Zero) < DateTime.UtcNow) {
+                    return false;
+                }
+                return true;
+            }
+            catch {
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Create token
         /// </summary>
         /// <param name="expiresOn"></param>
@@ -124,10 +155,6 @@ namespace Microsoft.Azure.IIoT.Utils {
             Signature = signature;
             Audience = WebUtility.UrlDecode(encodedAudience);
             KeyName = keyName ?? string.Empty;
-            if (IsExpired) {
-                throw new UnauthorizedAccessException(
-                    $"The specified SAS token is expired on {ExpiresOn}.");
-            }
         }
 
         /// <inheritdoc/>
@@ -142,29 +169,12 @@ namespace Microsoft.Azure.IIoT.Utils {
         }
 
         /// <summary>
-        /// Test for shared access signature
-        /// </summary>
-        /// <param name="rawSignature"></param>
-        /// <returns></returns>
-        public static bool IsSharedAccessSignature(string rawSignature) {
-            if (string.IsNullOrWhiteSpace(rawSignature)) {
-                return false;
-            }
-            try {
-                var parsedFields = ExtractFieldValues(rawSignature);
-                return parsedFields.TryGetValue(kSignatureFieldName, out var signature);
-            }
-            catch (FormatException) {
-                return false;
-            }
-        }
-
-        /// <summary>
         /// Authenticate token against a base64 encoded key
         /// </summary>
         /// <param name="base64EncodedKey"></param>
-        public bool Authenticate(string base64EncodedKey) {
-            if (IsExpired) {
+        /// <param name="clockSkew"></param>
+        public bool Authenticate(string base64EncodedKey, TimeSpan? clockSkew = null) {
+            if (ExpiresOn + (clockSkew ?? TimeSpan.FromMinutes(5)) < DateTime.UtcNow) {
                 return false;
             }
             using (var algorithm = new HMACSHA256(Convert.FromBase64String(base64EncodedKey))) {
@@ -258,7 +268,6 @@ namespace Microsoft.Azure.IIoT.Utils {
         private const string kPairSeparator = "&";
         private static readonly DateTime kEpochTime =
             new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-        private static readonly TimeSpan kMaxClockSkew = TimeSpan.FromMinutes(5);
         private readonly string _encodedAudience;
         private readonly string _expiry;
     }

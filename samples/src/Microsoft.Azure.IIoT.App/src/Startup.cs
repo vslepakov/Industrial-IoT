@@ -164,7 +164,7 @@ namespace Microsoft.Azure.IIoT.App {
             services.AddSignalR()
                 .AddJsonSerializer()
                 .AddMessagePackSerializer()
-             //   .AddAzureSignalRService(Config)
+                .AddAzureSignalRService(Config)
                 ;
 
             services.AddServerSideBlazor()
@@ -218,8 +218,6 @@ namespace Microsoft.Azure.IIoT.App {
             builder.RegisterType<RegistryServiceClient>()
                 .AsImplementedInterfaces();
             builder.RegisterType<VaultServiceClient>()
-                .AsImplementedInterfaces();
-            builder.RegisterType<PublisherServiceClient>()
                 .AsImplementedInterfaces();
 
             // ... with client event callbacks

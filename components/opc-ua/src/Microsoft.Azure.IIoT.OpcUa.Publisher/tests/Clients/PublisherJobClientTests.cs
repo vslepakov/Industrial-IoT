@@ -3,15 +3,16 @@
 //  Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
+namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
+    using Microsoft.Azure.IIoT.OpcUa.Twin.Models;
     using Microsoft.Azure.IIoT.OpcUa.Registry;
     using Microsoft.Azure.IIoT.OpcUa.Registry.Models;
     using Microsoft.Azure.IIoT.OpcUa.Core.Models;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients;
+    using Microsoft.Azure.IIoT.OpcUa.Twin;
     using Microsoft.Azure.IIoT.OpcUa.Publisher;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Services;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Database;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default;
     using Microsoft.Azure.IIoT.Storage;
     using Microsoft.Azure.IIoT.Storage.Default;
     using Microsoft.Azure.IIoT.Serializers.NewtonSoft;
@@ -36,18 +37,18 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                 throw new AssertActualExpectedException(null, q, "Query");
             })) {
 
-                IPublishServices<string> service = mock.Create<PublisherJobService>();
+                IPublishServices service = mock.Create<PublisherJobService>();
 
                 // Run
                 var result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                    Item = new PublishedItemModel {
+                    Item = new PublishedNodeModel {
                         NodeId = "i=2258",
                         PublishingInterval = TimeSpan.FromSeconds(2),
                         SamplingInterval = TimeSpan.FromSeconds(1)
                     }
                 });
 
-                var list = await service.NodePublishListAsync("endpoint1", new PublishedItemListRequestModel {
+                var list = await service.NodePublishListAsync("endpoint1", new PublishedNodeQueryModel {
                     ContinuationToken = null
                 });
 
@@ -69,16 +70,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                 throw new AssertActualExpectedException(null, q, "Query");
             })) {
 
-                IPublishServices<string> service = mock.Create<PublisherJobService>();
+                IPublishServices service = mock.Create<PublisherJobService>();
 
                 // Run
                 var result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                    Item = new PublishedItemModel {
+                    Item = new PublishedNodeModel {
                         NodeId = "i=2258"
                     }
                 });
 
-                var list = await service.NodePublishListAsync("endpoint1", new PublishedItemListRequestModel {
+                var list = await service.NodePublishListAsync("endpoint1", new PublishedNodeQueryModel {
                     ContinuationToken = null
                 });
 
@@ -100,11 +101,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                 throw new AssertActualExpectedException(null, q, "Query");
             })) {
 
-                IPublishServices<string> service = mock.Create<PublisherJobService>();
+                IPublishServices service = mock.Create<PublisherJobService>();
 
                 // Run
                 var result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                    Item = new PublishedItemModel {
+                    Item = new PublishedNodeModel {
                         NodeId = "i=2258",
                         PublishingInterval = TimeSpan.FromSeconds(2),
                         SamplingInterval = TimeSpan.FromSeconds(1)
@@ -115,7 +116,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                     NodeId = "i=2258"
                 });
 
-                var list = await service.NodePublishListAsync("endpoint1", new PublishedItemListRequestModel {
+                var list = await service.NodePublishListAsync("endpoint1", new PublishedNodeQueryModel {
                     ContinuationToken = null
                 });
 
@@ -135,18 +136,18 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                     throw new AssertActualExpectedException(null, q, "Query");
                 })) {
 
-                IPublishServices<string> service = mock.Create<PublisherJobService>();
+                IPublishServices service = mock.Create<PublisherJobService>();
 
                 // Run
                 var result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                    Item = new PublishedItemModel {
+                    Item = new PublishedNodeModel {
                         NodeId = "i=2258",
                         PublishingInterval = TimeSpan.FromSeconds(2),
                         SamplingInterval = TimeSpan.FromSeconds(1)
                     }
                 });
                 result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                    Item = new PublishedItemModel {
+                    Item = new PublishedNodeModel {
                         NodeId = "i=2258",
                         PublishingInterval = TimeSpan.FromSeconds(2),
                         SamplingInterval = TimeSpan.FromSeconds(1)
@@ -154,7 +155,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                 });
 
 
-                var list = await service.NodePublishListAsync("endpoint1", new PublishedItemListRequestModel {
+                var list = await service.NodePublishListAsync("endpoint1", new PublishedNodeQueryModel {
                     ContinuationToken = null
                 });
 
@@ -176,18 +177,18 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                     throw new AssertActualExpectedException(null, q, "Query");
                 })) {
 
-                IPublishServices<string> service = mock.Create<PublisherJobService>();
+                IPublishServices service = mock.Create<PublisherJobService>();
 
                 // Run
                 var result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                    Item = new PublishedItemModel {
+                    Item = new PublishedNodeModel {
                         NodeId = "i=2258",
                         PublishingInterval = TimeSpan.FromSeconds(2),
                         SamplingInterval = TimeSpan.FromSeconds(1)
                     }
                 });
                 result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                    Item = new PublishedItemModel {
+                    Item = new PublishedNodeModel {
                         NodeId = "i=2259",
                         PublishingInterval = TimeSpan.FromSeconds(2),
                         SamplingInterval = TimeSpan.FromSeconds(1)
@@ -195,7 +196,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                 });
 
 
-                var list = await service.NodePublishListAsync("endpoint1", new PublishedItemListRequestModel {
+                var list = await service.NodePublishListAsync("endpoint1", new PublishedNodeQueryModel {
                     ContinuationToken = null
                 });
 
@@ -216,25 +217,25 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                     throw new AssertActualExpectedException(null, q, "Query");
                 })) {
 
-                IPublishServices<string> service = mock.Create<PublisherJobService>();
+                IPublishServices service = mock.Create<PublisherJobService>();
 
                 // Run
                 var result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                    Item = new PublishedItemModel {
+                    Item = new PublishedNodeModel {
                         NodeId = "i=2258",
                         PublishingInterval = TimeSpan.FromSeconds(2),
                         SamplingInterval = TimeSpan.FromSeconds(1)
                     }
                 });
                 result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                    Item = new PublishedItemModel {
+                    Item = new PublishedNodeModel {
                         NodeId = "i=2258",
                         PublishingInterval = TimeSpan.FromSeconds(3),
                         SamplingInterval = TimeSpan.FromSeconds(2)
                     }
                 });
 
-                var list = await service.NodePublishListAsync("endpoint1", new PublishedItemListRequestModel {
+                var list = await service.NodePublishListAsync("endpoint1", new PublishedNodeQueryModel {
                     ContinuationToken = null
                 });
 
@@ -256,12 +257,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                     throw new AssertActualExpectedException(null, q, "Query");
                 })) {
 
-                IPublishServices<string> service = mock.Create<PublisherJobService>();
+                IPublishServices service = mock.Create<PublisherJobService>();
 
                 // Run
                 for (var i = 0; i < 100; i++) {
                     var result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                        Item = new PublishedItemModel {
+                        Item = new PublishedNodeModel {
                             NodeId = "i=" + (i + 1000),
                             PublishingInterval = TimeSpan.FromSeconds(i),
                             SamplingInterval = TimeSpan.FromSeconds(i+1)
@@ -276,7 +277,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                     Assert.NotNull(result);
                 }
 
-                var list = await service.NodePublishListAsync("endpoint1", new PublishedItemListRequestModel {
+                var list = await service.NodePublishListAsync("endpoint1", new PublishedNodeQueryModel {
                     ContinuationToken = null
                 });
 
@@ -288,7 +289,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                 // Run
                 for (var i = 0; i < 100; i++) {
                     var result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                        Item = new PublishedItemModel {
+                        Item = new PublishedNodeModel {
                             NodeId = "i=" + (i + 2000),
                             PublishingInterval = TimeSpan.FromSeconds(i),
                             SamplingInterval = TimeSpan.FromSeconds(i + 1)
@@ -303,7 +304,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                     Assert.NotNull(result);
                 }
 
-                list = await service.NodePublishListAsync("endpoint1", new PublishedItemListRequestModel {
+                list = await service.NodePublishListAsync("endpoint1", new PublishedNodeQueryModel {
                     ContinuationToken = null
                 });
 
@@ -327,10 +328,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                 builder.RegisterType<NewtonSoftJsonSerializer>().As<IJsonSerializer>();
                 builder.RegisterInstance(new QueryEngineAdapter(provider)).As<IQueryEngine>();
                 builder.RegisterType<MemoryDatabase>().SingleInstance().As<IDatabaseServer>();
-                builder.RegisterType<MockConfig>().As<IJobDatabaseConfig>();
-                builder.RegisterType<JobDatabase>().As<IJobRepository>();
+                builder.RegisterType<MockConfig>().As<IItemContainerConfig>();
+                builder.RegisterType<LegacyJobDatabase>().As<ILegacyJobRepository>();
                 builder.RegisterType<DefaultJobService>().As<IJobScheduler>();
-                builder.RegisterType<PublisherJobSerializer>().As<IJobSerializer>();
                 var registry = new Mock<IEndpointRegistry>();
                 registry
                     .Setup(e => e.GetEndpointAsync(It.IsAny<string>(), false, CancellationToken.None))
@@ -341,7 +341,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                         }
                     }));
                 builder.RegisterMock(registry);
-                builder.RegisterType<PublisherJobService>().As<IPublishServices<string>>();
+                builder.RegisterType<PublisherJobService>().As<IPublishServices>();
             });
             return mock;
         }
@@ -349,7 +349,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
         /// <summary>
         /// Mock
         /// </summary>
-        public class MockConfig : IJobDatabaseConfig {
+        public class MockConfig : IItemContainerConfig {
             public string ContainerName => "Test";
             public string DatabaseName => "Test";
         }

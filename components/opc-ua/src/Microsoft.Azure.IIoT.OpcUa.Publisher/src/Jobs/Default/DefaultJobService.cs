@@ -20,7 +20,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs {
         /// </summary>
         /// <param name="jobRepository"></param>
         /// <param name="jobRepositoryEventHandlers"></param>
-        public DefaultJobService(IJobRepository jobRepository,
+        public DefaultJobService(ILegacyJobRepository jobRepository,
             IEnumerable<IJobEventHandler> jobRepositoryEventHandlers) {
             _jobRepository = jobRepository;
             _jobRepositoryEventHandlers = jobRepositoryEventHandlers;
@@ -170,7 +170,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs {
             return await _jobRepository.GetAsync(jobId, ct);
         }
 
-        private readonly IJobRepository _jobRepository;
+        private readonly ILegacyJobRepository _jobRepository;
         private readonly IEnumerable<IJobEventHandler> _jobRepositoryEventHandlers;
     }
 }

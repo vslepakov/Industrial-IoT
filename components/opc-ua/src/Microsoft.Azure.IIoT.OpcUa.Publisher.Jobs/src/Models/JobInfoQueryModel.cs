@@ -4,6 +4,7 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
+
     /// <summary>
     /// Job info query model
     /// </summary>
@@ -13,11 +14,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
         /// Name
         /// </summary>
         public string Name { get; set; }
-
-        /// <summary>
-        /// Configuration type
-        /// </summary>
-        public string JobConfigurationType { get; set; }
 
         /// <summary>
         /// Job status

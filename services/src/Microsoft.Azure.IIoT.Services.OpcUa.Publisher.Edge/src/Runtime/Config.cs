@@ -13,12 +13,12 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime {
     using Microsoft.Azure.IIoT.AspNetCore.ForwardedHeaders.Runtime;
     using Microsoft.Azure.IIoT.OpcUa.Publisher;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs.Runtime;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Database;
     using Microsoft.Azure.IIoT.Hosting;
     using Microsoft.Azure.IIoT.Auth.Runtime;
     using Microsoft.Azure.IIoT.Diagnostics;
     using Microsoft.Azure.IIoT.Hub.Client;
     using Microsoft.Azure.IIoT.Hub.Client.Runtime;
+    using Microsoft.Azure.IIoT.Storage;
     using Microsoft.Azure.IIoT.Storage.CosmosDb;
     using Microsoft.Azure.IIoT.Storage.CosmosDb.Runtime;
     using Microsoft.Extensions.Configuration;
@@ -29,8 +29,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime {
     /// </summary>
     public class Config : DiagnosticsConfig, IWebHostConfig, IIoTHubConfig,
         ICorsConfig, IOpenApiConfig, IJobOrchestratorConfig, ICosmosDbConfig,
-        IJobDatabaseConfig, IWorkerDatabaseConfig, IForwardedHeadersConfig,
-        IRoleConfig {
+        IItemContainerConfig, IForwardedHeadersConfig, IRoleConfig {
 
         /// <inheritdoc/>
         public string DbConnectionString => _cosmos.DbConnectionString;

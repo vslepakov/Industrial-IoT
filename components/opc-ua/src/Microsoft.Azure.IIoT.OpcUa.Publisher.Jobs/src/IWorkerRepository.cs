@@ -3,7 +3,7 @@
 //  Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-namespace Microsoft.Azure.IIoT.OpcUa.Publisher {
+namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage {
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
     using System.Threading;
     using System.Threading.Tasks;

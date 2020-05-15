@@ -4,7 +4,6 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
-    using Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Agent;
     using Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime;
     using Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controller;
     using Microsoft.Azure.IIoT.Module.Framework;
@@ -12,6 +11,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
     using Microsoft.Azure.IIoT.Module.Framework.Hosting;
     using Microsoft.Azure.IIoT.Module.Framework.Services;
     using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients;
+    using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Runtime;
     using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine;
     using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Models;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Services;
@@ -143,8 +143,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
             builder.RegisterInstance(this)
                 .AsImplementedInterfaces();
 
-            builder.RegisterModule<PublisherJobsConfiguration>();
-
             // Register module and publisher framework ...
             builder.RegisterModule<ModuleFramework>();
             builder.RegisterModule<NewtonSoftJsonModule>();
@@ -153,6 +151,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                 .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<Worker>()
                 .AsImplementedInterfaces();
+            builder.RegisterType<WriterGroupJobContainerFactory>()
+                .AsImplementedInterfaces().InstancePerDependency();
 
             if (legacyCliOptions.RunInLegacyMode) {
                 builder.AddDiagnostics(config,

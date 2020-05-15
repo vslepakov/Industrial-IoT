@@ -3,14 +3,15 @@
 //  Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Database {
+namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default {
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
+    using Microsoft.Azure.IIoT.Serializers;
     using System.Runtime.Serialization;
     using System;
     using System.Collections.Generic;
 
     /// <summary>
-    /// Job model
+    /// Job document
     /// </summary>
     [DataContract]
     public class JobDocument {
@@ -33,37 +34,25 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Database {
         [DataMember]
         public string ClassType { get; set; } = ClassTypeName;
         /// <summary/>
-        public static readonly string ClassTypeName = "Job";
+        public static readonly string ClassTypeName = "WriterGroupJob";
 
         /// <summary>
-        /// Identifier of the job document
+        /// Identifier of the writer group
         /// </summary>
         [DataMember]
-        public string JobId { get; set; }
+        public string WriterGroupId { get; set; }
+
+        /// <summary>
+        /// Writer group generation last synchronized
+        /// </summary>
+        [DataMember]
+        public string WriterGroupGenerationId { get; set; }
 
         /// <summary>
         /// Name
         /// </summary>
         [DataMember]
         public string Name { get; set; }
-
-        /// <summary>
-        /// Configuration type
-        /// </summary>
-        [DataMember]
-        public string Type { get; set; }
-
-        /// <summary>
-        /// Job configuration
-        /// </summary>
-        [DataMember]
-        public JobConfigDocument JobConfiguration { get; set; }
-
-        /// <summary>
-        /// Demands
-        /// </summary>
-        [DataMember]
-        public List<DemandDocument> Demands { get; set; }
 
         /// <summary>
         /// Number of desired active agents
@@ -87,7 +76,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Database {
         /// Processing status
         /// </summary>
         [DataMember]
-        public Dictionary<string, ProcessingStatusDocument> ProcessingStatus { get; set; }
+        public Dictionary<string, ProcessingStatus> ProcessingStatus { get; set; }
 
         /// <summary>
         /// Updated at
@@ -100,5 +89,30 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Database {
         /// </summary>
         [DataMember]
         public DateTime Created { get; set; }
+    }
+
+    /// <summary>
+    /// processing status
+    /// </summary>
+    [DataContract]
+    public class ProcessingStatus {
+
+        /// <summary>
+        /// Last known heartbeat
+        /// </summary>
+        [DataMember]
+        public DateTime? LastKnownHeartbeat { get; set; }
+
+        /// <summary>
+        /// Last known state
+        /// </summary>
+        [DataMember]
+        public VariantValue LastKnownState { get; set; }
+
+        /// <summary>
+        /// Processing mode
+        /// </summary>
+        [DataMember]
+        public ProcessMode? ProcessMode { get; set; }
     }
 }

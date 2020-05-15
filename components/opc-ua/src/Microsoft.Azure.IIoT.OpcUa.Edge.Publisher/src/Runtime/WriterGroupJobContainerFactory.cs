@@ -20,19 +20,17 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Runtime {
         /// <summary>
         /// Create job scope factory
         /// </summary>
-        /// <param name="jobConfig"></param>
         /// <param name="clientConfig"></param>
-        public WriterGroupJobContainerFactory(WriterGroupJobModel jobConfig,
-            IModuleConfig clientConfig) {
+        public WriterGroupJobContainerFactory(IModuleConfig clientConfig) {
             _clientConfig = clientConfig ?? throw new ArgumentNullException(nameof(clientConfig));
-            _jobConfig = jobConfig ?? throw new ArgumentNullException(nameof(jobConfig));
         }
 
         /// <inheritdoc/>
-        public Action<ContainerBuilder> GetJobContainerScope(string agentId, string publisherId) {
+        public Action<ContainerBuilder> GetJobContainerScope(string agentId, string publisherId,
+            WriterGroupJobModel job) {
             return builder => {
                 // Register job configuration
-                builder.RegisterInstance(_jobConfig.ToWriterGroupJobConfiguration(publisherId))
+                builder.RegisterInstance(job.ToWriterGroupJobConfiguration(publisherId))
                     .AsImplementedInterfaces();
 
                 // Register default serializers...
@@ -43,7 +41,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Runtime {
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
                 builder.RegisterType<WriterGroupMessageTrigger>()
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
-                switch (_jobConfig.MessagingMode) {
+                switch (job.MessagingMode) {
                     case MessagingMode.Samples:
                         builder.RegisterType<MonitoredItemMessageEncoder>()
                             .AsImplementedInterfaces().InstancePerLifetimeScope();
@@ -59,12 +57,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Runtime {
                 }
                 builder.RegisterType<IoTHubMessageSink>()
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
-                builder.RegisterInstance(_clientConfig.Clone(_jobConfig.ConnectionString))
+                builder.RegisterInstance(_clientConfig.Clone(job.ConnectionString))
                     .AsImplementedInterfaces();
             };
         }
 
         private readonly IModuleConfig _clientConfig;
-        private readonly WriterGroupJobModel _jobConfig;
     }
 }

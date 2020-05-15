@@ -4,6 +4,7 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.OpcUa.Publisher {
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
     using System;
     using Autofac;
 
@@ -13,10 +14,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher {
     public interface IProcessingEngineContainerFactory {
 
         /// <summary>
-        /// Create a factory to create individual scopes engines.
+        /// Create container scope for a job.
         /// </summary>
+        /// <param name="agentId"></param>
+        /// <param name="publisherId"></param>
+        /// <param name="job"></param>
         /// <returns></returns>
-        Action<ContainerBuilder> GetJobContainerScope(
-            string agentId, string jobId);
+        Action<ContainerBuilder> GetJobContainerScope(string agentId,
+            string publisherId, WriterGroupJobModel job);
     }
 }

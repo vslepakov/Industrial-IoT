@@ -18,7 +18,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Runtime {
     using Microsoft.Azure.IIoT.OpcUa.Api.Registry;
     using Microsoft.Azure.IIoT.Storage.CosmosDb;
     using Microsoft.Azure.IIoT.Storage.CosmosDb.Runtime;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Database;
+    using Microsoft.Azure.IIoT.Storage;
     using Microsoft.Azure.IIoT.Auth.Runtime;
     using Microsoft.Azure.IIoT.Deploy;
     using Microsoft.Azure.IIoT.Deploy.Runtime;
@@ -31,7 +31,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Runtime {
     /// </summary>
     public class Config : DiagnosticsConfig, IWebHostConfig, IIoTHubConfig,
         ICorsConfig, IOpenApiConfig, IRoleConfig,
-        ICosmosDbConfig, IJobDatabaseConfig, IRegistryConfig, ITwinConfig,
+        ICosmosDbConfig, IItemContainerConfig, IRegistryConfig, ITwinConfig,
         IForwardedHeadersConfig, IContainerRegistryConfig {
 
         /// <inheritdoc/>

@@ -3,7 +3,7 @@
 //  Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Database {
+namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default {
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
     using System.Runtime.Serialization;
     using System;

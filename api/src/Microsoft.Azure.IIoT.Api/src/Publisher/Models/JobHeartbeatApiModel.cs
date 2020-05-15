@@ -22,11 +22,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
         public string JobId { get; set; }
 
         /// <summary>
-        /// Hash
+        /// Job generation id
         /// </summary>
-        [DataMember(Name = "jobHash", Order = 1,
+        [DataMember(Name = "generationId", Order = 1,
             EmitDefaultValue = false)]
-        public string JobHash { get; set; }
+        public string GenerationId { get; set; }
 
         /// <summary>
         /// Status

@@ -69,7 +69,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
         private IEnumerable<NetworkMessageModel> EncodeBatchAsJson(
             IEnumerable<DataSetMessageModel> messages, int maxMessageSize) {
 
-            var notifications = GetMonitoredItemMessages(messages, MessageEncoding.Json);
+            var notifications = GetMonitoredItemMessages(messages, NetworkMessageType.Json);
             if (notifications.Count() == 0) {
                 yield break;
             }
@@ -136,7 +136,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
         private IEnumerable<NetworkMessageModel> EncodeBatchAsUadp(
             IEnumerable<DataSetMessageModel> messages, int maxEncodedSize) {
 
-            var notifications = GetMonitoredItemMessages(messages, MessageEncoding.Uadp);
+            var notifications = GetMonitoredItemMessages(messages, NetworkMessageType.Uadp);
             if (notifications.Count() == 0) {
                 yield break;
             }
@@ -186,7 +186,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
         private IEnumerable<NetworkMessageModel> EncodeAsJson(
             IEnumerable<DataSetMessageModel> messages) {
 
-            var notifications = GetMonitoredItemMessages(messages, MessageEncoding.Json);
+            var notifications = GetMonitoredItemMessages(messages, NetworkMessageType.Json);
             if (notifications.Count() == 0) {
                 yield break;
             }
@@ -219,7 +219,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
         private IEnumerable<NetworkMessageModel> EncodeAsUadp(
             IEnumerable<DataSetMessageModel> messages) {
 
-            var notifications = GetMonitoredItemMessages(messages, MessageEncoding.Uadp);
+            var notifications = GetMonitoredItemMessages(messages, NetworkMessageType.Uadp);
             if (notifications.Count() == 0) {
                 yield break;
             }
@@ -244,9 +244,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
         /// <param name="messages"></param>
         /// <param name="encoding"></param>
         private IEnumerable<MonitoredItemMessage> GetMonitoredItemMessages(
-            IEnumerable<DataSetMessageModel> messages, MessageEncoding encoding) {
+            IEnumerable<DataSetMessageModel> messages, NetworkMessageType encoding) {
             foreach (var message in messages) {
-                if (message.WriterGroup?.MessageType.GetValueOrDefault(MessageEncoding.Json) == encoding) {
+                if (message.WriterGroup?.MessageType.GetValueOrDefault(NetworkMessageType.Json) == encoding) {
                     foreach (var notification in message.Notifications) {
                         var result = new MonitoredItemMessage {
                             MessageContentMask = (message.Writer?.MessageSettings?

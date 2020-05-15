@@ -29,6 +29,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
         /// <summary>
         /// Subscription settings (publisher extension)
         /// </summary>
-        public PublishedDataSetSettingsModel SubscriptionSettings { get; set; }
+        public PublishedDataSetSourceSettingsModel SubscriptionSettings { get; set; }
     }
 }

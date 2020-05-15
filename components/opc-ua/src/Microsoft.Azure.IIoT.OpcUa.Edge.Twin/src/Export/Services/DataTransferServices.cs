@@ -10,6 +10,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Export.Services {
     using Microsoft.Azure.IIoT.OpcUa.Core.Models;
     using Microsoft.Azure.IIoT.OpcUa.Twin.Models;
     using Microsoft.Azure.IIoT.Tasks;
+    using Microsoft.Azure.IIoT.Auth;
     using Microsoft.Azure.IIoT.Http;
     using Serilog;
     using System;
@@ -31,12 +32,14 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Export.Services {
         /// </summary>
         /// <param name="client"></param>
         /// <param name="http"></param>
+        /// <param name="tokens"></param>
         /// <param name="scheduler"></param>
         /// <param name="logger"></param>
         public DataTransferServices(IEndpointServices client, IHttpClient http,
-            ITaskScheduler scheduler, ILogger logger) {
+            ISasTokenGenerator tokens, ITaskScheduler scheduler, ILogger logger) {
             _client = client ?? throw new ArgumentNullException(nameof(client));
             _http = http ?? throw new ArgumentNullException(nameof(http));
+            _tokens = tokens ?? throw new ArgumentNullException(nameof(tokens));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
             _tasks = new ConcurrentDictionary<ConnectionIdentifier, ModelUploadTask>();
@@ -161,6 +164,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Export.Services {
                         if (!string.IsNullOrEmpty(Authorization)) {
                             request.Headers.Authorization = AuthenticationHeaderValue.Parse(Authorization);
                         }
+                        else {
+                            // Otherwise set shared access token
+                            var token = await _outer._tokens.GenerateTokenAsync(request.Uri.ToString());
+                            request.Headers.Authorization = AuthenticationHeaderValue.Parse(token);
+                        }
                         request.SetStreamContent(file, MimeType);
                         await _outer._http.PutAsync(request, ct);
                         _logger.Information("Model uploaded");
@@ -243,6 +251,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Export.Services {
 
         private readonly IEndpointServices _client;
         private readonly IHttpClient _http;
+        private readonly ISasTokenGenerator _tokens;
         private readonly ITaskScheduler _scheduler;
         private readonly ILogger _logger;
         private readonly ConcurrentDictionary<ConnectionIdentifier, ModelUploadTask> _tasks;

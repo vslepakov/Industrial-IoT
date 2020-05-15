@@ -70,7 +70,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
         private IEnumerable<NetworkMessageModel> EncodeBatchAsJson(
             IEnumerable<DataSetMessageModel> messages, int maxMessageSize) {
 
-            var notifications = GetNetworkMessages(messages, MessageEncoding.Json);
+            var notifications = GetNetworkMessages(messages, NetworkMessageType.Json);
             if (notifications.Count() == 0) {
                 yield break;
             }
@@ -136,7 +136,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
         private IEnumerable<NetworkMessageModel> EncodeBatchAsUadp(
             IEnumerable<DataSetMessageModel> messages, int maxMessageSize) {
 
-            var notifications = GetNetworkMessages(messages, MessageEncoding.Uadp);
+            var notifications = GetNetworkMessages(messages, NetworkMessageType.Uadp);
             if (notifications.Count() == 0) {
                 yield break;
             }
@@ -185,7 +185,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
         /// <returns></returns>
         private IEnumerable<NetworkMessageModel> EncodeAsJson(
             IEnumerable<DataSetMessageModel> messages) {
-            var notifications = GetNetworkMessages(messages, MessageEncoding.Json);
+            var notifications = GetNetworkMessages(messages, NetworkMessageType.Json);
             if (notifications.Count() == 0) {
                 yield break;
             }
@@ -217,7 +217,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
         /// <returns></returns>
         private IEnumerable<NetworkMessageModel> EncodeAsUadp(
             IEnumerable<DataSetMessageModel> messages) {
-            var notifications = GetNetworkMessages(messages, MessageEncoding.Uadp);
+            var notifications = GetNetworkMessages(messages, NetworkMessageType.Uadp);
             if (notifications.Count() == 0) {
                 yield break;
             }
@@ -245,13 +245,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
         /// <returns></returns>
         private IEnumerable<NetworkMessage> GetNetworkMessages(
             IEnumerable<DataSetMessageModel> messages,
-            MessageEncoding encoding) {
+            NetworkMessageType encoding) {
 
             // TODO: Honor single message
             // TODO: Group by writer
             foreach (var message in messages) {
                 if (message.WriterGroup?.MessageType
-                    .GetValueOrDefault(MessageEncoding.Json) == encoding) {
+                    .GetValueOrDefault(NetworkMessageType.Json) == encoding) {
                     var networkMessage = new NetworkMessage() {
                         MessageContentMask = message.WriterGroup
                             .MessageSettings.NetworkMessageContentMask

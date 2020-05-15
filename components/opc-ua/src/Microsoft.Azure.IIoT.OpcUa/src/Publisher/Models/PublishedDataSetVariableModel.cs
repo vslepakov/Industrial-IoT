@@ -25,16 +25,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
         public string PublishedVariableNodeId { get; set; }
 
         /// <summary>
-        /// Display name of the published variable
-        /// </summary>
-        public string PublishedVariableDisplayName { get; set; }
-
-        /// <summary>
         /// An optional component path from the node identified by
         /// PublishedVariableNodeId to the actual node to publish
         /// (Publisher extension).
         /// </summary>
         public string[] BrowsePath { get; set; }
+
+        /// <summary>
+        /// Display name of the published variable
+        /// </summary>
+        public string PublishedVariableDisplayName { get; set; }
 
         /// <summary>
         /// Default is <see cref="NodeAttribute.Value"/>.
@@ -103,5 +103,25 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
         /// (Publisher extension)
         /// </summary>
         public TimeSpan? HeartbeatInterval { get; set; }
+
+        /// <summary>
+        /// Generation id
+        /// </summary>
+        public string GenerationId { get; set; }
+
+        /// <summary>
+        /// The order in the dataset
+        /// </summary>
+        public int? Order { get; set; }
+
+        /// <summary>
+        /// Last updated
+        /// </summary>
+        public PublisherOperationContextModel Updated { get; set; }
+
+        /// <summary>
+        /// Created
+        /// </summary>
+        public PublisherOperationContextModel Created { get; set; }
     }
 }

@@ -7,8 +7,8 @@
 namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
     using Microsoft.Azure.IIoT.OpcUa.Protocol;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Services;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
+    using Microsoft.Azure.IIoT.OpcUa.Twin;
+    using Microsoft.Azure.IIoT.OpcUa.Twin.Models;
     using Opc.Ua;
     using Opc.Ua.Extensions;
     using Opc.Ua.Nodeset;
@@ -29,7 +29,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
         /// </summary>
         /// <param name="processor"></param>
         /// <param name="publish"></param>
-        public BulkPublishHandler(INodeSetProcessor processor, IPublishServices<string> publish) {
+        public BulkPublishHandler(INodeSetProcessor processor, IPublishServices publish) {
             _processor = processor ?? throw new ArgumentNullException(nameof(processor));
             _publish = publish ?? throw new ArgumentNullException(nameof(publish));
         }
@@ -58,21 +58,24 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
         /// </summary>
         private class PublishingSession : NodeHandlerBase {
 
-            public PublishingSession(BulkPublishHandler outer, string endpointId, string sessionId) {
+            public PublishingSession(BulkPublishHandler outer, string endpointId,
+                string sessionId) {
                 _endpointId = endpointId;
                 _sessionId = sessionId;
                 _outer = outer;
             }
 
             /// <inheritdoc/>
-            public override async Task CompleteAsync(ISystemContext context, bool abort = false) {
+            public override async Task CompleteAsync(ISystemContext context,
+                bool abort = false) {
                 if (_cache.Count != 0) {
                     await PublishFromCacheAsync(context);
                 }
             }
 
             /// <inheritdoc/>
-            public override async Task HandleAsync(VariableNodeModel node, ISystemContext context) {
+            public override async Task HandleAsync(VariableNodeModel node,
+                ISystemContext context) {
                 _cache.Add(node);
                 if (_cache.Count >= kMaxCacheSize) {
                     await PublishFromCacheAsync(context);
@@ -88,7 +91,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                 var ctx = context.ToMessageContext();
                 await _outer._publish.NodePublishBulkAsync(_endpointId, new PublishBulkRequestModel {
                     NodesToAdd = _cache
-                        .Select(n => new PublishedItemModel {
+                        .Select(n => new PublishedNodeModel {
                             DisplayName = n.DisplayName.Text,
                             SamplingInterval = n.MinimumSamplingInterval == null ? (TimeSpan?)null :
                                 TimeSpan.FromMilliseconds(n.MinimumSamplingInterval.Value),
@@ -107,6 +110,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
         }
 
         private readonly INodeSetProcessor _processor;
-        private readonly IPublishServices<string> _publish;
+        private readonly IPublishServices _publish;
     }
 }

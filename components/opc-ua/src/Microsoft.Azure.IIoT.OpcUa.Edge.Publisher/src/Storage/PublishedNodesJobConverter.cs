@@ -94,12 +94,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Models {
                     .Flatten()
                     .GroupBy(n => n.OpcPublishingInterval)
                     .SelectMany(n => n
-                        .Distinct((a, b) => a.Id == b.Id && a.DisplayName == b.DisplayName && 
+                        .Distinct((a, b) => a.Id == b.Id && a.DisplayName == b.DisplayName &&
                                     a.OpcSamplingInterval == b.OpcSamplingInterval)
                         .Batch(1000))
                     .Select(opcNodes => new PublishedDataSetSourceModel {
                         Connection = group.Key.Clone(),
-                        SubscriptionSettings = new PublishedDataSetSettingsModel {
+                        SubscriptionSettings = new PublishedDataSetSourceSettingsModel {
                             PublishingInterval = GetPublishingIntervalFromNodes(opcNodes, legacyCliModel),
                             ResolveDisplayName = legacyCliModel.FetchOpcNodeDisplayName
                         },
@@ -116,10 +116,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Models {
                                         legacyCliModel.DefaultSamplingInterval ?? (TimeSpan?)null,
                                     HeartbeatInterval = node.HeartbeatInterval == null ? (TimeSpan?)null :
                                         TimeSpan.FromSeconds(node.HeartbeatInterval.Value),
-                                    // Force the queue size to 2 so that we avoid data 
+                                    // Force the queue size to 2 so that we avoid data
                                     // loss in case publishing interval and sampling interval are equal
                                     QueueSize = 2
-                                    // TODO: skip first? 
+                                    // TODO: skip first?
                                     // SkipFirst = opcNode.SkipFirst,
                                 }).ToList()
                         }
@@ -132,7 +132,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Models {
                         MaxMessageSize = _config.MaxMessageSize
                     },
                     WriterGroup = new WriterGroupModel {
-                        MessageType = MessageEncoding.Json,
+                        MessageType = NetworkMessageType.Json,
                         WriterGroupId = $"{dataSetSourceBatches.First().Connection.Endpoint.Url}_" +
                             $"{dataSetSourceBatches.First().GetHashSafe()}",
                         DataSetWriters = dataSetSourceBatches.Select(dataSetSource => new DataSetWriterModel {

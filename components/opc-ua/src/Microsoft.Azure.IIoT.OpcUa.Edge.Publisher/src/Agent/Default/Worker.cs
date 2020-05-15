@@ -4,6 +4,7 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Agent {
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
     using Microsoft.Azure.IIoT.Utils;
     using Autofac;
@@ -40,19 +41,15 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Agent {
         /// </summary>
         /// <param name="jobManagerConnector"></param>
         /// <param name="agentConfigProvider"></param>
-        /// <param name="jobConfigurationFactory"></param>
         /// <param name="workerInstance"></param>
         /// <param name="lifetimeScope"></param>
         /// <param name="logger"></param>
         /// <param name="agentRepository"></param>
-        public Worker(IJobOrchestrator jobManagerConnector,
-            IAgentConfigProvider agentConfigProvider, IJobSerializer jobConfigurationFactory,
+        public Worker(IJobOrchestrator jobManagerConnector, IAgentConfigProvider agentConfigProvider,
             int workerInstance, ILifetimeScope lifetimeScope, ILogger logger,
             IWorkerRepository agentRepository = null) {
 
             _agentRepository = agentRepository;
-            _jobConfigurationFactory = jobConfigurationFactory ??
-                throw new ArgumentNullException(nameof(jobConfigurationFactory));
             _lifetimeScope = lifetimeScope ??
                 throw new ArgumentNullException(nameof(lifetimeScope));
             _logger = logger ??
@@ -216,8 +213,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Agent {
                 while (true) {
                     _jobProcess = null;
                     ct.ThrowIfCancellationRequested();
-                    using (_jobProcess = new JobProcess(this, jobProcessInstruction,
-                        _lifetimeScope, _logger)) {
+                    using (_jobProcess = new JobProcess(this, jobProcessInstruction, _lifetimeScope, _logger)) {
                         await _jobProcess.WaitAsync(); // Does not throw
                     }
 
@@ -276,13 +272,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Agent {
                     _outer._cts.Token);
 
                 // Do autofac injection to resolve processing engine
-                var jobConfig = _outer._jobConfigurationFactory.DeserializeJobConfiguration(
-                    Job.JobConfiguration, Job.JobConfigurationType);
-                var jobProcessorFactory = workerScope.ResolveNamed<IProcessingEngineContainerFactory>(
-                    Job.JobConfigurationType, new NamedParameter(nameof(jobConfig), jobConfig));
-
+                var jobProcessorFactory = workerScope.Resolve<IProcessingEngineContainerFactory>();
                 _jobScope = workerScope.BeginLifetimeScope(
-                    jobProcessorFactory.GetJobContainerScope(outer.WorkerId, Job.Id));
+                    jobProcessorFactory.GetJobContainerScope(outer.WorkerId, Job.Id, Job.JobConfiguration));
                 _currentProcessingEngine = _jobScope.Resolve<IProcessingEngine>();
 
                 // Continuously send job status heartbeats
@@ -385,7 +377,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Agent {
                         Worker = workerHeartbeat,
                         Job = new JobHeartbeatModel {
                             JobId = Job.Id,
-                            JobHash = Job.GetHashSafe(),
+                            GenerationId = Job.GenerationId,
                             Status = Job.LifetimeData.Status,
                             ProcessMode = _currentJobProcessInstruction.ProcessMode.Value,
                             State = await _currentProcessingEngine.GetCurrentJobState()
@@ -490,7 +482,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Agent {
         private readonly IWorkerRepository _agentRepository;
         private readonly Timer _heartbeatTimer;
         private readonly SemaphoreSlim _lock;
-        private readonly IJobSerializer _jobConfigurationFactory;
         private readonly IJobOrchestrator _jobManagerConnector;
         private readonly ILifetimeScope _lifetimeScope;
         private readonly ILogger _logger;

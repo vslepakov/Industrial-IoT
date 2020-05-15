@@ -34,11 +34,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs {
 
         /// <inheritdoc/>
         public async Task OnJobCreatingAsync(IJobService manager, JobInfoModel job) {
-            if (job.JobConfiguration?.IsObject != true) {
+            if (job.JobConfiguration == null) {
                 return;
             }
             try {
-                var jobDeviceId = GetJobDeviceId(job);
+                var jobDeviceId = job.Id;
                 var deviceTwin = await _ioTHubTwinServices.FindAsync(jobDeviceId);
                 if (deviceTwin == null) {
                     deviceTwin = new DeviceTwinModel {
@@ -47,7 +47,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs {
                     await _ioTHubTwinServices.CreateAsync(deviceTwin, true);
                 }
                 var cs = await _ioTHubTwinServices.GetConnectionStringAsync(deviceTwin.Id);
-                job.JobConfiguration[TwinProperties.ConnectionString].AssignValue(cs.ToString());
+                job.JobConfiguration.ConnectionString = cs.ToString();
                 _logger.Debug("Added connection string to job {id}", jobDeviceId);
             }
             catch (Exception ex) {
@@ -62,22 +62,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs {
 
         /// <inheritdoc/>
         public async Task OnJobDeletedAsync(IJobService manager, JobInfoModel job) {
-            var jobDeviceId = GetJobDeviceId(job);
+            var jobDeviceId = job.Id;
             try {
                 await _ioTHubTwinServices.DeleteAsync(jobDeviceId);
             }
             catch (Exception ex) {
                 _logger.Error(ex, "Failed to delete device job {id}", jobDeviceId);
             }
-        }
-
-        /// <summary>
-        /// Create job device identifier
-        /// </summary>
-        /// <param name="job"></param>
-        /// <returns></returns>
-        private static string GetJobDeviceId(JobInfoModel job) {
-            return $"{job.JobConfigurationType}_{job.Id}";
         }
 
         private readonly IIoTHubTwinServices _ioTHubTwinServices;

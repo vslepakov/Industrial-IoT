@@ -4,7 +4,6 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
-    using Microsoft.Azure.IIoT.Serializers;
     using System.Runtime.Serialization;
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
@@ -31,18 +30,18 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
         public string Name { get; set; }
 
         /// <summary>
-        /// Configuration type
+        /// Generation
         /// </summary>
-        [DataMember(Name = "jobConfigurationType", Order = 2,
+        [DataMember(Name = "generationId", Order = 2,
             EmitDefaultValue = false)]
-        public string JobConfigurationType { get; set; }
+        public string GenerationId { get; set; }
 
         /// <summary>
         /// Job configuration
         /// </summary>
         [DataMember(Name = "jobConfiguration", Order = 3,
             EmitDefaultValue = false)]
-        public VariantValue JobConfiguration { get; set; }
+        public WriterGroupJobApiModel JobConfiguration { get; set; }
 
         /// <summary>
         /// Demands
