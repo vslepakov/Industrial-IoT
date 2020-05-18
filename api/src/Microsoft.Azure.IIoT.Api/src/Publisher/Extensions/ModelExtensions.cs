@@ -2272,6 +2272,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new PublishedDataSetSourceInfoApiModel {
+                DiagnosticsLevel = (Core.Models.DiagnosticsLevel?)model.DiagnosticsLevel,
+                EndpointId = model.EndpointId,
+                ExtensionFields = model.ExtensionFields?
+                    .ToDictionary(kv => kv.Key, kv => kv.Value)
             };
         }
 
@@ -2285,6 +2289,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new PublishedDataSetSourceInfoModel {
+                DiagnosticsLevel = (OpcUa.Core.Models.DiagnosticsLevel?)model.DiagnosticsLevel,
+                EndpointId = model.EndpointId,
+                ExtensionFields = model.ExtensionFields?
+                    .ToDictionary(kv => kv.Key, kv => kv.Value)
             };
         }
 
@@ -2298,6 +2306,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new PublishedDataSetVariableListApiModel {
+                ContinuationToken = model.ContinuationToken,
+                Variables = model.Variables?
+                    .Select(v => v.ToApiModel())
+                    .ToList()
             };
         }
 
@@ -2311,6 +2323,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new PublishedDataSetVariableListModel {
+                ContinuationToken = model.ContinuationToken,
+                Variables = model.Variables?
+                    .Select(v => v.ToServiceModel())
+                    .ToList()
             };
         }
 
@@ -2324,6 +2340,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new PublishedDataSetVariableQueryApiModel {
+                Attribute = (Core.Models.NodeAttribute?)model.Attribute,
+                PublishedVariableDisplayName = model.PublishedVariableDisplayName,
+                PublishedVariableNodeId = model.PublishedVariableNodeId
             };
         }
 
@@ -2337,6 +2356,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new PublishedDataSetVariableQueryModel {
+                Attribute = (OpcUa.Core.Models.NodeAttribute?)model.Attribute,
+                PublishedVariableDisplayName = model.PublishedVariableDisplayName,
+                PublishedVariableNodeId = model.PublishedVariableNodeId
             };
         }
 
@@ -2350,6 +2372,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new WriterGroupAddRequestApiModel {
+                SiteId = model.SiteId,
+                BatchSize = model.BatchSize,
+                HeaderLayoutUri = model.HeaderLayoutUri,
+                KeepAliveTime = model.KeepAliveTime,
+                LocaleIds = model.LocaleIds?.ToList(),
+                MessageSettings = model.MessageSettings.ToApiModel(),
+                MessageType = (NetworkMessageType?)model.MessageType,
+                Name = model.Name,
+                Priority = model.Priority,
+                PublishingInterval = model.PublishingInterval
             };
         }
 
@@ -2363,6 +2395,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new WriterGroupAddRequestModel {
+                SiteId = model.SiteId,
+                BatchSize = model.BatchSize,
+                HeaderLayoutUri = model.HeaderLayoutUri,
+                KeepAliveTime = model.KeepAliveTime,
+                LocaleIds = model.LocaleIds?.ToList(),
+                MessageSettings = model.MessageSettings.ToServiceModel(),
+                MessageType = (OpcUa.Publisher.Models.NetworkMessageType?)model.MessageType,
+                Name = model.Name,
+                Priority = model.Priority,
+                PublishingInterval = model.PublishingInterval
             };
         }
 
@@ -2376,6 +2418,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new WriterGroupAddResponseApiModel {
+                GenerationId = model.GenerationId,
+                WriterGroupId = model.WriterGroupId
             };
         }
 
@@ -2389,6 +2433,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new WriterGroupAddResultModel {
+                GenerationId = model.GenerationId,
+                WriterGroupId = model.WriterGroupId
             };
         }
 
@@ -2402,6 +2448,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new WriterGroupInfoListApiModel {
+                ContinuationToken = model.ContinuationToken,
+                WriterGroups = model.WriterGroups?
+                    .Select(g => g.ToApiModel())
+                    .ToList()
             };
         }
 
@@ -2415,6 +2465,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new WriterGroupInfoListModel {
+                ContinuationToken = model.ContinuationToken,
+                WriterGroups = model.WriterGroups?
+                    .Select(g => g.ToServiceModel())
+                    .ToList()
             };
         }
 
@@ -2428,6 +2482,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new WriterGroupInfoQueryApiModel {
+                Priority = model.Priority,
+                Name = model.Name,
+                MessageType = (NetworkMessageType?)model.MessageType,
+                GroupVersion = model.GroupVersion,
+                SiteId = model.SiteId
             };
         }
 
@@ -2441,6 +2500,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new WriterGroupInfoQueryModel {
+                Priority = model.Priority,
+                Name = model.Name,
+                MessageType = (OpcUa.Publisher.Models.NetworkMessageType?)model.MessageType,
+                GroupVersion = model.GroupVersion,
+                SiteId = model.SiteId
             };
         }
 
@@ -2454,6 +2518,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new WriterGroupUpdateRequestApiModel {
+                BatchSize = model.BatchSize,
+                GenerationId = model.GenerationId,
+                HeaderLayoutUri = model.HeaderLayoutUri,
+                KeepAliveTime = model.KeepAliveTime,
+                LocaleIds = model.LocaleIds?.ToList(),
+                MessageSettings = model.MessageSettings.ToApiModel(),
+                MessageType = (NetworkMessageType?)model.MessageType,
+                Name = model.Name,
+                Priority = model.Priority,
+                PublishingInterval = model.PublishingInterval
             };
         }
 
@@ -2467,6 +2541,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new WriterGroupUpdateRequestModel {
+                BatchSize = model.BatchSize,
+                GenerationId = model.GenerationId,
+                HeaderLayoutUri = model.HeaderLayoutUri,
+                KeepAliveTime = model.KeepAliveTime,
+                LocaleIds = model.LocaleIds?.ToList(),
+                MessageSettings = model.MessageSettings.ToServiceModel(),
+                MessageType = (OpcUa.Publisher.Models.NetworkMessageType?)model.MessageType,
+                Name = model.Name,
+                Priority = model.Priority,
+                PublishingInterval = model.PublishingInterval
             };
         }
 
@@ -2480,6 +2564,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new PublisherOperationContextApiModel {
+                AuthorityId = model.AuthorityId,
+                Time = model.Time
             };
         }
 
@@ -2493,6 +2579,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new PublisherOperationContextModel {
+                AuthorityId = model.AuthorityId,
+                Time = model.Time
             };
         }
 
