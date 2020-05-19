@@ -16,7 +16,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Testing.Runtime {
     public class TestClientServicesConfig : IClientServicesConfig, IDisposable {
 
         /// <inheritdoc/>
-        public string PkiRootPath { get;}
+        public string PkiRootPath { get; }
         /// <inheritdoc/>
         public string ApplicationName => _opc.ApplicationName;
         /// <inheritdoc/>
@@ -41,6 +41,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Testing.Runtime {
         public CertificateStore RejectedCertificateStore => _opc.RejectedCertificateStore;
         /// <inheritdoc/>
         public bool RejectSha1SignedCertificates => _opc.RejectSha1SignedCertificates;
+        /// <inheritdoc/>
+        public bool AddAppCertToTrustedStore => _opc.AddAppCertToTrustedStore;
         /// <inheritdoc/>
         public CertificateStore TrustedIssuerCertificates => _opc.TrustedIssuerCertificates;
         /// <inheritdoc/>

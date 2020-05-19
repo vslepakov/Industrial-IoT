@@ -38,6 +38,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
         /// <param name="logger"></param>
         public DataFlowProcessingEngine(IMessageTrigger messageTrigger, IMessageEncoder encoder,
             IMessageSink messageSink, IEngineConfiguration engineConfiguration, ILogger logger) {
+            _config = engineConfiguration;
             _messageTrigger = messageTrigger;
             _messageSink = messageSink;
             _messageEncoder = encoder;
@@ -45,10 +46,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
 
             _messageTrigger.OnMessage += MessageTriggerMessageReceived;
 
-            if (engineConfiguration.DiagnosticsInterval.HasValue &&
-                engineConfiguration.DiagnosticsInterval > TimeSpan.Zero) {
-                _diagnosticsOutputTimer = new Timer(DiagnosticsOutputTimer_Elapsed, null, 0,
-                    (int)engineConfiguration.DiagnosticsInterval.Value.TotalMilliseconds);
+            if (_config.BatchSize.HasValue && _config.BatchSize.Value > 1) {
+                _dataSetMessageBufferSize = _config.BatchSize.Value;
             }
 
             if (engineConfiguration.BatchSize.HasValue &&
@@ -65,6 +64,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
         public void Dispose() {
             _messageTrigger.OnMessage -= MessageTriggerMessageReceived;
             _diagnosticsOutputTimer?.Dispose();
+            _batchTriggerIntervalTimer?.Dispose();
         }
 
         /// <inheritdoc/>
@@ -84,7 +84,18 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
                 }
 
                 IsRunning = true;
+                _diagnosticStart = DateTime.UtcNow;
+                if (_config.DiagnosticsInterval.HasValue && _config.DiagnosticsInterval > TimeSpan.Zero){
+                    _diagnosticsOutputTimer = new Timer(DiagnosticsOutputTimer_Elapsed, null,
+                        _config.DiagnosticsInterval.Value,
+                        _config.DiagnosticsInterval.Value);
+                }
 
+                if (_config.BatchTriggerInterval.HasValue && _config.BatchTriggerInterval > TimeSpan.Zero){
+                    _batchTriggerIntervalTimer = new Timer(BatchTriggerIntervalTimer_Elapsed, null,
+                        _config.BatchTriggerInterval.Value,
+                        _config.BatchTriggerInterval.Value);
+                }
                 _encodingBlock = new TransformManyBlock<DataSetMessageModel[], NetworkMessageModel>(
                     async input =>
                         (_dataSetMessageBufferSize == 1)
@@ -116,8 +127,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
                 _batchNetworkMessageBlock.LinkTo(_sinkBlock);
 
                 await _messageTrigger.RunAsync(cancellationToken);
-
-                IsRunning = false;
             }
             finally {
                 IsRunning = false;
@@ -134,22 +143,39 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
         /// </summary>
         /// <param name="state"></param>
         private void DiagnosticsOutputTimer_Elapsed(object state) {
+            var totalDuration = DateTime.UtcNow - _diagnosticStart;
+
             var sb = new StringBuilder();
             sb.AppendLine();
-            sb.AppendLine("   DIAGNOSTICS INFORMATION");
+            sb.AppendLine($"   DIAGNOSTICS INFORMATION for Engine:{Name}");
             sb.AppendLine("   =======================");
-            sb.AppendLine($"   # Messages invoked by the message trigger: {_messageTrigger.NumberOfInvokedMessages}");
-            sb.AppendLine($"   # Messages Sent to IoT Hub: {_messageSink.SentMessagesCount}");
+            sb.AppendLine($"   # Ingress data changes (from OPC)  : {_messageTrigger?.DataChangesCount}" +
+                $" #/s : {_messageTrigger?.DataChangesCount / totalDuration.TotalSeconds}");
+            sb.AppendLine($"   # Ingress value changes (from OPC) : {_messageTrigger?.ValueChangesCount}" +
+                $" #/s : {_messageTrigger?.ValueChangesCount / totalDuration.TotalSeconds}");
+            sb.AppendLine($"   # Ingress BatchBlock buffer count  : {_batchDataSetMessageBlock?.OutputCount}");
+            sb.AppendLine($"   # EncodingBlock input/output count : {_encodingBlock?.InputCount}/{_encodingBlock?.OutputCount}");
+            sb.AppendLine($"   # Outgress Batch Block buffer count: {_batchNetworkMessageBlock?.OutputCount}");
+            sb.AppendLine($"   # Outgress Synk input buffer count : {_sinkBlock?.InputCount}");
+            sb.AppendLine($"   # Outgress message count (IoT Hub) : {_messageSink.SentMessagesCount}" +
+                $" #/s : {_messageSink.SentMessagesCount / totalDuration.TotalSeconds}");
+            sb.AppendLine("   =======================");
             sb.AppendLine($"   # Number of connection retries since last error: {_messageTrigger.NumberOfConnectionRetries}");
-            sb.AppendLine($"   # EncodingBlock input/output count: {_encodingBlock?.InputCount}/{_encodingBlock?.OutputCount}");
-            sb.AppendLine($"   # DataSetMessageBatchBlock output count: {_batchDataSetMessageBlock?.OutputCount}");
-            sb.AppendLine($"   # SinkBlock input count: {_sinkBlock?.InputCount}");
             sb.AppendLine("   =======================");
             _logger.Information(sb.ToString());
-            kNumberOfInvokedMessages.Set(_messageTrigger.NumberOfInvokedMessages);
-            kSentMessagesCount.Set(_messageSink.SentMessagesCount);
+            kValueChangesCount.Set(_messageTrigger.ValueChangesCount);
+            kDataChangesCount.Set(_messageTrigger.DataChangesCount);
             kNumberOfConnectionRetries.Set(_messageTrigger.NumberOfConnectionRetries);
+            kSentMessagesCount.Set(_messageSink.SentMessagesCount);
             // TODO: Use structured logging!
+        }
+
+        /// <summary>
+        /// Batch trigger interval
+        /// </summary>
+        /// <param name="state"></param>
+        private void BatchTriggerIntervalTimer_Elapsed(object state) {
+            _batchDataSetMessageBlock.TriggerBatch();
         }
 
         /// <summary>
@@ -163,8 +189,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
 
         private readonly int _dataSetMessageBufferSize = 1;
         private readonly int _networkMessageBufferSize = 1;
+        private Timer _batchTriggerIntervalTimer;
         private readonly int _maxEncodedMessageSize = 256 * 1024;
-        private readonly Timer _diagnosticsOutputTimer;
+
+        private readonly IEngineConfiguration _config;
         private readonly IMessageSink _messageSink;
         private readonly IMessageEncoder _messageEncoder;
         private readonly IMessageTrigger _messageTrigger;
@@ -172,11 +200,19 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
 
         private BatchBlock<DataSetMessageModel> _batchDataSetMessageBlock;
         private BatchBlock<NetworkMessageModel> _batchNetworkMessageBlock;
+
+        private Timer _diagnosticsOutputTimer;
+        private DateTime _diagnosticStart = DateTime.UtcNow;
+
         private TransformManyBlock<DataSetMessageModel[], NetworkMessageModel> _encodingBlock;
         private ActionBlock<NetworkMessageModel[]> _sinkBlock;
-        private static readonly Gauge kNumberOfInvokedMessages = Metrics.CreateGauge("iiot_edge_publisher_messages_invoked", "invoke messages in trigger");
-        private static readonly Gauge kSentMessagesCount = Metrics.CreateGauge("iiot_edge_publisher_messages_sink", "messages sent to sink");
-        private static readonly Gauge kNumberOfConnectionRetries = Metrics.CreateGauge("iiot_edge_publisher_connection_retries", "retries in trigger");
-
+        private static readonly Gauge kValueChangesCount = Metrics.CreateGauge(
+            "iiot_edge_publisher_value_changes", "invoke value changes in trigger");
+        private static readonly Gauge kDataChangesCount = Metrics.CreateGauge(
+            "iiot_edge_publisher_data_changes", "invoke data changes in trigger");
+        private static readonly Gauge kSentMessagesCount = Metrics.CreateGauge(
+            "iiot_edge_publisher_messages_sink", "messages sent to sink");
+        private static readonly Gauge kNumberOfConnectionRetries = Metrics.CreateGauge(
+            "iiot_edge_publisher_connection_retries", "retries in trigger");
     }
 }

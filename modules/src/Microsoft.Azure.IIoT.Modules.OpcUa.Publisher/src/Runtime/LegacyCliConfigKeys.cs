@@ -79,7 +79,12 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
         public const string BatchSize = "BatchSize";
 
         /// <summary>
-        /// Key for the max (IoT Hub D2C)message size
+        /// Key for the batch size of the batching buffer
+        /// </summary>
+        public const string BatchTriggerInterval = "BatchTriggerInterval";
+
+        /// <summary>
+        /// Key for the max (IoT Hub D2C)message size 
         /// </summary>
         public const string MaxMessageSize = "MaxMessageSize";
 

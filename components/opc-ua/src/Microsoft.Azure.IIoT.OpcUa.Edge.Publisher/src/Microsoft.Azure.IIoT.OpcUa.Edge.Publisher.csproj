@@ -4,7 +4,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.Threading.Tasks.Dataflow" Version="4.11.0" />
+    <PackageReference Include="System.Threading.Tasks.Dataflow" Version="4.11.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\components\opc-ua\src\Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs\src\Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs.csproj" />
