@@ -8,6 +8,7 @@ namespace Microsoft.Azure.IIoT.Modules.Discovery {
     using Microsoft.Azure.IIoT.Modules.Discovery.Controllers;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Services;
     using Microsoft.Azure.IIoT.OpcUa.Edge.Discovery.Services;
+    using Microsoft.Azure.IIoT.Module;
     using Microsoft.Azure.IIoT.Module.Framework;
     using Microsoft.Azure.IIoT.Module.Framework.Services;
     using Microsoft.Azure.IIoT.Module.Framework.Client;
@@ -81,6 +82,7 @@ namespace Microsoft.Azure.IIoT.Modules.Discovery {
                 using (var hostScope = ConfigureContainer(_config)) {
                     _reset = new TaskCompletionSource<bool>();
                     var module = hostScope.Resolve<IModuleHost>();
+                    var identity = hostScope.Resolve<IIdentity>();
                     var logger = hostScope.Resolve<ILogger>();
                     var config = new Config(_config);
                     IMetricServer server = null;
@@ -93,7 +95,8 @@ namespace Microsoft.Azure.IIoT.Modules.Discovery {
                         if (hostScope.TryResolve(out server)) {
                             server.Start();
                         }
-                        kDiscoveryModuleStart.Inc();
+                        kDiscoveryModuleStart.WithLabels(
+                            identity.DeviceId ?? "", identity.ModuleId ?? "").Inc();
                         OnRunning?.Invoke(this, true);
                         await Task.WhenAny(_reset.Task, _exit.Task);
                         if (_exit.Task.IsCompleted) {
@@ -111,7 +114,8 @@ namespace Microsoft.Azure.IIoT.Modules.Discovery {
                             await server.StopAsync();
                         }
                         await module.StopAsync();
-                        kDiscoveryModuleStart.Set(0);
+                        kDiscoveryModuleStart.WithLabels(
+                            identity.DeviceId ?? "", identity.ModuleId ?? "").Set(0);
                         OnRunning?.Invoke(this, false);
                     }
                 }
@@ -171,6 +175,9 @@ namespace Microsoft.Azure.IIoT.Modules.Discovery {
         private TaskCompletionSource<bool> _reset;
         private int _exitCode;
         private static readonly Gauge kDiscoveryModuleStart = Metrics
-            .CreateGauge("iiot_edge_discovery_module_start", "discovery module started");
+            .CreateGauge("iiot_edge_discovery_module_start", "discovery module started",
+                new GaugeConfiguration {
+                    LabelNames = new[] { "deviceid", "module" }
+                });
     }
 }

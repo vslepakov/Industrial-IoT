@@ -196,7 +196,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
         /// <summary>
         /// The AgentConfigModel instance that is based on specified legacy command line arguments.
         /// </summary>
-        public AgentConfigModel Config { get; }
+        public PublisherConfigModel Config { get; }
 
         /// <summary>
         /// OnConfigUpdated-Event - never called as command line arguments don't change while runtime.
@@ -281,8 +281,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
             };
         }
 
-        private AgentConfigModel ToAgentConfigModel() {
-            return new AgentConfigModel {
+        private PublisherConfigModel ToAgentConfigModel() {
+            return new PublisherConfigModel {
                 AgentId = "StandalonePublisher",
                 Capabilities = new Dictionary<string, string>(),
                 HeartbeatInterval = TimeSpan.FromSeconds(30), // heartbeat is needed even though in standalone mode to be notified about config file changes

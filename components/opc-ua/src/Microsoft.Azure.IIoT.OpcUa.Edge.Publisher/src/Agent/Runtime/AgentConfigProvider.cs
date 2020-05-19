@@ -15,12 +15,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Agent {
         /// Create provider
         /// </summary>
         /// <param name="config"></param>
-        public AgentConfigProvider(AgentConfigModel config) {
+        public AgentConfigProvider(PublisherConfigModel config) {
             Config = config;
         }
 
         /// <inheritdoc/>
-        public AgentConfigModel Config { get; }
+        public PublisherConfigModel Config { get; }
 
         /// <inheritdoc/>
 #pragma warning disable 0067

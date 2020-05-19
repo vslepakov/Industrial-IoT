@@ -6,6 +6,7 @@
 namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
     using Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime;
     using Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controller;
+    using Microsoft.Azure.IIoT.Module;
     using Microsoft.Azure.IIoT.Module.Framework;
     using Microsoft.Azure.IIoT.Module.Framework.Client;
     using Microsoft.Azure.IIoT.Module.Framework.Hosting;
@@ -19,7 +20,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Agent;
     using Microsoft.Azure.IIoT.Hub;
     using Microsoft.Azure.IIoT.Serializers;
-    using Microsoft.Azure.IIoT.Module;
     using Microsoft.Extensions.Configuration;
     using Autofac;
     using Serilog;
@@ -86,6 +86,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                     var module = hostScope.Resolve<IModuleHost>();
                     var events = hostScope.Resolve<IEventEmitter>();
                     var workerSupervisor = hostScope.Resolve<IWorkerSupervisor>();
+                    var identity = hostScope.Resolve<IIdentity>();
                     var logger = hostScope.Resolve<ILogger>();
                     var config = new Config(_config);
                     IMetricServer server = null;
@@ -98,7 +99,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                         if (hostScope.TryResolve(out server)) {
                             server.Start();
                         }
-                        kPublisherModuleStart.Inc();
+                        kPublisherModuleStart.WithLabels(
+                            identity.DeviceId ?? "", identity.ModuleId ?? "").Inc();
                         await workerSupervisor.StartAsync();
                         OnRunning?.Invoke(this, true);
                         await Task.WhenAny(_reset.Task, _exit.Task);
@@ -113,7 +115,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                         logger.Error(ex, "Error during module execution - restarting!");
                     }
                     finally {
-                        kPublisherModuleStart.Set(0);
+                        kPublisherModuleStart.WithLabels(
+                            identity.DeviceId ?? "", identity.ModuleId ?? "").Set(0);
                         await workerSupervisor.StopAsync();
                         if (server != null) {
                             await server.StopAsync();
@@ -210,6 +213,9 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
         private TaskCompletionSource<bool> _reset;
 
         private static readonly Gauge kPublisherModuleStart = Metrics
-            .CreateGauge("iiot_edge_publisher_module_start", "publisher module started");
+            .CreateGauge("iiot_edge_publisher_module_start", "publisher module started",
+                new GaugeConfiguration {
+                    LabelNames = new[] { "deviceid", "module" }
+                });
     }
 }

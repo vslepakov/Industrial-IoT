@@ -65,7 +65,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controller {
 
         /// <inheritdoc/>
         [Ignore]
-        public AgentConfigModel Config {
+        public PublisherConfigModel Config {
             get {
                 var config = _config.Clone();
                 config.AgentId = _identity.DeviceId + "_" + _identity.ModuleId;
@@ -105,10 +105,10 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controller {
         public ConfigurationSettingsController(ILogger logger, IIdentity identity) {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _identity = identity ?? throw new ArgumentNullException(nameof(identity));
-            _config = new AgentConfigModel();
+            _config = new PublisherConfigModel();
         }
 
-        private readonly AgentConfigModel _config;
+        private readonly PublisherConfigModel _config;
         private readonly ILogger _logger;
         private readonly IIdentity _identity;
     }

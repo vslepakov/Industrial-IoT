@@ -195,7 +195,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine {
 
         private readonly FileSystemWatcher _fileSystemWatcher;
         private readonly LegacyCliModel _legacyCliModel;
-        private readonly AgentConfigModel _agentConfig;
+        private readonly PublisherConfigModel _agentConfig;
         private readonly IIdentity _identity;
         private readonly ILogger _logger;
 

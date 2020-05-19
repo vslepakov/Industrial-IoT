@@ -8,9 +8,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
     using System.Collections.Generic;
 
     /// <summary>
-    /// Default Agent configuration
+    /// Default Publisher configuration
     /// </summary>
-    public class AgentConfigModel {
+    public class PublisherConfigModel {
 
         /// <summary>
         /// Agent identifier

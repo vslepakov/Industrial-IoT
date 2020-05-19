@@ -13,6 +13,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin {
     using Microsoft.Azure.IIoT.OpcUa.Edge.Twin.Services;
     using Microsoft.Azure.IIoT.OpcUa.Protocol;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Services;
+    using Microsoft.Azure.IIoT.Module;
     using Microsoft.Azure.IIoT.Module.Framework;
     using Microsoft.Azure.IIoT.Module.Framework.Services;
     using Microsoft.Azure.IIoT.Module.Framework.Client;
@@ -87,6 +88,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin {
                 using (var hostScope = ConfigureContainer(_config)) {
                     _reset = new TaskCompletionSource<bool>();
                     var module = hostScope.Resolve<IModuleHost>();
+                    var identity = hostScope.Resolve<IIdentity>();
                     var logger = hostScope.Resolve<ILogger>();
                     var config = new Config(_config);
                     IMetricServer server = null;
@@ -99,7 +101,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin {
                         if (hostScope.TryResolve(out server)) {
                             server.Start();
                         }
-                        kTwinModuleStart.Inc();
+                        kTwinModuleStart.WithLabels(
+                            identity.DeviceId ?? "", identity.ModuleId ?? "").Inc();
                         OnRunning?.Invoke(this, true);
                         await Task.WhenAny(_reset.Task, _exit.Task);
                         if (_exit.Task.IsCompleted) {
@@ -113,11 +116,12 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin {
                         logger.Error(ex, "Error during module execution - restarting!");
                     }
                     finally {
-                        kTwinModuleStart.Set(0);
                         if (server != null) {
                             await server.StopAsync();
                         }
                         await module.StopAsync();
+                        kTwinModuleStart.WithLabels(
+                            identity.DeviceId ?? "", identity.ModuleId ?? "").Set(0);
                         OnRunning?.Invoke(this, false);
                     }
                 }
@@ -255,6 +259,9 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin {
         private TaskCompletionSource<bool> _reset;
         private int _exitCode;
         private static readonly Gauge kTwinModuleStart = Metrics
-            .CreateGauge("iiot_edge_twin_module_start", "twin module started");
+            .CreateGauge("iiot_edge_twin_module_start", "twin module started",
+                new GaugeConfiguration {
+                    LabelNames = new[] { "deviceid", "module" }
+                });
     }
 }

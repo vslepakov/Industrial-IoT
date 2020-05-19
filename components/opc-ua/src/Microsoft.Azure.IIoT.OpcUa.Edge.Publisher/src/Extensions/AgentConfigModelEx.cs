@@ -16,11 +16,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
-        public static AgentConfigModel Clone(this AgentConfigModel model) {
+        public static PublisherConfigModel Clone(this PublisherConfigModel model) {
             if (model == null) {
                 return null;
             }
-            return new AgentConfigModel {
+            return new PublisherConfigModel {
                 AgentId = model.AgentId,
                 Capabilities = model.Capabilities?
                     .ToDictionary(k => k.Key, v => v.Value),

@@ -8,6 +8,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Deploy {
     using Microsoft.Azure.IIoT.Diagnostics;
     using Microsoft.Azure.IIoT.Hub;
     using Microsoft.Azure.IIoT.Hub.Models;
+    using Microsoft.Azure.IIoT.Hub.Services;
     using Microsoft.Azure.IIoT.Serializers;
     using Serilog;
     using System;
@@ -45,7 +46,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Deploy {
                     ModulesContent = CreateLayeredDeployment()
                 },
                 SchemaVersion = kDefaultSchemaVersion,
-                TargetCondition = $"tags.__type__ = '{IdentityType.Gateway}'",
+                TargetCondition = IoTHubEdgeBaseDeployment.TargetCondition,
                 Priority = 1
             }, true);
         }

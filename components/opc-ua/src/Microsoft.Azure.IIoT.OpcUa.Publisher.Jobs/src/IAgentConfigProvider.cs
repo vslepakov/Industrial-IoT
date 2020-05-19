@@ -23,7 +23,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher {
         /// <summary>
         /// Agent Configuration
         /// </summary>
-        AgentConfigModel Config { get; }
+        PublisherConfigModel Config { get; }
 
         /// <summary>
         /// Configuration change events
