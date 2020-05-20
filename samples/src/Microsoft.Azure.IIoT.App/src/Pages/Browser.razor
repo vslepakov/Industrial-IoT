@@ -125,8 +125,7 @@
             else if (node.NodeClass == NodeClass.Method)
             {
                 <td>
-                    @{_drawerType = drawer.Action;}
-                    <a href="javascript: void(0)" @onclick="@(() => OpenDrawer(node))">
+                    <a href="javascript: void(0)" @onclick="@(() => OpenDrawer(node, drawer.Action))">
                         @node.NodeClass
                     </a>
                 </td>
@@ -140,7 +139,7 @@
             {
                 <td>
                     <div class="td-fixed">
-                        <a href="javascript: void(0)" @onclick="@(() => OpenDrawer(node))">
+                        <a href="javascript: void(0)" @onclick="@(() => OpenDrawer(node, drawer.Action))">
                             @{string outputValue = $"{node.Value}";}
                             @{string outputType = $"({node.DataType})";}
                             @{string outputStatus = $"({node.Status} -";}
@@ -166,16 +165,15 @@
                     @output
                 </td>
                 <td>
-                    @{_drawerType = drawer.Publisher;}
                     @if (node.Publishing == true && node.PublishedItem != null)
                     {
-                        <label>Sampling:</label><a href="javascript: void(0)" @onclick="@(() => OpenDrawer(node))">
+                        <label>Sampling:</label><a href="javascript: void(0)" @onclick="@(() => OpenDrawer(node, drawer.Publisher))">
                             @(node.PublishedItem.SamplingInterval?.TotalMilliseconds.ToString() ?? "1000") ms<br />
                         </a>
-                        <label>Publishing: </label><a href="javascript: void(0)" @onclick="@(() => OpenDrawer(node))">
+                        <label>Publishing: </label><a href="javascript: void(0)" @onclick="@(() => OpenDrawer(node, drawer.Publisher))">
                             @(node.PublishedItem.PublishingInterval?.TotalMilliseconds.ToString() ?? "1000") ms<br />
                         </a>
-                        <label>HeartBeat: </label><a href="jpavascript: void(0)" @onclick="@(() => OpenDrawer(node))">
+                        <label>HeartBeat: </label><a href="jpavascript: void(0)" @onclick="@(() => OpenDrawer(node, drawer.Publisher))">
                             @(node.PublishedItem.HeartbeatInterval == null ? "-" : node.PublishedItem.HeartbeatInterval?.TotalSeconds.ToString() + " sec")
                             <br />
                         </a>
@@ -453,10 +451,11 @@
     /// Open the Drawer
     /// </summary>
     /// <param name="node"></param>
-    private void OpenDrawer(ListNode node)
+    private void OpenDrawer(ListNode node, drawer type)
     {
         IsOpened = true;
         NodeData = node;
+        _drawerType = type;
     }
 
     /// <summary>

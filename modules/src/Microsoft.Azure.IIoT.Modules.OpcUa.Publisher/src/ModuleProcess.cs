@@ -19,6 +19,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
     using Microsoft.Azure.IIoT.OpcUa.Publisher;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Agent;
     using Microsoft.Azure.IIoT.Hub;
+    using Microsoft.Azure.IIoT.Utils;
     using Microsoft.Azure.IIoT.Serializers;
     using Microsoft.Extensions.Configuration;
     using Autofac;
@@ -57,17 +58,22 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
             _reset.TrySetResult(true);
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public void Exit(int exitCode) {
+
             // Shut down gracefully.
             _exitCode = exitCode;
             _exit.TrySetResult(true);
 
-            // Set timer to kill the entire process after a minute.
+            if (Host.IsContainer) {
+                // Set timer to kill the entire process after 5 minutes.
 #pragma warning disable IDE0067 // Dispose objects before losing scope
-            var _ = new Timer(o => Process.GetCurrentProcess().Kill(), null,
-                TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+                var _ = new Timer(o => {
+                    Log.Logger.Fatal("Killing non responsive module process!");
+                    Process.GetCurrentProcess().Kill();
+                }, null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
 #pragma warning restore IDE0067 // Dispose objects before losing scope
+            }
         }
 
         /// <summary>
@@ -91,11 +97,9 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                     var config = new Config(_config);
                     IMetricServer server = null;
                     try {
-                        var product = "OpcPublisher_" +
-                            GetType().Assembly.GetReleaseVersion().ToString();
-                        // Start module
+                        var version = GetType().Assembly.GetReleaseVersion().ToString();
                         await module.StartAsync(IdentityType.Publisher, SiteId,
-                            product, this);
+                            "OpcPublisher", version, this);
                         if (hostScope.TryResolve(out server)) {
                             server.Start();
                         }
