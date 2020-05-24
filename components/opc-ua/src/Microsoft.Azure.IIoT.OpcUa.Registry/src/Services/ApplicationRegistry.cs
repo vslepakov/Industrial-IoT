@@ -411,19 +411,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                     _logger.Error(ex, "Exception during update.");
                 }
             }
-
-            var log = added != 0 || removed != 0 || updated != 0;
-#if DEBUG
-            log = true;
-#endif
-            if (log) {
-                _logger.Information("... processed discovery results from {discovererId}: " +
-                    "{added} applications added, {updated} updated, {removed} disabled, and " +
-                    "{unchanged} unchanged.", discovererId, added, updated, removed, unchanged);
-                kAppsAdded.Set(added);
-                kAppsUpdated.Set(updated);
-                kAppsUnchanged.Set(unchanged);
-            }
+            _logger.Information("... processed discovery results from {discovererId}: " +
+                "{added} applications added, {updated} updated, {removed} disabled, and " +
+                "{unchanged} unchanged.", discovererId, added, updated, removed, unchanged);
+            kAppsAdded.Set(added);
+            kAppsUpdated.Set(updated);
+            kAppsUnchanged.Set(unchanged);
         }
 
         private readonly IApplicationRepository _database;
