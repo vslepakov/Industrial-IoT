@@ -118,20 +118,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                 // Should not happen
                 throw new ArgumentNullException(nameof(dataSetWriter.WriterGroupId));
             }
-            try {
-                await _iothub.PatchAsync(new DeviceTwinModel {
-                    Id = WriterGroupRegistrationEx.ToDeviceId(dataSetWriter.WriterGroupId),
-                    Properties = new TwinPropertiesModel {
-                        Desired = new Dictionary<string, VariantValue> {
-                            [IdentityType.DataSet + "_" + dataSetWriter.DataSetWriterId] = null
-                        }
-                    }
-                });
-            }
-            catch (Exception ex) {
-                // Retry create/update
-                _logger.Error(ex, "Removing writer from writerGroup failed...");
-            }
+            await PatchTwinAsync(WriterGroupRegistrationEx.ToDeviceId(dataSetWriter.WriterGroupId),
+                dataSetWriter.DataSetWriterId, true);
         }
 
         /// <inheritdoc/>
@@ -174,7 +162,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             }
             catch (Exception ex) {
                 // Retry create/update
-                _logger.Error(ex, "Adding or updating writer in writerGroup failed...");
+                _logger.Error(ex, "Updating writer table in writerGroup failed...");
             }
         }
 
