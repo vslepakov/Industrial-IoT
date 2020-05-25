@@ -368,10 +368,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
 
         /// <inheritdoc/>
         public async Task<PublishedDataSetVariableListModel> QueryDataSetVariablesAsync(
-            string dataSetWriterId, PublishedDataSetVariableQueryModel query,
+            string dataSetWriterId, PublishedDataSetVariableQueryModel query, int? pageSize,
             CancellationToken ct) {
             return await _dataSets.QueryDataSetVariablesAsync(dataSetWriterId,
-                query, null, null, ct);
+                query, null, pageSize, ct);
         }
 
         /// <inheritdoc/>
@@ -826,7 +826,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                 return true;
             }, ct);
             await _writerEvents.NotifyAllAsync(
-                l => l.OnDataSetWriterRemovedAsync(context, dataSetWriterId, writer));
+                l => l.OnDataSetWriterRemovedAsync(context, writer));
         }
 
         /// <inheritdoc/>

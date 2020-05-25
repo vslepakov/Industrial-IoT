@@ -30,8 +30,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default {
         }
 
         /// <inheritdoc/>
-        public async Task<PublishedDataSetEventsModel> AddEventDataSetAsync(string dataSetWriterId, PublishedDataSetEventsModel item,
-            CancellationToken ct) {
+        public async Task<PublishedDataSetEventsModel> AddEventDataSetAsync(string dataSetWriterId,
+            PublishedDataSetEventsModel item, CancellationToken ct) {
             if (item == null) {
                 throw new ArgumentNullException(nameof(item));
             }
@@ -140,8 +140,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default {
         }
 
         /// <inheritdoc/>
-        public async Task<PublishedDataSetVariableModel> AddDataSetVariableAsync(string dataSetWriterId, PublishedDataSetVariableModel item,
-            CancellationToken ct) {
+        public async Task<PublishedDataSetVariableModel> AddDataSetVariableAsync(string dataSetWriterId,
+            PublishedDataSetVariableModel item, CancellationToken ct) {
             if (string.IsNullOrEmpty(dataSetWriterId)) {
                 throw new ArgumentNullException(nameof(dataSetWriterId));
             }

@@ -7,7 +7,9 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin {
     using Microsoft.Azure.IIoT.Services.OpcUa.Twin.Runtime;
     using Microsoft.Azure.IIoT.Services.OpcUa.Twin.Auth;
     using Microsoft.Azure.IIoT.OpcUa.Twin.Deploy;
+    using Microsoft.Azure.IIoT.OpcUa.Twin.Clients;
     using Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients;
+    using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients;
     using Microsoft.Azure.IIoT.AspNetCore.Auth;
     using Microsoft.Azure.IIoT.AspNetCore.Auth.Clients;
     using Microsoft.Azure.IIoT.AspNetCore.Cors;
@@ -200,6 +202,14 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin {
                 .AsImplementedInterfaces();
             builder.RegisterType<TwinModuleSupervisorClient>()
                 .AsImplementedInterfaces();
+
+            // Publish services publisher adapter
+            builder.RegisterType<PublisherAdapter>()
+                .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<PublishServicesApiAdapter>()
+                .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<PublisherServiceClient>()
+                .AsImplementedInterfaces().SingleInstance();
 
             // Edge deployment
             builder.RegisterType<IoTHubConfigurationClient>()

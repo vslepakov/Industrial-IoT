@@ -6,8 +6,8 @@
 namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
     using Microsoft.Azure.IIoT.OpcUa.Core.Models;
     using Microsoft.Azure.IIoT.Hub;
-    using System.Runtime.Serialization;
     using Microsoft.Azure.IIoT.Serializers;
+    using System.Runtime.Serialization;
     using System.Collections.Generic;
 
     /// <summary>
@@ -188,7 +188,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 return false;
             }
             if (!AuthenticationMethods.DecodeAsList().SetEqualsSafe(
-                    AuthenticationMethods.DecodeAsList(), VariantValue.DeepEquals)) {
+                    registration.AuthenticationMethods.DecodeAsList(),
+                        VariantValue.DeepEquals)) {
                 return false;
             }
             return true;

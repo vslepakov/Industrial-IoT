@@ -41,7 +41,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Events.v2 {
                 case DataSetWriterEventType.Removed:
                     await Task.WhenAll(_listeners
                         .Select(l => l.OnDataSetWriterRemovedAsync(
-                            eventData.Context, eventData.Id, eventData.DataSetWriter)
+                            eventData.Context, eventData.DataSetWriter)
                         .ContinueWith(t => Task.CompletedTask)));
                     break;
             }

@@ -36,10 +36,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher {
         /// dataset items were also deleted.
         /// </summary>
         /// <param name="context"></param>
-        /// <param name="dataSetWriterId"></param>
         /// <param name="dataSetWriter"></param>
         /// <returns></returns>
         Task OnDataSetWriterRemovedAsync(PublisherOperationContextModel context,
-            string dataSetWriterId, DataSetWriterInfoModel dataSetWriter = null);
+            DataSetWriterInfoModel dataSetWriter);
     }
 }

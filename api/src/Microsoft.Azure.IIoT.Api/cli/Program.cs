@@ -133,7 +133,6 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
             _twin = _scope.Resolve<ITwinServiceApi>();
             _registry = _scope.Resolve<IRegistryServiceApi>();
             _history = _scope.Resolve<IHistoryServiceApi>();
-            _publish = _scope.Resolve<IPublishServiceApi>();
             _publisher = _scope.Resolve<IPublisherServiceApi>();
             _vault = _scope.Resolve<IVaultServiceApi>();
             _jobs = _scope.Resolve<IPublisherJobServiceApi>();
@@ -867,7 +866,7 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
         /// Publish node
         /// </summary>
         private async Task PublishAsync(CliOptions options) {
-            var result = await _publish.NodePublishStartAsync(
+            var result = await _twin.NodePublishStartAsync(
                 GetEndpointId(options),
                 new PublishStartRequestApiModel {
                     Item = new PublishListItemApiModel {
@@ -903,7 +902,7 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
         /// Unpublish node
         /// </summary>
         private async Task UnpublishAsync(CliOptions options) {
-            var result = await _publish.NodePublishStopAsync(
+            var result = await _twin.NodePublishStopAsync(
                 GetEndpointId(options),
                 new PublishStopRequestApiModel {
                     NodeId = GetNodeId(options)
@@ -918,12 +917,12 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
         /// </summary>
         private async Task ListPublishedNodesAsync(CliOptions options) {
             if (options.IsSet("-A", "--all")) {
-                var result = await _publish.NodePublishListAllAsync(GetEndpointId(options));
+                var result = await _twin.NodePublishListAllAsync(GetEndpointId(options));
                 PrintResult(options, result);
                 Console.WriteLine($"{result.Count()} item(s) found...");
             }
             else {
-                var result = await _publish.NodePublishListAsync(GetEndpointId(options),
+                var result = await _twin.NodePublishListAsync(GetEndpointId(options),
                     options.GetValueOrDefault<string>("-C", "--continuation", null));
                 PrintResult(options, result);
             }
@@ -3583,7 +3582,6 @@ Commands and Options
 
         private readonly ILifetimeScope _scope;
         private readonly ITwinServiceApi _twin;
-        private readonly IPublishServiceApi _publish;
         private readonly IPublisherJobServiceApi _jobs;
         private readonly IRegistryServiceApi _registry;
         private readonly IPublisherServiceApi _publisher;

@@ -140,11 +140,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher {
         /// </summary>
         /// <param name="dataSetWriterId"></param>
         /// <param name="query"></param>
+        /// <param name="pageSize"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
         Task<PublishedDataSetVariableListModel> QueryDataSetVariablesAsync(
             string dataSetWriterId, PublishedDataSetVariableQueryModel query,
-            CancellationToken ct = default);
+            int? pageSize = null, CancellationToken ct = default);
 
         /// <summary>
         /// Unregister dataset variable and remove from dataset.

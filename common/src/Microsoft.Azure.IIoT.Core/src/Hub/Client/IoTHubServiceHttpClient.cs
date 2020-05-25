@@ -56,7 +56,7 @@ namespace Microsoft.Azure.IIoT.Hub.Client {
         }
 
         /// <inheritdoc/>
-        public Task<DeviceTwinModel> CreateAsync(DeviceTwinModel twin, bool force,
+        public Task<DeviceTwinModel> CreateOrUpdateAsync(DeviceTwinModel twin, bool force,
             CancellationToken ct) {
             if (twin == null) {
                 throw new ArgumentNullException(nameof(twin));

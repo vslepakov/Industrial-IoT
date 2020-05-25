@@ -196,6 +196,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
 
                 DeviceId = twin.Id,
                 Etag = twin.Etag,
+                Version = null,
                 Connected = twin.IsConnected() ?? false,
 
                 // Tags

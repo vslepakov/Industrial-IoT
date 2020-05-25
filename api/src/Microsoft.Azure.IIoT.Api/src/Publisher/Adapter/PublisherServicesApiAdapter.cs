@@ -3,7 +3,7 @@
 //  Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher {
+namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients {
     using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
     using Microsoft.Azure.IIoT.OpcUa.Publisher;
@@ -109,10 +109,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher {
 
         /// <inheritdoc/>
         public async Task<PublishedDataSetVariableListModel> QueryDataSetVariablesAsync(
-            string dataSetWriterId, PublishedDataSetVariableQueryModel query,
+            string dataSetWriterId, PublishedDataSetVariableQueryModel query, int? pageSize,
             CancellationToken ct) {
             var result = await _client.QueryDataSetVariablesAsync(dataSetWriterId,
-                query.ToApiModel(), ct);
+                query.ToApiModel(), pageSize, ct);
             return result.ToServiceModel();
         }
 

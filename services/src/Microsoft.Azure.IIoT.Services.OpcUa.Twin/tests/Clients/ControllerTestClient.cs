@@ -124,19 +124,39 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.Controllers.Test {
         }
 
         /// <inheritdoc/>
-        public Task<string> GetServiceStatusAsync(CancellationToken ct) {
-            return Task.FromException<string>(new NotImplementedException());
-        }
-
-        /// <inheritdoc/>
         public Task<BrowsePathResponseApiModel> NodeBrowsePathAsync(string endpointId,
             BrowsePathRequestApiModel content, CancellationToken ct) {
             return Task.FromException<BrowsePathResponseApiModel>(new NotImplementedException());
         }
 
         public Task<ModelUploadStartResponseApiModel> ModelUploadStartAsync(string endpointId,
-            ModelUploadStartRequestApiModel content, CancellationToken ct = default) {
+            ModelUploadStartRequestApiModel content, CancellationToken ct) {
             return Task.FromException<ModelUploadStartResponseApiModel>(new NotImplementedException());
+        }
+
+        public Task<PublishStartResponseApiModel> NodePublishStartAsync(string endpointId,
+            PublishStartRequestApiModel request, CancellationToken ct) {
+            return Task.FromException<PublishStartResponseApiModel>(new NotImplementedException());
+        }
+
+        public Task<PublishStopResponseApiModel> NodePublishStopAsync(string endpointId,
+            PublishStopRequestApiModel request, CancellationToken ct) {
+            return Task.FromException<PublishStopResponseApiModel>(new NotImplementedException());
+        }
+
+        public Task<PublishBulkResponseApiModel> NodePublishBulkAsync(string endpointId,
+            PublishBulkRequestApiModel request, CancellationToken ct) {
+            return Task.FromException<PublishBulkResponseApiModel>(new NotImplementedException());
+        }
+
+        public Task<PublishListResponseApiModel> NodePublishListAsync(string endpointId,
+            PublishListRequestApiModel request, CancellationToken ct) {
+            return Task.FromException<PublishListResponseApiModel>(new NotImplementedException());
+        }
+
+        /// <inheritdoc/>
+        public Task<string> GetServiceStatusAsync(CancellationToken ct) {
+            return Task.FromException<string>(new NotImplementedException());
         }
 
         private readonly IHttpClient _httpClient;

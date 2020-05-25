@@ -123,7 +123,7 @@ namespace Microsoft.Azure.IIoT.Hub.Mock {
         }
 
         /// <inheritdoc/>
-        public Task<DeviceTwinModel> CreateAsync(DeviceTwinModel twin, bool force,
+        public Task<DeviceTwinModel> CreateOrUpdateAsync(DeviceTwinModel twin, bool force,
             CancellationToken ct) {
             lock (_lock) {
                 var model = GetModel(twin.Id, twin.ModuleId);

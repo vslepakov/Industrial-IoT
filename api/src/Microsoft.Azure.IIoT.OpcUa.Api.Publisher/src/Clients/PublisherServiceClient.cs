@@ -13,7 +13,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients {
     using System.Threading;
 
     /// <summary>
-    /// Implementation of twin service api.
+    /// Implementation of publisher configuration service api.
     /// </summary>
     public sealed class PublisherServiceClient : IPublisherServiceApi {
 
@@ -60,152 +60,378 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients {
         }
 
         /// <inheritdoc/>
-        public Task<DataSetWriterAddResponseApiModel> AddDataSetWriterAsync(
-            DataSetWriterAddRequestApiModel request, CancellationToken ct) {
-            throw new NotImplementedException();
+        public async Task<DataSetWriterAddResponseApiModel> AddDataSetWriterAsync(
+            DataSetWriterAddRequestApiModel content, CancellationToken ct) {
+            if (content == null) {
+                throw new ArgumentNullException(nameof(content));
+            }
+            var request = _httpClient.NewRequest($"{_serviceUri}/v2/writers", Resource.Platform);
+            _serializer.SerializeToRequest(request, content);
+            var response = await _httpClient.PutAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<DataSetWriterAddResponseApiModel>(response);
         }
 
         /// <inheritdoc/>
-        public Task<DataSetWriterApiModel> GetDataSetWriterAsync(string dataSetWriterId,
+        public async Task<DataSetWriterApiModel> GetDataSetWriterAsync(string dataSetWriterId,
             CancellationToken ct) {
-            throw new NotImplementedException();
+            if (string.IsNullOrEmpty(dataSetWriterId)) {
+                throw new ArgumentNullException(nameof(dataSetWriterId));
+            }
+            var request = _httpClient.NewRequest($"{_serviceUri}/v2/writers/{dataSetWriterId}",
+                Resource.Platform);
+            _serializer.SetAcceptHeaders(request);
+            var response = await _httpClient.GetAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<DataSetWriterApiModel>(response);
         }
 
         /// <inheritdoc/>
-        public Task UpdateDataSetWriterAsync(string dataSetWriterId,
-            DataSetWriterUpdateRequestApiModel request, CancellationToken ct) {
-            throw new NotImplementedException();
+        public async Task UpdateDataSetWriterAsync(string dataSetWriterId,
+            DataSetWriterUpdateRequestApiModel content, CancellationToken ct) {
+            if (string.IsNullOrEmpty(dataSetWriterId)) {
+                throw new ArgumentNullException(nameof(dataSetWriterId));
+            }
+            if (content == null) {
+                throw new ArgumentNullException(nameof(content));
+            }
+            var request = _httpClient.NewRequest($"{_serviceUri}/v2/writers/{dataSetWriterId}",
+                Resource.Platform);
+            _serializer.SerializeToRequest(request, content);
+            var response = await _httpClient.PatchAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
         }
 
         /// <inheritdoc/>
-        public Task<DataSetAddEventResponseApiModel> AddEventDataSetAsync(string dataSetWriterId,
-            DataSetAddEventRequestApiModel request, CancellationToken ct) {
-            throw new NotImplementedException();
+        public async Task<DataSetAddEventResponseApiModel> AddEventDataSetAsync(
+            string dataSetWriterId, DataSetAddEventRequestApiModel content, CancellationToken ct) {
+            if (content == null) {
+                throw new ArgumentNullException(nameof(content));
+            }
+            var request = _httpClient.NewRequest($"{_serviceUri}/v2/writers/{dataSetWriterId}/event",
+                Resource.Platform);
+            _serializer.SerializeToRequest(request, content);
+            var response = await _httpClient.PutAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<DataSetAddEventResponseApiModel>(response);
         }
 
         /// <inheritdoc/>
-        public Task<PublishedDataSetEventsApiModel> GetEventDataSetAsync(string dataSetWriterId,
+        public async Task<PublishedDataSetEventsApiModel> GetEventDataSetAsync(
+            string dataSetWriterId, CancellationToken ct) {
+            if (string.IsNullOrEmpty(dataSetWriterId)) {
+                throw new ArgumentNullException(nameof(dataSetWriterId));
+            }
+            var request = _httpClient.NewRequest($"{_serviceUri}/v2/writers/{dataSetWriterId}/event",
+                Resource.Platform);
+            _serializer.SetAcceptHeaders(request);
+            var response = await _httpClient.GetAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<PublishedDataSetEventsApiModel>(response);
+        }
+
+        /// <inheritdoc/>
+        public async Task UpdateEventDataSetAsync(string dataSetWriterId,
+            DataSetUpdateEventRequestApiModel content, CancellationToken ct) {
+            if (string.IsNullOrEmpty(dataSetWriterId)) {
+                throw new ArgumentNullException(nameof(dataSetWriterId));
+            }
+            if (content == null) {
+                throw new ArgumentNullException(nameof(content));
+            }
+            var request = _httpClient.NewRequest($"{_serviceUri}/v2/writers/{dataSetWriterId}/event",
+                Resource.Platform);
+            _serializer.SerializeToRequest(request, content);
+            var response = await _httpClient.PatchAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+        }
+
+        /// <inheritdoc/>
+        public async Task RemoveEventDataSetAsync(string dataSetWriterId, string generationId,
             CancellationToken ct) {
-            throw new NotImplementedException();
+            if (string.IsNullOrEmpty(dataSetWriterId)) {
+                throw new ArgumentNullException(nameof(dataSetWriterId));
+            }
+            if (string.IsNullOrEmpty(generationId)) {
+                throw new ArgumentNullException(nameof(generationId));
+            }
+            var request = _httpClient.NewRequest(
+                $"{_serviceUri}/v2/writers/{dataSetWriterId}/event/{generationId}",
+                Resource.Platform);
+            var response = await _httpClient.DeleteAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
         }
 
         /// <inheritdoc/>
-        public Task UpdateEventDataSetAsync(string dataSetWriterId,
-            DataSetUpdateEventRequestApiModel request,
+        public async Task<DataSetAddVariableResponseApiModel> AddDataSetVariableAsync(
+            string dataSetWriterId, DataSetAddVariableRequestApiModel content,
             CancellationToken ct) {
-            throw new NotImplementedException();
+            if (content == null) {
+                throw new ArgumentNullException(nameof(content));
+            }
+            var request = _httpClient.NewRequest(
+                $"{_serviceUri}/v2/writers/{dataSetWriterId}/variables", Resource.Platform);
+            _serializer.SerializeToRequest(request, content);
+            var response = await _httpClient.PutAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<DataSetAddVariableResponseApiModel>(response);
         }
 
         /// <inheritdoc/>
-        public Task RemoveEventDataSetAsync(string dataSetWriterId, string generationId,
+        public async Task UpdateDataSetVariableAsync(string dataSetWriterId, string variableId,
+            DataSetUpdateVariableRequestApiModel content, CancellationToken ct) {
+            if (string.IsNullOrEmpty(dataSetWriterId)) {
+                throw new ArgumentNullException(nameof(dataSetWriterId));
+            }
+            if (string.IsNullOrEmpty(variableId)) {
+                throw new ArgumentNullException(nameof(variableId));
+            }
+            if (content == null) {
+                throw new ArgumentNullException(nameof(content));
+            }
+            var request = _httpClient.NewRequest(
+                $"{_serviceUri}/v2/writers/{dataSetWriterId}/variables/{variableId}",
+                Resource.Platform);
+            _serializer.SerializeToRequest(request, content);
+            var response = await _httpClient.PatchAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+        }
+
+        /// <inheritdoc/>
+        public async Task<PublishedDataSetVariableListApiModel> ListDataSetVariablesAsync(
+            string dataSetWriterId, string continuation, int? pageSize, CancellationToken ct) {
+            var uri = new UriBuilder($"{_serviceUri}/v2/writers/{dataSetWriterId}/variables");
+            var request = _httpClient.NewRequest(uri.Uri, Resource.Platform);
+            if (continuation != null) {
+                request.AddHeader(HttpHeader.ContinuationToken, continuation);
+            }
+            if (pageSize != null) {
+                request.AddHeader(HttpHeader.MaxItemCount, pageSize.ToString());
+            }
+            _serializer.SetAcceptHeaders(request);
+            var response = await _httpClient.GetAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<PublishedDataSetVariableListApiModel>(response);
+        }
+
+        /// <inheritdoc/>
+        public async Task<PublishedDataSetVariableListApiModel> QueryDataSetVariablesAsync(
+            string dataSetWriterId, PublishedDataSetVariableQueryApiModel query, int? pageSize,
             CancellationToken ct) {
-            throw new NotImplementedException();
+            var uri = new UriBuilder($"{_serviceUri}/v2/writers/{dataSetWriterId}/variables/query");
+            var request = _httpClient.NewRequest(uri.Uri, Resource.Platform);
+            if (pageSize != null) {
+                request.AddHeader(HttpHeader.MaxItemCount, pageSize.ToString());
+            }
+            _serializer.SerializeToRequest(request, query);
+            var response = await _httpClient.PostAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<PublishedDataSetVariableListApiModel>(response);
         }
 
         /// <inheritdoc/>
-        public Task<DataSetAddVariableResponseApiModel> AddDataSetVariableAsync(
-            string dataSetWriterId, DataSetAddVariableRequestApiModel request,
-            CancellationToken ct) {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc/>
-        public Task UpdateDataSetVariableAsync(string dataSetWriterId, string variableId,
-            DataSetUpdateVariableRequestApiModel request,
-            CancellationToken ct) {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc/>
-        public Task<PublishedDataSetVariableListApiModel> ListDataSetVariablesAsync(
-            string dataSetWriterId, string continuation, int? pageSize,
-            CancellationToken ct) {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc/>
-        public Task<PublishedDataSetVariableListApiModel> QueryDataSetVariablesAsync(
-            string dataSetWriterId, PublishedDataSetVariableQueryApiModel query,
-            CancellationToken ct) {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc/>
-        public Task RemoveDataSetVariableAsync(string dataSetWriterId, string variableId,
+        public async Task RemoveDataSetVariableAsync(string dataSetWriterId, string variableId,
             string generationId, CancellationToken ct) {
-            throw new NotImplementedException();
+            if (string.IsNullOrEmpty(dataSetWriterId)) {
+                throw new ArgumentNullException(nameof(dataSetWriterId));
+            }
+            if (string.IsNullOrEmpty(variableId)) {
+                throw new ArgumentNullException(nameof(variableId));
+            }
+            if (string.IsNullOrEmpty(generationId)) {
+                throw new ArgumentNullException(nameof(generationId));
+            }
+            var request = _httpClient.NewRequest(
+                $"{_serviceUri}/v2/writers/{dataSetWriterId}/variables/{variableId}/{generationId}",
+                Resource.Platform);
+            var response = await _httpClient.DeleteAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
         }
 
         /// <inheritdoc/>
-        public Task<DataSetWriterInfoListApiModel> ListDataSetWritersAsync(string continuation,
-            int? pageSize, CancellationToken ct) {
-            throw new NotImplementedException();
+        public async Task<DataSetWriterInfoListApiModel> ListDataSetWritersAsync(
+            string continuation, int? pageSize, CancellationToken ct) {
+            var uri = new UriBuilder($"{_serviceUri}/v2/writers");
+            var request = _httpClient.NewRequest(uri.Uri, Resource.Platform);
+            if (continuation != null) {
+                request.AddHeader(HttpHeader.ContinuationToken, continuation);
+            }
+            if (pageSize != null) {
+                request.AddHeader(HttpHeader.MaxItemCount, pageSize.ToString());
+            }
+            _serializer.SetAcceptHeaders(request);
+            var response = await _httpClient.GetAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<DataSetWriterInfoListApiModel>(response);
         }
 
         /// <inheritdoc/>
-        public Task<DataSetWriterInfoListApiModel> QueryDataSetWritersAsync(
+        public async Task<DataSetWriterInfoListApiModel> QueryDataSetWritersAsync(
             DataSetWriterInfoQueryApiModel query, int? pageSize, CancellationToken ct) {
-            throw new NotImplementedException();
+            var uri = new UriBuilder($"{_serviceUri}/v2/writers/query");
+            var request = _httpClient.NewRequest(uri.Uri, Resource.Platform);
+            if (pageSize != null) {
+                request.AddHeader(HttpHeader.MaxItemCount, pageSize.ToString());
+            }
+            _serializer.SerializeToRequest(request, query);
+            var response = await _httpClient.PostAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<DataSetWriterInfoListApiModel>(response);
         }
 
         /// <inheritdoc/>
-        public Task RemoveDataSetWriterAsync(string dataSetWriterId, string generationId,
+        public async Task RemoveDataSetWriterAsync(string dataSetWriterId, string generationId,
             CancellationToken ct) {
-            throw new NotImplementedException();
+            if (string.IsNullOrEmpty(dataSetWriterId)) {
+                throw new ArgumentNullException(nameof(dataSetWriterId));
+            }
+            if (string.IsNullOrEmpty(generationId)) {
+                throw new ArgumentNullException(nameof(generationId));
+            }
+            var request = _httpClient.NewRequest(
+                $"{_serviceUri}/v2/writers/{dataSetWriterId}/{generationId}", Resource.Platform);
+            var response = await _httpClient.DeleteAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
         }
 
         /// <inheritdoc/>
-        public Task<WriterGroupAddResponseApiModel> AddWriterGroupAsync(
-            WriterGroupAddRequestApiModel request, CancellationToken ct) {
-            throw new NotImplementedException();
+        public async Task<WriterGroupAddResponseApiModel> AddWriterGroupAsync(
+            WriterGroupAddRequestApiModel content, CancellationToken ct) {
+            if (content == null) {
+                throw new ArgumentNullException(nameof(content));
+            }
+            var request = _httpClient.NewRequest($"{_serviceUri}/v2/groups", Resource.Platform);
+            _serializer.SerializeToRequest(request, content);
+            var response = await _httpClient.PutAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<WriterGroupAddResponseApiModel>(response);
         }
 
         /// <inheritdoc/>
-        public Task<WriterGroupApiModel> GetWriterGroupAsync(string writerGroupId,
+        public async Task<WriterGroupApiModel> GetWriterGroupAsync(string writerGroupId,
             CancellationToken ct) {
-            throw new NotImplementedException();
+            if (string.IsNullOrEmpty(writerGroupId)) {
+                throw new ArgumentNullException(nameof(writerGroupId));
+            }
+            var request = _httpClient.NewRequest($"{_serviceUri}/v2/groups/{writerGroupId}",
+                Resource.Platform);
+            _serializer.SetAcceptHeaders(request);
+            var response = await _httpClient.GetAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<WriterGroupApiModel>(response);
         }
 
         /// <inheritdoc/>
-        public Task UpdateWriterGroupAsync(string writerGroupId,
-            WriterGroupUpdateRequestApiModel request, CancellationToken ct) {
-            throw new NotImplementedException();
+        public async Task UpdateWriterGroupAsync(string writerGroupId,
+            WriterGroupUpdateRequestApiModel content, CancellationToken ct) {
+            if (string.IsNullOrEmpty(writerGroupId)) {
+                throw new ArgumentNullException(nameof(writerGroupId));
+            }
+            if (content == null) {
+                throw new ArgumentNullException(nameof(content));
+            }
+            var request = _httpClient.NewRequest($"{_serviceUri}/v2/groups/{writerGroupId}",
+                Resource.Platform);
+            _serializer.SerializeToRequest(request, content);
+            var response = await _httpClient.PatchAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
         }
 
         /// <inheritdoc/>
-        public Task<WriterGroupInfoListApiModel> ListWriterGroupsAsync(string continuation,
-            int? pageSize, CancellationToken ct) {
-            throw new NotImplementedException();
+        public async Task<WriterGroupInfoListApiModel> ListWriterGroupsAsync(
+            string continuation, int? pageSize, CancellationToken ct) {
+            var uri = new UriBuilder($"{_serviceUri}/v2/groups");
+            var request = _httpClient.NewRequest(uri.Uri, Resource.Platform);
+            if (continuation != null) {
+                request.AddHeader(HttpHeader.ContinuationToken, continuation);
+            }
+            if (pageSize != null) {
+                request.AddHeader(HttpHeader.MaxItemCount, pageSize.ToString());
+            }
+            _serializer.SetAcceptHeaders(request);
+            var response = await _httpClient.GetAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<WriterGroupInfoListApiModel>(response);
         }
 
         /// <inheritdoc/>
-        public Task<WriterGroupInfoListApiModel> QueryWriterGroupsAsync(
+        public async Task<WriterGroupInfoListApiModel> QueryWriterGroupsAsync(
             WriterGroupInfoQueryApiModel query, int? pageSize, CancellationToken ct) {
-            throw new NotImplementedException();
+            var uri = new UriBuilder($"{_serviceUri}/v2/groups/query");
+            var request = _httpClient.NewRequest(uri.Uri, Resource.Platform);
+            if (pageSize != null) {
+                request.AddHeader(HttpHeader.MaxItemCount, pageSize.ToString());
+            }
+            _serializer.SerializeToRequest(request, query);
+            var response = await _httpClient.PostAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<WriterGroupInfoListApiModel>(response);
         }
 
         /// <inheritdoc/>
-        public Task RemoveWriterGroupAsync(string writerGroupId, string generationId,
+        public async Task RemoveWriterGroupAsync(string writerGroupId, string generationId,
             CancellationToken ct) {
-            throw new NotImplementedException();
+            if (string.IsNullOrEmpty(writerGroupId)) {
+                throw new ArgumentNullException(nameof(writerGroupId));
+            }
+            if (string.IsNullOrEmpty(generationId)) {
+                throw new ArgumentNullException(nameof(generationId));
+            }
+            var request = _httpClient.NewRequest(
+                $"{_serviceUri}/v2/groups/{writerGroupId}/{generationId}", Resource.Platform);
+            var response = await _httpClient.DeleteAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
         }
 
         /// <inheritdoc/>
-        public Task<DataSetAddVariableBatchResponseApiModel> AddVariablesToDataSetWriterAsync(
-            string dataSetWriterId, DataSetAddVariableBatchRequestApiModel request, CancellationToken ct) {
-            throw new NotImplementedException();
+        public async Task<DataSetAddVariableBatchResponseApiModel> AddVariablesToDataSetWriterAsync(
+            string dataSetWriterId, DataSetAddVariableBatchRequestApiModel content, CancellationToken ct) {
+            if (string.IsNullOrEmpty(dataSetWriterId)) {
+                throw new ArgumentNullException(nameof(dataSetWriterId));
+            }
+            if (content == null) {
+                throw new ArgumentNullException(nameof(content));
+            }
+            var request = _httpClient.NewRequest($"{_serviceUri}/v2/bulk/writers/{dataSetWriterId}",
+                Resource.Platform);
+            _serializer.SerializeToRequest(request, content);
+            var response = await _httpClient.PostAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<DataSetAddVariableBatchResponseApiModel>(response);
         }
 
         /// <inheritdoc/>
-        public Task<DataSetAddVariableBatchResponseApiModel> AddVariablesToDefaultDataSetWriterAsync(
-            string endpointId, DataSetAddVariableBatchRequestApiModel request, CancellationToken ct) {
-            throw new NotImplementedException();
+        public async Task<DataSetAddVariableBatchResponseApiModel> AddVariablesToDefaultDataSetWriterAsync(
+            string endpointId, DataSetAddVariableBatchRequestApiModel content, CancellationToken ct) {
+            if (string.IsNullOrEmpty(endpointId)) {
+                throw new ArgumentNullException(nameof(endpointId));
+            }
+            if (content == null) {
+                throw new ArgumentNullException(nameof(content));
+            }
+            var request = _httpClient.NewRequest($"{_serviceUri}/v2/bulk/endpoints/{endpointId}",
+                Resource.Platform);
+            _serializer.SerializeToRequest(request, content);
+            var response = await _httpClient.PostAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<DataSetAddVariableBatchResponseApiModel>(response);
         }
 
         /// <inheritdoc/>
-        public Task<DataSetRemoveVariableBatchResponseApiModel> RemoveVariablesFromDataSetWriterAsync(
-            string dataSetWriterId, DataSetRemoveVariableBatchRequestApiModel request, CancellationToken ct) {
-            throw new NotImplementedException();
+        public async Task<DataSetRemoveVariableBatchResponseApiModel> RemoveVariablesFromDataSetWriterAsync(
+            string dataSetWriterId, DataSetRemoveVariableBatchRequestApiModel content, CancellationToken ct) {
+            if (string.IsNullOrEmpty(dataSetWriterId)) {
+                throw new ArgumentNullException(nameof(dataSetWriterId));
+            }
+            if (content == null) {
+                throw new ArgumentNullException(nameof(content));
+            }
+            var request = _httpClient.NewRequest($"{_serviceUri}/v2/bulk/writers/{dataSetWriterId}/remove",
+                Resource.Platform);
+            _serializer.SerializeToRequest(request, content);
+            var response = await _httpClient.PostAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<DataSetRemoveVariableBatchResponseApiModel>(response);
         }
 
         private readonly IHttpClient _httpClient;

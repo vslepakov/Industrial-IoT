@@ -3,7 +3,7 @@
 //  Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
+namespace Microsoft.Azure.IIoT.OpcUa.Twin.Clients {
     using Microsoft.Azure.IIoT.OpcUa.Publisher;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
     using Microsoft.Azure.IIoT.OpcUa.Twin;
@@ -17,7 +17,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
     using System.Threading.Tasks;
 
     /// <summary>
-    /// Publisher client
+    /// Publisher twin adapter
     /// </summary>
     public sealed class PublisherAdapter : IPublishServices {
 

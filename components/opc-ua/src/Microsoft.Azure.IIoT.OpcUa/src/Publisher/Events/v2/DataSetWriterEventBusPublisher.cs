@@ -39,9 +39,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Events.v2 {
 
         /// <inheritdoc/>
         public Task OnDataSetWriterRemovedAsync(PublisherOperationContextModel context,
-            string dataSetWriterId, DataSetWriterInfoModel dataSetWriter) {
+            DataSetWriterInfoModel dataSetWriter) {
             return _bus.PublishAsync(Wrap(DataSetWriterEventType.Removed, context,
-                dataSetWriterId, dataSetWriter));
+                dataSetWriter.DataSetWriterId, dataSetWriter));
         }
 
         /// <summary>

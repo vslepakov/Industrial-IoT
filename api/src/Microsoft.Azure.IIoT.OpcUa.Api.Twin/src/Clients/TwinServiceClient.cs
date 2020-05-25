@@ -16,7 +16,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
     /// <summary>
     /// Implementation of twin service api.
     /// </summary>
-    public sealed class TwinServiceClient : ITwinServiceApi, IPublishServiceApi {
+    public sealed class TwinServiceClient : ITwinServiceApi {
 
         /// <summary>
         /// Create service client
