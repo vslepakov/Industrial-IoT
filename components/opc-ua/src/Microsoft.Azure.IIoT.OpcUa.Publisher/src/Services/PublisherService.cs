@@ -20,6 +20,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
 
     /// <summary>
     /// Publisher registry service manages the Publish configuration surface
+    /// on top of the entity repositories and provides eventing support.
     /// </summary>
     public sealed class PublisherService : IDataSetBatchOperations,
         IDataSetWriterRegistry, IWriterGroupRegistry {
@@ -34,25 +35,128 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
         /// <param name="endpoints"></param>
         /// <param name="writerEvents"></param>
         /// <param name="groupEvents"></param>
-        public PublisherService(IDataSetEntityRepository dataSets,
+        public PublisherService(IDataSetEntityRepository dataSets, IEndpointRegistry endpoints,
             IDataSetWriterRepository writers, IWriterGroupRepository groups,
             IRegistryEventBroker<IDataSetWriterRegistryListener> writerEvents,
-            IRegistryEventBroker<IWriterGroupRegistryListener> groupEvents,
-            IEndpointRegistry endpoints, ILogger logger) {
-            _dataSets = dataSets ??
-                throw new ArgumentNullException(nameof(dataSets));
-            _writers = writers ??
-                throw new ArgumentNullException(nameof(writers));
-            _groups = groups ??
-                throw new ArgumentNullException(nameof(groups));
-            _logger = logger ??
-                throw new ArgumentNullException(nameof(logger));
-            _endpoints = endpoints ??
-                throw new ArgumentNullException(nameof(endpoints));
-            _writerEvents = writerEvents ??
-                throw new ArgumentNullException(nameof(writerEvents));
-            _groupEvents = groupEvents ??
-                throw new ArgumentNullException(nameof(groupEvents));
+            IRegistryEventBroker<IWriterGroupRegistryListener> groupEvents, ILogger logger) {
+            _dataSets = dataSets ?? throw new ArgumentNullException(nameof(dataSets));
+            _writers = writers ?? throw new ArgumentNullException(nameof(writers));
+            _groups = groups ?? throw new ArgumentNullException(nameof(groups));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
+            _writerEvents = writerEvents ?? throw new ArgumentNullException(nameof(writerEvents));
+            _groupEvents = groupEvents ?? throw new ArgumentNullException(nameof(groupEvents));
+        }
+
+        /// <inheritdoc/>
+        public async Task<DataSetAddVariableBatchResultModel> AddVariablesToDataSetWriterAsync(
+            string dataSetWriterId, DataSetAddVariableBatchRequestModel request,
+            PublisherOperationContextModel context, CancellationToken ct) {
+            if (string.IsNullOrEmpty(dataSetWriterId)) {
+                throw new ArgumentNullException(nameof(dataSetWriterId));
+            }
+            if (request?.Variables == null) {
+                throw new ArgumentNullException(nameof(request));
+            }
+            if (request.Variables.Count == 0 || request.Variables.Count > kMaxBatchSize) {
+                throw new ArgumentException(nameof(request.Variables),
+                    "Number of variables in request is invalid.");
+            }
+            // Try to find writer
+            var writer = await _writers.FindAsync(dataSetWriterId, ct);
+            if (writer == null) {
+                throw new ArgumentException(nameof(dataSetWriterId), "Writer not found");
+            }
+            var results = new List<DataSetAddVariableResultModel>();
+            try {
+                // Add variables - TODO consider adding a bulk database api.
+                foreach (var variable in request.Variables) {
+                    try {
+                        var info = variable.AsDataSetVariable(context);
+                        var result = await _dataSets.AddDataSetVariableAsync(
+                            writer.DataSetWriterId, info);
+                        results.Add(new DataSetAddVariableResultModel {
+                            GenerationId = result.GenerationId,
+                            Id = result.Id
+                        });
+                    }
+                    catch (Exception ex) {
+                        results.Add(new DataSetAddVariableResultModel {
+                            ErrorInfo = new ServiceResultModel {
+                                ErrorMessage = ex.Message
+                                // ...
+                            }
+                        });
+                    }
+                }
+
+                // If successful notify about dataset writer change
+                await _writerEvents.NotifyAllAsync(
+                    l => l.OnDataSetWriterUpdatedAsync(context, dataSetWriterId, writer));
+                return new DataSetAddVariableBatchResultModel {
+                    Results = results
+                };
+            }
+            catch {
+                // Undo add
+                await Task.WhenAll(results.Select(item =>
+                    Try.Async(() => _dataSets.DeleteDataSetVariableAsync(writer.DataSetWriterId,
+                        item.Id, item.GenerationId))));
+                throw;
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<DataSetAddVariableBatchResultModel> AddVariablesToDefaultDataSetWriterAsync(
+            string endpointId, DataSetAddVariableBatchRequestModel request,
+            PublisherOperationContextModel context, CancellationToken ct) {
+            if (string.IsNullOrEmpty(endpointId)) {
+                throw new ArgumentNullException(nameof(endpointId));
+            }
+            if (request?.Variables == null) {
+                throw new ArgumentNullException(nameof(request));
+            }
+            if (request.Variables.Count == 0 || request.Variables.Count > kMaxBatchSize) {
+                throw new ArgumentException(nameof(request.Variables),
+                    "Number of variables in request is invalid.");
+            }
+            var results = new List<DataSetAddVariableResultModel>();
+            try {
+                // Add variables - TODO consider adding a bulk database api.
+                foreach (var variable in request.Variables) {
+                    try {
+                        var info = variable.AsDataSetVariable(context);
+                        var result = await _dataSets.AddDataSetVariableAsync(endpointId, info);
+                        results.Add(new DataSetAddVariableResultModel {
+                            GenerationId = result.GenerationId,
+                            Id = result.Id
+                        });
+                    }
+                    catch (Exception ex) {
+                        results.Add(new DataSetAddVariableResultModel {
+                            ErrorInfo = new ServiceResultModel {
+                                ErrorMessage = ex.Message
+                                // ...
+                            }
+                        });
+                    }
+                }
+                var writer = await EnsureDefaultDataSetWriterExistsAsync(endpointId,
+                    context, request.DataSetPublishingInterval, request.User, ct);
+                // If successful notify about dataset writer change
+                await _writerEvents.NotifyAllAsync(
+                    l => l.OnDataSetWriterUpdatedAsync(context, endpointId, writer));
+                return new DataSetAddVariableBatchResultModel {
+                    Results = results
+                };
+            }
+            catch {
+                // Undo add
+                await Task.WhenAll(results.Select(item =>
+                    Try.Async(() => _dataSets.DeleteDataSetVariableAsync(endpointId,
+                        item.Id, item.GenerationId))));
+                throw;
+            }
         }
 
         /// <inheritdoc/>
@@ -180,117 +284,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                 GenerationId = result.GenerationId,
                 WriterGroupId = result.WriterGroupId
             };
-        }
-
-        /// <inheritdoc/>
-        public async Task<DataSetAddVariableBatchResultModel> AddVariablesToDataSetWriterAsync(
-            string dataSetWriterId, DataSetAddVariableBatchRequestModel request,
-            PublisherOperationContextModel context, CancellationToken ct) {
-            if (string.IsNullOrEmpty(dataSetWriterId)) {
-                throw new ArgumentNullException(nameof(dataSetWriterId));
-            }
-            if (request?.Variables == null) {
-                throw new ArgumentNullException(nameof(request));
-            }
-            if (request.Variables.Count == 0 || request.Variables.Count > kMaxBatchSize) {
-                throw new ArgumentException(nameof(request.Variables),
-                    "Number of variables in request is invalid.");
-            }
-            // Try to find writer
-            var writer = await _writers.FindAsync(dataSetWriterId, ct);
-            if (writer == null) {
-                throw new ArgumentException(nameof(dataSetWriterId), "Writer not found");
-            }
-            var results = new List<DataSetAddVariableResultModel>();
-            try {
-                // Add variables - TODO consider adding a bulk database api.
-                foreach (var variable in request.Variables) {
-                    try {
-                        var info = variable.AsDataSetVariable(context);
-                        var result = await _dataSets.AddDataSetVariableAsync(
-                            writer.DataSetWriterId, info);
-                        results.Add(new DataSetAddVariableResultModel {
-                            GenerationId = result.GenerationId,
-                            Id = result.Id
-                        });
-                    }
-                    catch (Exception ex) {
-                        results.Add(new DataSetAddVariableResultModel {
-                            ErrorInfo = new ServiceResultModel {
-                                ErrorMessage = ex.Message
-                                // ...
-                            }
-                        });
-                    }
-                }
-
-                // If successful notify about dataset writer change
-                await _writerEvents.NotifyAllAsync(
-                    l => l.OnDataSetWriterUpdatedAsync(context, dataSetWriterId, writer));
-                return new DataSetAddVariableBatchResultModel {
-                    Results = results
-                };
-            }
-            catch {
-                // Undo add
-                await Task.WhenAll(results.Select(item =>
-                    Try.Async(() => _dataSets.DeleteDataSetVariableAsync(writer.DataSetWriterId,
-                        item.Id, item.GenerationId))));
-                throw;
-            }
-        }
-
-        /// <inheritdoc/>
-        public async Task<DataSetAddVariableBatchResultModel> AddVariablesToDefaultDataSetWriterAsync(
-            string endpointId, DataSetAddVariableBatchRequestModel request,
-            PublisherOperationContextModel context, CancellationToken ct) {
-            if (string.IsNullOrEmpty(endpointId)) {
-                throw new ArgumentNullException(nameof(endpointId));
-            }
-            if (request?.Variables == null) {
-                throw new ArgumentNullException(nameof(request));
-            }
-            if (request.Variables.Count == 0 || request.Variables.Count > kMaxBatchSize) {
-                throw new ArgumentException(nameof(request.Variables),
-                    "Number of variables in request is invalid.");
-            }
-            var results = new List<DataSetAddVariableResultModel>();
-            try {
-                // Add variables - TODO consider adding a bulk database api.
-                foreach (var variable in request.Variables) {
-                    try {
-                        var info = variable.AsDataSetVariable(context);
-                        var result = await _dataSets.AddDataSetVariableAsync(endpointId, info);
-                        results.Add(new DataSetAddVariableResultModel {
-                            GenerationId = result.GenerationId,
-                            Id = result.Id
-                        });
-                    }
-                    catch (Exception ex) {
-                        results.Add(new DataSetAddVariableResultModel {
-                            ErrorInfo = new ServiceResultModel {
-                                ErrorMessage = ex.Message
-                                // ...
-                            }
-                        });
-                    }
-                }
-                var writer = await EnsureDefaultDataSetWriterExistsAsync(endpointId,
-                    context, request.DataSetPublishingInterval, request.User, ct);
-                // If successful notify about dataset writer change
-                await _writerEvents.NotifyAllAsync(
-                    l => l.OnDataSetWriterUpdatedAsync(context, endpointId, writer));
-                return new DataSetAddVariableBatchResultModel {
-                    Results = results
-                };
-            }
-            catch {
-                // Undo add
-                await Task.WhenAll(results.Select(item =>
-                    Try.Async(() => _dataSets.DeleteDataSetVariableAsync(endpointId,
-                        item.Id, item.GenerationId))));
-                throw;
-            }
         }
 
         /// <inheritdoc/>

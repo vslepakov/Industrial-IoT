@@ -21,7 +21,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
         /// </summary>
         /// <param name="transfer"></param>
         /// <param name="endpoint"></param>
-        public BulkPublishService(ITransferServices<T> transfer, IJobOrchestratorEndpoint endpoint) {
+        public BulkPublishService(ITransferServices<T> transfer, IOrchestratorEndpoint endpoint) {
             _transfer = transfer ?? throw new ArgumentNullException(nameof(transfer));
             _endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
         }
@@ -38,6 +38,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
         }
 
         private readonly ITransferServices<T> _transfer;
-        private readonly IJobOrchestratorEndpoint _endpoint;
+        private readonly IOrchestratorEndpoint _endpoint;
     }
 }

@@ -33,7 +33,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
         }
 
         /// <inheritdoc/>
-        public async Task ActivateEndpointAsync(EndpointRegistrationModel registration,
+        public async Task ActivateAsync(EndpointRegistrationModel registration,
             string secret, CancellationToken ct) {
             if (registration == null) {
                 throw new ArgumentNullException(nameof(registration));
@@ -57,7 +57,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
         }
 
         /// <inheritdoc/>
-        public async Task DeactivateEndpointAsync(EndpointRegistrationModel registration,
+        public async Task DeactivateAsync(EndpointRegistrationModel registration,
             CancellationToken ct) {
             if (registration == null) {
                 throw new ArgumentNullException(nameof(registration));

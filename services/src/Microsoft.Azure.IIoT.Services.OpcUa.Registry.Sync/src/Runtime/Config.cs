@@ -20,7 +20,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry.Sync.Runtime {
     /// Alerting agent configuration
     /// </summary>
     public class Config : DiagnosticsConfig, IIoTHubConfig, IServiceBusConfig,
-        IActivationSyncConfig, IJobOrchestratorEndpoint {
+        IActivationSyncConfig, IOrchestratorEndpoint {
 
         /// <inheritdoc/>
         public string IoTHubConnString => _hub.IoTHubConnString;

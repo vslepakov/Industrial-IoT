@@ -4,12 +4,12 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
-    using Microsoft.Azure.IIoT.Diagnostics;
-    using Microsoft.Azure.IIoT.Hub.Module.Client.Runtime;
     using Microsoft.Azure.IIoT.Module.Framework;
     using Microsoft.Azure.IIoT.Module.Framework.Client;
     using Microsoft.Azure.IIoT.OpcUa.Protocol;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Runtime;
+    using Microsoft.Azure.IIoT.Hub.Module.Client.Runtime;
+    using Microsoft.Azure.IIoT.Diagnostics;
     using Microsoft.Extensions.Configuration;
 
     /// <summary>
@@ -78,8 +78,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
         /// <param name="configuration"></param>
         public Config(IConfiguration configuration) :
             base(configuration) {
-            _opc = new ClientServicesConfig(configuration);
             _module = new ModuleConfig(configuration);
+            _opc = new ClientServicesConfig(configuration);
         }
 
         private readonly ClientServicesConfig _opc;

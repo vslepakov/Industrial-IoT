@@ -314,7 +314,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events.Api {
             var expected = new EndpointEventModel {
                 Endpoint = new EndpointInfoModel {
                     ApplicationId = "TestSigfsdfg  ff",
-                    ActivationState = IIoT.OpcUa.Registry.Models.EndpointActivationState.ActivatedAndConnected,
+                    ActivationState = IIoT.OpcUa.Registry.Models.EntityActivationState.ActivatedAndConnected,
                     NotSeenSince = DateTime.UtcNow
                 }
             };
@@ -333,7 +333,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events.Api {
                 Assert.Equal(expected.Endpoint.NotSeenSince, received.Endpoint.NotSeenSince);
                 Assert.Equal(expected.Endpoint.ApplicationId, received.Endpoint.ApplicationId);
                 Assert.Equal(expected.Endpoint.ActivationState,
-                    (IIoT.OpcUa.Registry.Models.EndpointActivationState)received.Endpoint.ActivationState);
+                    (IIoT.OpcUa.Registry.Models.EntityActivationState)received.Endpoint.ActivationState);
             }
         }
 
@@ -349,7 +349,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events.Api {
             var expected = new EndpointEventModel {
                 Endpoint = new EndpointInfoModel {
                     ApplicationId = "TestSigfsdfg  ff",
-                    ActivationState = IIoT.OpcUa.Registry.Models.EndpointActivationState.ActivatedAndConnected,
+                    ActivationState = IIoT.OpcUa.Registry.Models.EntityActivationState.ActivatedAndConnected,
                     NotSeenSince = DateTime.UtcNow
                 }
             };

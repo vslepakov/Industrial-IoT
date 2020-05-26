@@ -7,10 +7,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin {
     using Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Runtime;
     using Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers;
     using Microsoft.Azure.IIoT.OpcUa.Edge;
-    using Microsoft.Azure.IIoT.OpcUa.Edge.Control.Services;
-    using Microsoft.Azure.IIoT.OpcUa.Edge.Export.Services;
-    using Microsoft.Azure.IIoT.OpcUa.Edge.Supervisor.Services;
     using Microsoft.Azure.IIoT.OpcUa.Edge.Twin.Services;
+    using Microsoft.Azure.IIoT.OpcUa.Edge.Supervisor.Services;
     using Microsoft.Azure.IIoT.OpcUa.Protocol;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Services;
     using Microsoft.Azure.IIoT.Module;
@@ -119,12 +117,12 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin {
                         logger.Error(ex, "Error during module execution - restarting!");
                     }
                     finally {
+                        kTwinModuleStart.WithLabels(
+                            identity.DeviceId ?? "", identity.ModuleId ?? "").Set(0);
                         if (server != null) {
                             await server.StopAsync();
                         }
                         await module.StopAsync();
-                        kTwinModuleStart.WithLabels(
-                            identity.DeviceId ?? "", identity.ModuleId ?? "").Set(0);
                         OnRunning?.Invoke(this, false);
                     }
                 }
@@ -143,6 +141,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin {
 
             // Register configuration interfaces
             builder.RegisterInstance(config)
+                .AsImplementedInterfaces();
+            builder.RegisterInstance(config.Configuration)
                 .AsImplementedInterfaces();
             builder.RegisterInstance(this)
                 .AsImplementedInterfaces();
@@ -183,7 +183,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin {
             if (_injector != null) {
                 // Inject additional services
                 builder.RegisterInstance(_injector)
-                    .AsImplementedInterfaces().SingleInstance()
+                    .AsImplementedInterfaces()
                     .ExternallyOwned();
 
                 _injector.Inject(builder);
@@ -227,7 +227,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin {
                 // Register other opc ua services
                 builder.RegisterType<VariantEncoderFactory>()
                     .AsImplementedInterfaces();
-                builder.RegisterType<TwinServices>()
+                builder.RegisterType<EndpointTwinServices>()
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
                 builder.RegisterType<AddressSpaceServices>()
                     .AsImplementedInterfaces().InstancePerLifetimeScope();

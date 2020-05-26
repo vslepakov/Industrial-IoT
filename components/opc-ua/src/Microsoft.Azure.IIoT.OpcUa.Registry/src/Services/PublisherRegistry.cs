@@ -7,7 +7,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
     using Microsoft.Azure.IIoT.OpcUa.Registry.Models;
     using Microsoft.Azure.IIoT.OpcUa.Registry;
     using Microsoft.Azure.IIoT.OpcUa.Core.Models;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher;
     using Microsoft.Azure.IIoT.Exceptions;
+    using Microsoft.Azure.IIoT.Hub.Models;
     using Microsoft.Azure.IIoT.Hub;
     using Microsoft.Azure.IIoT.Serializers;
     using Serilog;
@@ -15,12 +18,14 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
     using System.Linq;
     using System.Threading.Tasks;
     using System.Threading;
+    using System.Collections.Generic;
 
     /// <summary>
-    /// Publisher registry which uses the IoT Hub twin services for supervisor
-    /// identity management.
+    /// Publisher registry which uses the IoT Hub twin services for publisher
+    /// and writer group identity management.
     /// </summary>
-    public sealed class PublisherRegistry : IPublisherRegistry, IPublisherEndpointQuery {
+    public sealed class PublisherRegistry : IPublisherRegistry,
+        IWriterGroupRegistryListener, IDataSetWriterRegistryListener {
 
         /// <summary>
         /// Create registry services
@@ -38,43 +43,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
         }
 
         /// <inheritdoc/>
-        public async Task<(string, EndpointModel)> FindPublisherEndpoint(
-            string endpointId, CancellationToken ct) {
-
-            // Get the endpoint and the endpoints supervisor
-            var device = await _iothub.GetAsync(endpointId, null, ct);
-            var registration = device.ToEndpointRegistration(false);
-
-            var endpoint = registration.ToServiceModel();
-            var supervisorId = endpoint?.Registration?.SupervisorId;
-
-            if (string.IsNullOrEmpty(supervisorId)) {
-                // No supervisor set for the retrieved endpoint
-                throw new ResourceInvalidStateException(
-                    $"Endpoint {endpointId} has no supervisor");
-            }
-
-            // Get iotedge device
-            var deviceId = SupervisorModelEx.ParseDeviceId(supervisorId, out _);
-
-            // Query for the publisher in the same edge device
-            var query = "SELECT * FROM devices.modules WHERE " +
-                $"properties.reported.{TwinProperty.Type} = '{IdentityType.Publisher}' " +
-                $"AND deviceId = '{deviceId}'";
-            var devices = await _iothub.QueryAllDeviceTwinsAsync(query, ct);
-
-            device = devices.SingleOrDefault();
-            if (device == null) {
-                throw new ResourceNotFoundException(
-                    $"No publisher found for {endpointId} in {deviceId}");
-            }
-            var publisherId = PublisherModelEx.CreatePublisherId(
-                device.Id, device.ModuleId);
-
-            return (publisherId, endpoint.Registration.Endpoint);
-        }
-
-        /// <inheritdoc/>
         public async Task<PublisherModel> GetPublisherAsync(string id,
             bool onlyServerState, CancellationToken ct) {
             if (string.IsNullOrEmpty(id)) {
@@ -86,7 +54,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                 as PublisherRegistration;
             if (registration == null) {
                 throw new ResourceNotFoundException(
-                    $"{id} is not a supervisor registration.");
+                    $"{id} is not a publisher registration.");
             }
             return registration.ToServiceModel();
         }
@@ -170,7 +138,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                     return;
                 }
                 catch (ResourceOutOfDateException ex) {
-                    _logger.Debug(ex, "Retrying updating supervisor...");
+                    _logger.Debug(ex, "Retrying updating publisher...");
                     continue;
                 }
             }
@@ -224,6 +192,147 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                     .Select(s => s.ToServiceModel())
                     .ToList()
             };
+        }
+
+        /// <inheritdoc/>
+        public async Task OnWriterGroupAddedAsync(PublisherOperationContextModel context,
+            WriterGroupInfoModel writerGroup) {
+
+            // Add new group
+            var group = writerGroup.ToWriterGroupRegistration();
+            await _iothub.CreateOrUpdateAsync(group.ToDeviceTwin(_serializer),
+                false, CancellationToken.None);
+
+            // assign writer group to a publisher
+
+
+        }
+
+        /// <inheritdoc/>
+        public async Task OnWriterGroupUpdatedAsync(PublisherOperationContextModel context,
+            WriterGroupInfoModel writerGroup) {
+            if (writerGroup?.WriterGroupId == null) {
+                // Should not happen
+                throw new ArgumentNullException(nameof(writerGroup.WriterGroupId));
+            }
+            while (true) {
+                try {
+                    var twin = await _iothub.FindAsync(
+                        WriterGroupRegistrationEx.ToDeviceId(writerGroup.WriterGroupId));
+                    if (twin == null) {
+                        _logger.Warning("Missed add group event - try recreating twin...");
+                        twin = await _iothub.CreateOrUpdateAsync(
+                            writerGroup.ToWriterGroupRegistration().ToDeviceTwin(_serializer),
+                            false, CancellationToken.None);
+                        return; // done
+                    }
+                    // Convert to writerGroup registration
+                    var registration = twin.ToEntityRegistration() as WriterGroupRegistration;
+                    if (registration == null) {
+                        _logger.Fatal("Unexpected - twin is not a writerGroup registration.");
+                        return; // nothing else to do other than delete and recreate.
+                    }
+                    twin = await _iothub.PatchAsync(registration.Patch(
+                        writerGroup.ToWriterGroupRegistration(), _serializer));
+                    break;
+                }
+                catch (ResourceOutOfDateException ex) {
+                    // Retry create/update
+                    _logger.Debug(ex, "Retry updating writerGroup...");
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task OnDataSetWriterAddedAsync(PublisherOperationContextModel context,
+            DataSetWriterInfoModel dataSetWriter) {
+            var writerGroupId = dataSetWriter?.WriterGroupId;
+            if (string.IsNullOrEmpty(writerGroupId)) {
+                // Should not happen
+                throw new ArgumentNullException(nameof(dataSetWriter.WriterGroupId));
+            }
+            await AddRemoveWriterFromWriterGroupTwinAsync(
+                WriterGroupRegistrationEx.ToDeviceId(writerGroupId), dataSetWriter.DataSetWriterId);
+        }
+
+        /// <inheritdoc/>
+        public async Task OnDataSetWriterUpdatedAsync(PublisherOperationContextModel context,
+            string dataSetWriterId, DataSetWriterInfoModel dataSetWriter) {
+            var writerGroupId = dataSetWriter?.WriterGroupId;
+            if (string.IsNullOrEmpty(writerGroupId)) {
+                //
+                // The variable and event updates do not carry a full model but we can quickly
+                // get the missing information by finding twins where this dataset is defined
+                // - should only be one -
+                // and patch them
+                //
+                var twins = await _iothub.QueryAllDeviceTwinsAsync(
+                    $"SELECT * FROM devices WHERE " +
+                    $"IS_DEFINED(properties.desired.{IdentityType.DataSet}_{dataSetWriterId}) AND " +
+                    $"tags.{nameof(EntityRegistration.DeviceType)} = '{IdentityType.WriterGroup}' ");
+                foreach (var twin in twins) {
+                    await AddRemoveWriterFromWriterGroupTwinAsync(twin.Id, dataSetWriterId);
+                }
+                return;
+            }
+            await AddRemoveWriterFromWriterGroupTwinAsync(
+                WriterGroupRegistrationEx.ToDeviceId(writerGroupId), dataSetWriterId);
+        }
+
+        /// <inheritdoc/>
+        public async Task OnDataSetWriterRemovedAsync(PublisherOperationContextModel context,
+            DataSetWriterInfoModel dataSetWriter) {
+            if (string.IsNullOrEmpty(dataSetWriter?.WriterGroupId)) {
+                // Should not happen
+                throw new ArgumentNullException(nameof(dataSetWriter.WriterGroupId));
+            }
+            await AddRemoveWriterFromWriterGroupTwinAsync(
+                WriterGroupRegistrationEx.ToDeviceId(dataSetWriter.WriterGroupId),
+                dataSetWriter.DataSetWriterId, true);
+        }
+
+        /// <inheritdoc/>
+        public async Task OnWriterGroupRemovedAsync(PublisherOperationContextModel context,
+            string writerGroupId) {
+            try {
+                // Force delete
+                await _iothub.DeleteAsync(WriterGroupRegistrationEx.ToDeviceId(writerGroupId));
+            }
+            catch (Exception ex) {
+                // Retry create/update
+                _logger.Error(ex, "Deleting writerGroup failed...");
+            }
+        }
+
+        /// <summary>
+        /// Add or remove the writer from the group
+        /// </summary>
+        /// <param name="deviceId"></param>
+        /// <param name="dataSetWriterId"></param>
+        /// <param name="remove"></param>
+        /// <returns></returns>
+        private async Task AddRemoveWriterFromWriterGroupTwinAsync(string deviceId,
+            string dataSetWriterId, bool remove = false) {
+            try {
+                await _iothub.PatchAsync(new DeviceTwinModel {
+                    Id = deviceId,
+                    Properties = new TwinPropertiesModel {
+                        Desired = new Dictionary<string, VariantValue> {
+                            [IdentityType.DataSet + "_" + dataSetWriterId] =
+                        remove ? null : _serializer.FromObject(
+                            new {
+                                DataSetWriterId = dataSetWriterId,
+                                // This will cause an update
+                                Tag = Guid.NewGuid().ToString(),
+                            })
+                        }
+                    }
+                });
+            }
+            catch (Exception ex) {
+                // Retry create/update
+                _logger.Error(ex, "Updating writer table in writerGroup failed...");
+            }
         }
 
         private readonly IIoTHubTwinServices _iothub;

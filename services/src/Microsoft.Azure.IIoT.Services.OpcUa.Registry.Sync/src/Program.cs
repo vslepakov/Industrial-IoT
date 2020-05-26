@@ -144,7 +144,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry.Sync {
                 .AsImplementedInterfaces().SingleInstance();
 
             // Handle discovery request and pass to all edges
-            builder.RegisterModule<RegistryServices>();
+            builder.RegisterModule<PublisherServices>();
             builder.RegisterType<DiscoveryRequestHandler>()
                 .AsImplementedInterfaces();
             builder.RegisterType<DiscovererModuleClient>()

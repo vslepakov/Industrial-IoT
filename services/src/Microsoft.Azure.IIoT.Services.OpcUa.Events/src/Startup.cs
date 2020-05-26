@@ -238,6 +238,11 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events {
                 DiscovererEventForwarder<DiscoverersHub>>()
                 .AsImplementedInterfaces().SingleInstance();
 
+
+            // TODO: add writers and writer group events
+
+
+
             // Register event bus for integration events
             builder.RegisterType<EventBusHost>()
                 .AsImplementedInterfaces().SingleInstance();

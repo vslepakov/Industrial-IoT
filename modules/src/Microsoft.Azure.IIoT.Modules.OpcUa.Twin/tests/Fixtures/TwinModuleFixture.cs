@@ -230,7 +230,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Tests {
             var endpoints = registry.ListAllEndpointsAsync().Result;
             var ep1 = endpoints.FirstOrDefault();
 
-            if (ep1.ActivationState == EndpointActivationState.Deactivated) {
+            if (ep1.ActivationState == EntityActivationState.Deactivated) {
                 // Activate
                 activate.ActivateEndpointAsync(ep1.Registration.Id).Wait();
             }

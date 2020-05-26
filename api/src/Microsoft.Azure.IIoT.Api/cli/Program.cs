@@ -88,8 +88,6 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
                 .AsImplementedInterfaces();
             builder.RegisterType<PublisherServiceClient>()
                 .AsImplementedInterfaces();
-            builder.RegisterType<PublisherJobServiceClient>()
-                .AsImplementedInterfaces();
 
             // ... with client event callbacks
             builder.RegisterType<RegistryServiceEvents>()
@@ -135,7 +133,6 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
             _history = _scope.Resolve<IHistoryServiceApi>();
             _publisher = _scope.Resolve<IPublisherServiceApi>();
             _vault = _scope.Resolve<IVaultServiceApi>();
-            _jobs = _scope.Resolve<IPublisherJobServiceApi>();
             _serializer = _scope.Resolve<IJsonSerializer>();
             if (_scope.TryResolve(out _metrics)) {
                 _metrics.Start();
@@ -285,47 +282,6 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
                                 case "--help":
                                 case "help":
                                     PrintEndpointsHelp();
-                                    break;
-                                default:
-                                    throw new ArgumentException($"Unknown command {command}.");
-                            }
-                            break;
-                        case "jobs":
-                            if (args.Length < 2) {
-                                throw new ArgumentException("Need a command!");
-                            }
-                            command = args[1].ToLowerInvariant();
-                            options = new CliOptions(args, 2);
-                            switch (command) {
-                                case "get":
-                                    await GetJobAsync(options);
-                                    break;
-                                case "list":
-                                    await ListJobsAsync(options);
-                                    break;
-                                case "workers":
-                                    await ListWorkersAsync(options);
-                                    break;
-                                case "select":
-                                    await SelectJobAsync(options);
-                                    break;
-                                case "query":
-                                    await QueryJobAsync(options);
-                                    break;
-                                case "restart":
-                                    await RestartJobAsync(options);
-                                    break;
-                                case "cancel":
-                                    await CancelJobAsync(options);
-                                    break;
-                                case "delete":
-                                    await DeleteJobAsync(options);
-                                    break;
-                                case "-?":
-                                case "-h":
-                                case "--help":
-                                case "help":
-                                    PrintJobsHelp();
                                     break;
                                 default:
                                     throw new ArgumentException($"Unknown command {command}.");
@@ -1303,138 +1259,6 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
                         "-a", "--algorithm", null),
                     Name = options.GetValueOrDefault<string>("-n", "--name", null)
                 });
-        }
-
-
-        private string _jobId;
-
-        /// <summary>
-        /// Get supervisor id
-        /// </summary>
-        private string GetJobId(CliOptions options, bool shouldThrow = true) {
-            var id = options.GetValueOrDefault<string>("-i", "--id", null);
-            if (_jobId != null) {
-                if (id == null) {
-                    return _jobId;
-                }
-                _jobId = null;
-            }
-            if (id != null) {
-                return id;
-            }
-            if (!shouldThrow) {
-                return null;
-            }
-            throw new ArgumentException("Missing -i/--id option.");
-        }
-
-        /// <summary>
-        /// Select job
-        /// </summary>
-        private async Task SelectJobAsync(CliOptions options) {
-            if (options.IsSet("-c", "--clear")) {
-                _jobId = null;
-            }
-            else if (options.IsSet("-s", "--show")) {
-                Console.WriteLine(_jobId);
-            }
-            else {
-                var jobId = options.GetValueOrDefault<string>("-i", "--id", null);
-                if (string.IsNullOrEmpty(jobId)) {
-                    var result = await _jobs.ListAllJobsAsync();
-                    jobId = ConsoleEx.Select(result.Select(r => r.Id));
-                    if (string.IsNullOrEmpty(jobId)) {
-                        Console.WriteLine("Nothing selected - job selection cleared.");
-                    }
-                    else {
-                        Console.WriteLine($"Selected {jobId}.");
-                    }
-                }
-                _jobId = jobId;
-            }
-        }
-
-        /// <summary>
-        /// Get job
-        /// </summary>
-        private async Task GetJobAsync(CliOptions options) {
-            var result = await _jobs.GetJobAsync(GetJobId(options));
-            PrintResult(options, result);
-        }
-
-        /// <summary>
-        /// Delete job
-        /// </summary>
-        private async Task DeleteJobAsync(CliOptions options) {
-            await _jobs.DeleteJobAsync(GetJobId(options));
-        }
-
-        /// <summary>
-        /// Cancel job
-        /// </summary>
-        private async Task CancelJobAsync(CliOptions options) {
-            await _jobs.CancelJobAsync(GetJobId(options));
-        }
-
-        /// <summary>
-        /// Restart job
-        /// </summary>
-        private async Task RestartJobAsync(CliOptions options) {
-            await _jobs.RestartJobAsync(GetJobId(options));
-        }
-
-        /// <summary>
-        /// Query jobs
-        /// </summary>
-        private async Task QueryJobAsync(CliOptions options) {
-            var query = new JobInfoQueryApiModel {
-                Status = options.GetValueOrDefault<JobStatus>("-s", "--status", null),
-                Name = options.GetValueOrDefault<string>("-n", "--name", null)
-            };
-            if (options.IsSet("-A", "--all")) {
-                var result = await _jobs.QueryAllJobsAsync(query);
-                PrintResult(options, result);
-                Console.WriteLine($"{result.Count()} item(s) found...");
-            }
-            else {
-                var result = await _jobs.QueryJobsAsync(query,
-                    options.GetValueOrDefault<int>("-P", "--page-size", null));
-                PrintResult(options, result);
-            }
-        }
-
-        /// <summary>
-        /// List jobs
-        /// </summary>
-        private async Task ListJobsAsync(CliOptions options) {
-            if (options.IsSet("-A", "--all")) {
-                var result = await _jobs.ListAllJobsAsync();
-                PrintResult(options, result);
-                Console.WriteLine($"{result.Count()} item(s) found...");
-            }
-            else {
-                var result = await _jobs.ListJobsAsync(
-                    options.GetValueOrDefault<string>("-C", "--continuation", null),
-                    options.GetValueOrDefault<int>("-P", "--page-size", null));
-                PrintResult(options, result);
-            }
-        }
-
-        /// <summary>
-        /// List workers
-        /// </summary>
-        private async Task ListWorkersAsync(CliOptions options) {
-            if (options.IsSet("-A", "--all")) {
-                var result = await _jobs.ListAllAgentsAsync();
-                PrintResult(options, result);
-                Console.WriteLine($"{result.Count()} item(s) found...");
-            }
-            else {
-                var result = await _jobs.ListWorkersAsync(
-                    options.GetValueOrDefault<string>("-C", "--continuation", null),
-                    options.GetValueOrDefault<int>("-P", "--page-size", null));
-                PrintResult(options, result);
-            }
         }
 
         private string _supervisorId;
@@ -2510,7 +2334,6 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
             Console.WriteLine("Twin:      " + await _twin.GetServiceStatusAsync());
             Console.WriteLine("Registry:  " + await _registry.GetServiceStatusAsync());
             Console.WriteLine("Publisher: " + await _publisher.GetServiceStatusAsync());
-            Console.WriteLine("Jobs:      " + await _jobs.GetServiceStatusAsync());
             Console.WriteLine("Vault:     " + await _vault.GetServiceStatusAsync());
             Console.WriteLine("History:   " + await _history.GetServiceStatusAsync());
         }
@@ -3345,68 +3168,6 @@ Commands and Options
         /// <summary>
         /// Print help
         /// </summary>
-        private void PrintJobsHelp() {
-            Console.WriteLine(
-                @"
-Manage jobs
-
-Commands and Options
-
-     select      Select job as -i/--id argument in all calls.
-        with ...
-        -i, --id        Job id to select.
-        -c, --clear     Clear current selection
-        -s, --show      Show current selection
-
-     list        List jobs
-        with ...
-        -C, --continuation
-                        Continuation from previous result.
-        -P, --page-size Size of page
-        -A, --all       Return all jobs (unpaged)
-        -F, --format    Json format for result
-
-     query       Find jobs
-        -S, --status    Status of the job
-        -n, --name      Name of the job.
-        -P, --page-size Size of page
-        -A, --all       Return all jobs (unpaged)
-        -F, --format    Json format for result
-
-     get         Get Job
-        with ...
-        -i, --id        Id of job to retrieve (mandatory)
-        -F, --format    Json format for result
-
-     workers     List workers
-        with ...
-        -C, --continuation
-                        Continuation from previous result.
-        -P, --page-size Size of page
-        -A, --all       Return all jobs (unpaged)
-        -F, --format    Json format for result
-
-     cancel      Cancel job
-        with ...
-        -i, --id        Id of job to cancel (mandatory)
-
-     restart     Restart job
-        with ...
-        -i, --id        Id of job to restart (mandatory)
-
-     delete      Delete job
-        with ...
-        -i, --id        Id of job to delete (mandatory)
-
-     help, -h, -? --help
-                 Prints out this help.
-"
-                );
-        }
-
-        /// <summary>
-        /// Print help
-        /// </summary>
         private void PrintGroupsHelp() {
             Console.WriteLine(
                 @"
@@ -3582,7 +3343,6 @@ Commands and Options
 
         private readonly ILifetimeScope _scope;
         private readonly ITwinServiceApi _twin;
-        private readonly IPublisherJobServiceApi _jobs;
         private readonly IRegistryServiceApi _registry;
         private readonly IPublisherServiceApi _publisher;
         private readonly IHistoryServiceApi _history;

@@ -28,7 +28,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime {
     /// Common web service configuration aggregation
     /// </summary>
     public class Config : DiagnosticsConfig, IWebHostConfig, IIoTHubConfig,
-        ICorsConfig, IOpenApiConfig, IJobOrchestratorConfig, ICosmosDbConfig,
+        ICorsConfig, IOpenApiConfig, IOrchestratorConfig, ICosmosDbConfig,
         IItemContainerConfig, IForwardedHeadersConfig, IRoleConfig {
 
         /// <inheritdoc/>
@@ -95,7 +95,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime {
             _hub = new IoTHubConfig(configuration);
             _cors = new CorsConfig(configuration);
             _cosmos = new CosmosDbConfig(configuration);
-            _jobs = new JobOrchestratorConfig(configuration);
+            _jobs = new OrchestratorConfig(configuration);
             _fh = new ForwardedHeadersConfig(configuration);
         }
 
@@ -103,7 +103,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime {
         private readonly WebHostConfig _host;
         private readonly CorsConfig _cors;
         private readonly CosmosDbConfig _cosmos;
-        private readonly JobOrchestratorConfig _jobs;
+        private readonly OrchestratorConfig _jobs;
         private readonly IoTHubConfig _hub;
         private readonly ForwardedHeadersConfig _fh;
     }

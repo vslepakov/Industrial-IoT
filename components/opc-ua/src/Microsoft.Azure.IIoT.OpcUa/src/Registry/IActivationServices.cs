@@ -8,27 +8,27 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry {
     using System.Threading.Tasks;
 
     /// <summary>
-    /// Endpoint activation services
+    /// Entity activation services
     /// </summary>
     public interface IActivationServices<T> {
 
         /// <summary>
-        /// Activate endpoint
+        /// Activate entity
         /// </summary>
         /// <param name="id"></param>
         /// <param name="secret"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        Task ActivateEndpointAsync(T id, string secret,
+        Task ActivateAsync(T id, string secret,
             CancellationToken ct = default);
 
         /// <summary>
-        /// Deactivate endpoint
+        /// Deactivate entity
         /// </summary>
         /// <param name="id"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        Task DeactivateEndpointAsync(T id,
+        Task DeactivateAsync(T id,
             CancellationToken ct = default);
     }
 }

@@ -129,23 +129,23 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         /// Activation state
         /// </summary>
         /// <returns></returns>
-        public EndpointActivationState? ActivationState {
+        public EntityActivationState? ActivationState {
             get {
                 if (Activated == true) {
                     if (Connected && !(IsDisabled ?? false) && NotSeenSince == null) {
-                        return EndpointActivationState.ActivatedAndConnected;
+                        return EntityActivationState.ActivatedAndConnected;
                     }
-                    return EndpointActivationState.Activated;
+                    return EntityActivationState.Activated;
                 }
-                return EndpointActivationState.Deactivated;
+                return EntityActivationState.Deactivated;
             }
             set {
-                if (value == EndpointActivationState.Activated ||
-                    value == EndpointActivationState.ActivatedAndConnected) {
+                if (value == EntityActivationState.Activated ||
+                    value == EntityActivationState.ActivatedAndConnected) {
                     Activated = true;
                 }
 #pragma warning disable RECS0093 // Convert 'if' to '&&' expression
-                else if (value == EndpointActivationState.Deactivated) {
+                else if (value == EntityActivationState.Deactivated) {
 #pragma warning restore RECS0093 // Convert 'if' to '&&' expression
                     Activated = false;
                 }

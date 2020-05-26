@@ -29,7 +29,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         /// <summary>
         /// Whether endpoint is activated in the twin module
         /// </summary>
-        public EndpointActivationState? ActivationState { get; set; }
+        public EntityActivationState? ActivationState { get; set; }
 
         /// <summary>
         /// The last state of the the activated endpoint

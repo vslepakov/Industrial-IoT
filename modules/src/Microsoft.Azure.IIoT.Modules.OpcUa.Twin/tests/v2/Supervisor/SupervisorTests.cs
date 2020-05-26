@@ -72,7 +72,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.v2.Supervisor {
                     Assert.Equal(status.DeviceId, device);
                     Assert.Equal(status.ModuleId, module);
                     Assert.Null(status.SiteId);
-                    Assert.Empty(status.Endpoints);
+                    Assert.Empty(status.Entities);
                 });
             }
         }
@@ -112,10 +112,10 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.v2.Supervisor {
                     Assert.Equal(device, status.DeviceId);
                     Assert.Equal(module, status.ModuleId);
                     Assert.Null(status.SiteId);
-                    Assert.Single(status.Endpoints);
-                    Assert.Equal(ep1.Registration.Id, status.Endpoints.Single().Id);
-                    Assert.Equal(EndpointActivationState.ActivatedAndConnected, status.Endpoints.Single().ActivationState);
-                    Assert.Equal(EndpointActivationState.ActivatedAndConnected, ep2.ActivationState);
+                    Assert.Single(status.Entities);
+                    Assert.Equal(ep1.Registration.Id, status.Entities.Single().Id);
+                    Assert.Equal(EntityActivationState.ActivatedAndConnected, status.Entities.Single().ActivationState);
+                    Assert.Equal(EntityActivationState.ActivatedAndConnected, ep2.ActivationState);
                     Assert.True(
                         ep2.EndpointState == EndpointConnectivityState.Connecting ||
                         ep2.EndpointState == EndpointConnectivityState.NotReachable);
@@ -162,8 +162,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.v2.Supervisor {
                     Assert.Equal(device, status.DeviceId);
                     Assert.Equal(module, status.ModuleId);
                     Assert.Null(status.SiteId);
-                    Assert.Empty(status.Endpoints);
-                    Assert.Equal(EndpointActivationState.Deactivated, ep3.ActivationState);
+                    Assert.Empty(status.Entities);
+                    Assert.Equal(EntityActivationState.Deactivated, ep3.ActivationState);
                     Assert.Equal(EndpointConnectivityState.Disconnected, ep3.EndpointState);
                 });
             }
@@ -209,8 +209,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.v2.Supervisor {
                     Assert.Equal(device, status.DeviceId);
                     Assert.Equal(module, status.ModuleId);
                     Assert.Null(status.SiteId);
-                    Assert.Empty(status.Endpoints);
-                    Assert.Equal(EndpointActivationState.Deactivated, ep3.ActivationState);
+                    Assert.Empty(status.Entities);
+                    Assert.Equal(EntityActivationState.Deactivated, ep3.ActivationState);
                     Assert.Equal(EndpointConnectivityState.Disconnected, ep3.EndpointState);
                 });
             }
@@ -255,8 +255,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.v2.Supervisor {
                     Assert.Equal(device, status.DeviceId);
                     Assert.Equal(module, status.ModuleId);
                     Assert.Null(status.SiteId);
-                    Assert.Empty(status.Endpoints);
-                    Assert.True(endpoints.All(ep => ep.ActivationState == EndpointActivationState.Deactivated));
+                    Assert.Empty(status.Entities);
+                    Assert.True(endpoints.All(ep => ep.ActivationState == EntityActivationState.Deactivated));
                     Assert.True(endpoints.All(ep => ep.EndpointState == EndpointConnectivityState.Disconnected));
                 });
             }

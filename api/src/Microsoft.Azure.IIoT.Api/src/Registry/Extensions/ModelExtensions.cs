@@ -644,7 +644,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
         /// <param name="model"></param>
         /// <returns></returns>
         public static EndpointActivationStatusApiModel ToApiModel(
-            this EndpointActivationStatusModel model) {
+            this EntityActivationStatusModel model) {
             if (model == null) {
                 return null;
             }
@@ -659,14 +659,14 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
-        public static EndpointActivationStatusModel ToServiceModel(
+        public static EntityActivationStatusModel ToServiceModel(
             this EndpointActivationStatusApiModel model) {
             if (model == null) {
                 return null;
             }
-            return new EndpointActivationStatusModel {
+            return new EntityActivationStatusModel {
                 Id = model.Id,
-                ActivationState = (OpcUa.Registry.Models.EndpointActivationState?)model.ActivationState
+                ActivationState = (OpcUa.Registry.Models.EntityActivationState?)model.ActivationState
             };
         }
 
@@ -742,7 +742,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
                 ApplicationId = model.ApplicationId,
                 NotSeenSince = model.NotSeenSince,
                 Registration = model.Registration.ToServiceModel(),
-                ActivationState = (OpcUa.Registry.Models.EndpointActivationState?)model.ActivationState,
+                ActivationState = (OpcUa.Registry.Models.EntityActivationState?)model.ActivationState,
                 EndpointState = (OpcUa.Registry.Models.EndpointConnectivityState?)model.EndpointState,
                 OutOfSync = model.OutOfSync
             };
@@ -1338,7 +1338,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
                 DeviceId = model.DeviceId,
                 ModuleId = model.ModuleId,
                 SiteId = model.SiteId,
-                Endpoints = model.Endpoints?
+                Endpoints = model.Entities?
                     .Select(e => e.ToApiModel())
                     .ToList()
             };
@@ -1358,7 +1358,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
                 DeviceId = model.DeviceId,
                 ModuleId = model.ModuleId,
                 SiteId = model.SiteId,
-                Endpoints = model.Endpoints?
+                Entities = model.Endpoints?
                     .Select(e => e.ToServiceModel())
                     .ToList()
             };

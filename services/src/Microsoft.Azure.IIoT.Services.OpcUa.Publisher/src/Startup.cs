@@ -11,15 +11,9 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher {
     using Microsoft.Azure.IIoT.AspNetCore.Cors;
     using Microsoft.Azure.IIoT.AspNetCore.Correlation;
     using Microsoft.Azure.IIoT.Diagnostics.Runtime;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Registry;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Registry.Clients;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Twin;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Deploy;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Services;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default;
+    using Microsoft.Azure.IIoT.OpcUa.Api.Registry.Clients;
     using Microsoft.Azure.IIoT.Storage.CosmosDb.Services;
     using Microsoft.Azure.IIoT.Http.Ssl;
     using Microsoft.Azure.IIoT.Http.Default;
@@ -191,39 +185,18 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher {
             builder.RegisterType<CorsSetup>()
                 .AsImplementedInterfaces();
 
-            // Registry services to lookup endpoints.
+            // ... Publisher services
+            builder.RegisterModule<PublisherServices>();
+            builder.RegisterType<CosmosDbServiceClient>()
+                .AsImplementedInterfaces();
+
+            // Registry services are required to lookup endpoints.
             builder.RegisterType<RegistryServicesApiAdapter>()
                 .AsImplementedInterfaces();
             builder.RegisterType<RegistryServiceClient>()
                 .AsImplementedInterfaces();
-            // Twin services for browsing and model transfer ...
-            builder.RegisterType<TwinServicesApiAdapter>()
-                .AsImplementedInterfaces();
-            builder.RegisterType<TwinServiceClient>()
-                .AsImplementedInterfaces();
 
-            // Create Publish jobs using ...
-            builder.RegisterType<PublisherJobService>()
-                .AsImplementedInterfaces();
-            builder.RegisterType<BulkPublishService<string>>()
-                .AsImplementedInterfaces();
-
-            // ... job services and dependencies
-            builder.RegisterType<DefaultJobService>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<LegacyJobDatabase>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<WorkerDatabase>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<CosmosDbServiceClient>()
-                .AsImplementedInterfaces();
-            builder.RegisterType<DefaultJobService>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<IoTHubJobConfigurationHandler>()
-                .AsImplementedInterfaces();
-            builder.RegisterType<IoTHubServiceHttpClient>()
-                .AsImplementedInterfaces();
-
+            // Auto Deploy publisher module
             builder.RegisterType<IoTHubConfigurationClient>()
                 .AsImplementedInterfaces();
             builder.RegisterType<LogAnalyticsConfig>()

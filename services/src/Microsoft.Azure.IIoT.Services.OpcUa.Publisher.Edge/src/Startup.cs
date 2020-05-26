@@ -5,11 +5,8 @@
 
 namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge {
     using Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Services;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Registry;
     using Microsoft.Azure.IIoT.OpcUa.Api.Registry.Clients;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Services;
     using Microsoft.Azure.IIoT.AspNetCore.Storage;
@@ -184,37 +181,22 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge {
             builder.RegisterType<CorsSetup>()
                 .AsImplementedInterfaces();
 
+            // ... Publisher services
+            builder.RegisterModule<PublisherServices>();
+            builder.RegisterType<CosmosDbServiceClient>()
+                .AsImplementedInterfaces();
+
             // Registry services to lookup endpoints.
             builder.RegisterType<RegistryServicesApiAdapter>()
                 .AsImplementedInterfaces();
             builder.RegisterType<RegistryServiceClient>()
                 .AsImplementedInterfaces();
 
-            // Create Publish jobs using ...
-            builder.RegisterType<PublisherJobService>()
-                .AsImplementedInterfaces();
-
-            // ... job services and dependencies
-            builder.RegisterType<DefaultJobService>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<LegacyJobDatabase>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<WorkerDatabase>()
-                .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<CosmosDbServiceClient>()
-                .AsImplementedInterfaces();
-            builder.RegisterType<DefaultJobService>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<IoTHubJobConfigurationHandler>()
                 .AsImplementedInterfaces();
             builder.RegisterType<IoTHubServiceHttpClient>()
                 .AsImplementedInterfaces();
 
-            // Orchestrator
-            builder.RegisterType<DefaultJobOrchestrator>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<DefaultDemandMatcher>()
-                .AsImplementedInterfaces();
             builder.RegisterType<IoTHubSasTokenValidator>()
                 .AsImplementedInterfaces();
             builder.RegisterType<DistributedProtectedCache>()

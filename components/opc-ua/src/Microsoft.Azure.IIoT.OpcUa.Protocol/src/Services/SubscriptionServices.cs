@@ -41,7 +41,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Protocol.Services {
             _codec = codec ?? throw new ArgumentNullException(nameof(codec));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _timer = new Timer(OnCheckAsync, null, kIdleCheckTimespan, Timeout.InfiniteTimeSpan);
-            _errorSignaled = false; 
+            _errorSignaled = false;
         }
 
         /// <summary>
@@ -868,7 +868,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Protocol.Services {
                     RelativePath = Template.RelativePath?
                                 .ToRelativePath(session.MessageContext)?
                                 .Format(session.NodeCache.TypeTree),
-                    MonitoringMode = activate 
+                    MonitoringMode = activate
                         ? Template.MonitoringMode.ToStackType() ?? Opc.Ua.MonitoringMode.Reporting
                         : Opc.Ua.MonitoringMode.Disabled,
                     StartNodeId = Template.StartNodeId.ToNodeId(session.MessageContext),

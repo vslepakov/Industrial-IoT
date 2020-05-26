@@ -85,8 +85,6 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
                 .AsImplementedInterfaces();
             builder.RegisterType<PublisherServiceClient>()
                 .AsImplementedInterfaces();
-            builder.RegisterType<PublisherJobServiceClient>()
-                .AsImplementedInterfaces();
 
             // ... with client event callbacks
             builder.RegisterType<RegistryServiceEvents>()
@@ -127,7 +125,6 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
             _registry = _scope.Resolve<IRegistryServiceApi>();
             _publisher = _scope.Resolve<IPublisherServiceApi>();
             _vault = _scope.Resolve<IVaultServiceApi>();
-            _jobs = _scope.Resolve<IPublisherJobServiceApi>();
             if (_scope.TryResolve(out _metrics)) {
                 _metrics.Start();
             }
@@ -706,7 +703,6 @@ Commands and Options
         private readonly IMetricServer _metrics;
         private readonly ILifetimeScope _scope;
         private readonly ITwinServiceApi _twin;
-        private readonly IPublisherJobServiceApi _jobs;
         private readonly IPublisherServiceApi _publisher;
         private readonly IRegistryServiceApi _registry;
         private readonly IVaultServiceApi _vault;

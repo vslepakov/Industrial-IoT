@@ -97,7 +97,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
 
         /// <returns></returns>
         public IEnumerable<string> GetPropertyNames() {
-            return _supervisor.GetStatusAsync().Result.Endpoints.Select(e => e.Id);
+            return _supervisor.GetStatusAsync().Result.Entities.Select(e => e.Id);
         }
 
         /// <summary>
@@ -108,7 +108,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
             foreach (var item in _endpoints.ToList()) {
                 if (string.IsNullOrEmpty((string)item.Value)) {
                     try {
-                        await _supervisor.DetachEndpointAsync(item.Key);
+                        await _supervisor.DetachAsync(item.Key);
                     }
                     catch (Exception ex) {
                         _logger.Error(ex, "Error detaching twin {Key}", item.Key);
@@ -116,7 +116,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
                 }
                 else {
                     try {
-                        await _supervisor.AttachEndpointAsync(item.Key, (string)item.Value);
+                        await _supervisor.AttachAsync(item.Key, (string)item.Value);
                     }
                     catch (Exception ex) {
                         _logger.Error(ex, "Error attaching twin {Key}", item.Key);

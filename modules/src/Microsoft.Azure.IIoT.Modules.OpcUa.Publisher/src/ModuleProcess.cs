@@ -5,19 +5,19 @@
 
 namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
     using Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime;
-    using Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controller;
+    using Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controllers;
     using Microsoft.Azure.IIoT.Module;
     using Microsoft.Azure.IIoT.Module.Framework;
     using Microsoft.Azure.IIoT.Module.Framework.Client;
     using Microsoft.Azure.IIoT.Module.Framework.Hosting;
     using Microsoft.Azure.IIoT.Module.Framework.Services;
     using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients;
-    using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Runtime;
-    using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Engine;
+    using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services;
     using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Models;
+    using Microsoft.Azure.IIoT.OpcUa.Edge.Supervisor.Services;
+    using Microsoft.Azure.IIoT.OpcUa.Edge;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Services;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Agent;
+    using Microsoft.Azure.IIoT.OpcUa.Protocol;
     using Microsoft.Azure.IIoT.Hub;
     using Microsoft.Azure.IIoT.Utils;
     using Microsoft.Azure.IIoT.Serializers;
@@ -32,28 +32,36 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
     using Prometheus;
 
     /// <summary>
-    /// Publisher module
+    /// Module Process
     /// </summary>
     public class ModuleProcess : IProcessControl {
-
-        /// <summary>
-        /// Create process
-        /// </summary>
-        /// <param name="config"></param>
-        public ModuleProcess(IConfigurationRoot config) {
-            _config = config;
-            _exitCode = 0;
-            _exit = new TaskCompletionSource<bool>();
-            AssemblyLoadContext.Default.Unloading += _ => _exit.TrySetResult(true);
-            SiteId = _config?.GetValue<string>("site", null);
-        }
 
         /// <summary>
         /// Site of the module
         /// </summary>
         public string SiteId { get; set; }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Whethr the module is running
+        /// </summary>
+
+        public event EventHandler<bool> OnRunning;
+
+        /// <summary>
+        /// Create process
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="injector"></param>
+        public ModuleProcess(IConfiguration config, IInjector injector = null) {
+            _config = config;
+            _injector = injector;
+            _exitCode = 0;
+            _exit = new TaskCompletionSource<bool>();
+            AssemblyLoadContext.Default.Unloading += _ => _exit.TrySetResult(true);
+            SiteId = _config?.GetValue<string>("site", null);
+        }
+
+        /// <inheritdoc/>
         public void Reset() {
             _reset.TrySetResult(true);
         }
@@ -77,11 +85,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
         }
 
         /// <summary>
-        /// Whether the module is running
-        /// </summary>
-        public event EventHandler<bool> OnRunning;
-
-        /// <summary>
         /// Run module host
         /// </summary>
         public async Task<int> RunAsync() {
@@ -90,8 +93,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                 using (var hostScope = ConfigureContainer(_config)) {
                     _reset = new TaskCompletionSource<bool>();
                     var module = hostScope.Resolve<IModuleHost>();
-                    var events = hostScope.Resolve<IEventEmitter>();
-                    var workerSupervisor = hostScope.Resolve<IWorkerSupervisor>();
                     var identity = hostScope.Resolve<IIdentity>();
                     var logger = hostScope.Resolve<ILogger>();
                     var config = new Config(_config);
@@ -105,7 +106,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                         }
                         kPublisherModuleStart.WithLabels(
                             identity.DeviceId ?? "", identity.ModuleId ?? "").Inc();
-                        await workerSupervisor.StartAsync();
                         OnRunning?.Invoke(this, true);
                         await Task.WhenAny(_reset.Task, _exit.Task);
                         if (_exit.Task.IsCompleted) {
@@ -121,7 +121,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                     finally {
                         kPublisherModuleStart.WithLabels(
                             identity.DeviceId ?? "", identity.ModuleId ?? "").Set(0);
-                        await workerSupervisor.StopAsync();
                         if (server != null) {
                             await server.StopAsync();
                         }
@@ -138,6 +137,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
         /// <param name="configuration"></param>
         /// <returns></returns>
         private IContainer ConfigureContainer(IConfiguration configuration) {
+
             var config = new Config(configuration);
             var builder = new ContainerBuilder();
             var legacyCliOptions = new LegacyCliOptions(configuration);
@@ -153,13 +153,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
             // Register module and publisher framework ...
             builder.RegisterModule<ModuleFramework>();
             builder.RegisterModule<NewtonSoftJsonModule>();
-
-            builder.RegisterType<WorkerSupervisor>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<Worker>()
-                .AsImplementedInterfaces();
-            builder.RegisterType<WriterGroupJobContainerFactory>()
-                .AsImplementedInterfaces().InstancePerDependency();
 
             if (legacyCliOptions.RunInLegacyMode) {
                 builder.AddDiagnostics(config,
@@ -186,36 +179,110 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                 builder.RegisterType<PerDependencyClientAccessor>()
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
                 // Cloud job orchestrator
-                builder.RegisterType<PublisherOrchestratorClient>()
+                builder.RegisterType<PublisherEdgeApiClient>()
                     .AsImplementedInterfaces().SingleInstance();
 
                 // ... plus controllers
-                builder.RegisterType<ConfigurationSettingsController>()
-                    .AsImplementedInterfaces().SingleInstance();
-
-                // Note that they must be singleton so they can
-                // plug as configuration into the orchestrator client.
+                builder.RegisterType<PublisherMethodsController>()
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
             }
 
             builder.RegisterType<PublisherSettingsController>()
-                .AsImplementedInterfaces().SingleInstance();
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
 
-            // Opc specific parts
+            // Sessions
             builder.RegisterType<DefaultSessionManager>()
                 .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<SubscriptionServices>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<VariantEncoderFactory>()
-                .AsImplementedInterfaces();
+
+            // Register supervisor services
+            builder.RegisterType<SupervisorServices>()
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
+            builder.RegisterType<WriterGroupContainerFactory>()
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
+
+            if (_injector != null) {
+                // Inject additional services
+                builder.RegisterInstance(_injector)
+                    .AsImplementedInterfaces()
+                    .ExternallyOwned();
+
+                _injector.Inject(builder);
+            }
 
             return builder.Build();
         }
 
-        private readonly IConfigurationRoot _config;
-        private readonly TaskCompletionSource<bool> _exit;
-        private int _exitCode;
-        private TaskCompletionSource<bool> _reset;
+        /// <summary>
+        /// Container factory for writer group twins
+        /// </summary>
+        public class WriterGroupContainerFactory : IContainerFactory {
 
+            /// <summary>
+            /// Create twin container factory
+            /// </summary>
+            /// <param name="sessions"></param>
+            /// <param name="logger"></param>
+            /// <param name="injector"></param>
+            public WriterGroupContainerFactory(ISessionManager sessions, ILogger logger,
+                IInjector injector = null) {
+                _sessions = sessions ?? throw new ArgumentNullException(nameof(sessions));
+                _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+                _injector = injector;
+            }
+
+            /// <inheritdoc/>
+            public IContainer Create(Action<ContainerBuilder> configure) {
+
+                // Create container for all twin level scopes...
+                var builder = new ContainerBuilder();
+
+                // Register outer instances
+                builder.RegisterInstance(_logger)
+                    .ExternallyOwned()
+                    .AsImplementedInterfaces();
+                builder.RegisterInstance(_sessions)
+                    .ExternallyOwned()
+                    .AsImplementedInterfaces();
+
+                // Register other opc ua services
+                builder.RegisterType<VariantEncoderFactory>()
+                    .AsImplementedInterfaces();
+                builder.RegisterType<SubscriptionServices>()
+                    .AsImplementedInterfaces().SingleInstance();
+
+                // Publisher engine
+                builder.RegisterType<DataFlowProcessingEngine>()
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
+                builder.RegisterType<WriterGroupMessageTrigger>()
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
+
+                // Register module framework
+                builder.RegisterModule<ModuleFramework>();
+                builder.RegisterModule<NewtonSoftJsonModule>();
+
+                // Register writer group controllers
+                builder.RegisterType<WriterGroupMethodsController>()
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
+                builder.RegisterType<WriterGroupSettingsController>()
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
+
+                configure?.Invoke(builder);
+                _injector?.Inject(builder);
+
+                // Build twin container
+                return builder.Build();
+            }
+
+            private readonly ISessionManager _sessions;
+            private readonly IInjector _injector;
+            private readonly ILogger _logger;
+        }
+
+        private readonly IConfiguration _config;
+        private readonly IInjector _injector;
+        private readonly TaskCompletionSource<bool> _exit;
+        private TaskCompletionSource<bool> _reset;
+        private int _exitCode;
         private static readonly Gauge kPublisherModuleStart = Metrics
             .CreateGauge("iiot_edge_publisher_module_start", "publisher module started",
                 new GaugeConfiguration {
