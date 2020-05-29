@@ -99,6 +99,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                     IMetricServer server = null;
                     try {
                         var version = GetType().Assembly.GetReleaseVersion().ToString();
+                        logger.Information("Starting module OpcPublisher version {version}.",
+                            version);
                         await module.StartAsync(IdentityType.Publisher, SiteId,
                             "OpcPublisher", version, this);
                         if (hostScope.TryResolve(out server)) {

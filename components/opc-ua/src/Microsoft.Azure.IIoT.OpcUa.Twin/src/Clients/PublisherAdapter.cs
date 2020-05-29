@@ -188,8 +188,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Clients {
         private readonly ILogger _logger;
 
         private static readonly Counter kNodePublishStart = Metrics
-            .CreateCounter("iiot_edge_publisher_node_publish_start", "calls to nodePublishStartAsync");
+            .CreateCounter("iiot_publisher_node_publish_start", "calls to nodePublishStartAsync");
         private static readonly Counter kNodePublishStop = Metrics
-            .CreateCounter("iiot_edge_publisher_node_publish_stop", "calls to nodePublishStopAsync");
+            .CreateCounter("iiot_publisher_node_publish_stop", "calls to nodePublishStopAsync");
     }
 }

@@ -128,6 +128,9 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.Gateway {
             app.UseAuthorization();
             app.UseHttpsRedirect();
 
+            app.UseMetricServer();
+            app.UseHttpMetrics();
+
             app.UseEndpoints(endpoints => {
                 endpoints.MapMetrics();
                 endpoints.MapControllers();

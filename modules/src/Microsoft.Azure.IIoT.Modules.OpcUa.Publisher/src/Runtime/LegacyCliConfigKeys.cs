@@ -49,6 +49,11 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
         public const string NetworkMessageType = "NetworkMessageType";
 
         /// <summary>
+        /// Key for the messaging mode
+        /// </summary>
+        public const string MessageEncoding = "MessageEncoding";
+
+        /// <summary>
         /// Flag to demand full featured message creation from publisher
         /// </summary>
         public const string FullFeaturedMessage = "FullFeaturedMessage";

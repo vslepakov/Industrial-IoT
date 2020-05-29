@@ -144,6 +144,10 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events {
 
             app.UseCorrelation();
             app.UseSwagger();
+
+            app.UseMetricServer();
+            app.UseHttpMetrics();
+
             app.UseEndpoints(endpoints => {
                 endpoints.MapMetrics();
                 endpoints.MapHubs();

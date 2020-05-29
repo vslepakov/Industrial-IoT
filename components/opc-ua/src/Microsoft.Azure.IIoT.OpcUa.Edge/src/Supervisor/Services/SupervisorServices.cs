@@ -57,6 +57,14 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Supervisor.Services {
                 var host = new TwinHost(this, _config, id, secret, _logger);
                 _twinHosts.Add(id, host);
 
+                var twins = _twinHosts.Count;
+                ThreadPool.GetMinThreads(out var workerThreads, out var asyncThreads);
+                if (twins > workerThreads || twins > asyncThreads) {
+                    var result = ThreadPool.SetMinThreads(twins, twins);
+                    _logger.Information("Thread pool changed to support {async} threads {success}",
+                        twins, result ? "succeeded" : "failed");
+                }
+
                 //
                 // This starts and waits for the twin to be started - versus attaching which
                 // represents the state of the actived and supervised twins in the supervisor

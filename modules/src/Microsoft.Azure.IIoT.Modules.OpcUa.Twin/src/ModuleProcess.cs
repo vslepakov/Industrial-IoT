@@ -97,6 +97,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin {
                     IMetricServer server = null;
                     try {
                         var version = GetType().Assembly.GetReleaseVersion().ToString();
+                        logger.Information("Starting module OpcTwin version {version}.", 
+                            version);
                         await module.StartAsync(IdentityType.Supervisor, SiteId,
                             "OpcTwin", version, this);
                         if (hostScope.TryResolve(out server)) {

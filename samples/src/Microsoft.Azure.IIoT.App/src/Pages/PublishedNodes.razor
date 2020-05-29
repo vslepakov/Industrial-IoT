@@ -4,6 +4,7 @@
     ------------------------------------------------------------*@
 
 @page "/PublishedNodes/{page}/{endpointId}"
+@page "/PublishedNodes/{page}/{endpointId}/{discovererId}/{applicationId}/{supervisorId}"
 
 @using Microsoft.AspNetCore.Components;
 @using Microsoft.Azure.IIoT.App.Services
@@ -18,53 +19,70 @@
 @inject NavigationManager NavigationManager
 @inject Publisher PublisherHelper
 @inject UICommon CommonHelper
+@inject Registry RegistryHelper
 
 <h1>Published Nodes</h1>
 
 <table class="table @_tableView">
     <thead>
         <tr>
-            <th>Node Id</th>
-            <th>Display Name</th>
-            <th>Publishing Interval</th>
-            <th>Sampling Interval</th>
-            <th>Heartbeat Interval</th>
-            <th>
-                <a href="/endpoints"><span class="oi oi-arrow-left"></span></a>
-            </th>
+            <th class="width-large">Node Id</th>
+            <th class="width-large">Display Name</th>
+            <th class="width-small">Publishing Interval</th>
+            <th class="width-small">Sampling Interval</th>
+            <th class="width-small">Heartbeat Interval</th>
+            @if (IsIdGiven(DiscovererId) && IsIdGiven(ApplicationId) && IsIdGiven(SupervisorId)) {
+                <th class="width-xsmall">
+                    <a href="/endpoints/1/@DiscovererId/@ApplicationId/@SupervisorId"><span class="oi oi-arrow-left"></span></a>
+                </th>
+            }
+            else {
+                <th class="width-xsmall">
+                    <a href="/endpoints/1"><span class="oi oi-arrow-left"></span></a>
+                </th>
+            }
         </tr>
     </thead>
     <tbody>
-        @foreach (var node in _pagednodeList.Results)
-        {
-        <tr>
-            <td>
-                @{ string NodeId = CommonHelper.None;
-                        NodeId = string.IsNullOrEmpty(node.NodeId) ? CommonHelper.None : node.NodeId;
-                } @NodeId
-            </td>
-            <td>
-                @{ string DisplayName = CommonHelper.None;
-                        DisplayName = string.IsNullOrEmpty(node.DisplayName) ? CommonHelper.None : node.DisplayName;
-                } @DisplayName
-            </td>
-            <td>
-                @{ string PublishingInterval = CommonHelper.None;
-                        PublishingInterval = node.PublishingInterval == null ? CommonHelper.None : node.PublishingInterval.ToString();
-                } @PublishingInterval
-            </td>
-            <td>
-                @{ string SamplingInterval = CommonHelper.None;
-                        SamplingInterval = node.SamplingInterval == null ? CommonHelper.None : node.SamplingInterval.ToString();
-                } @SamplingInterval
-            </td>
-            <td>
-                @{ string HeartbeatInterval = CommonHelper.None;
-                        HeartbeatInterval = node.HeartbeatInterval == null ? CommonHelper.None : node.HeartbeatInterval.ToString();
-                } @HeartbeatInterval
-            </td>
-            <td></td>
-        </tr>
+        @foreach (var node in _pagednodeList.Results) {
+            <tr>
+                <td class="hover-text width-large">
+                    <div>
+                        @{ string NodeId = CommonHelper.None;
+                            NodeId = string.IsNullOrEmpty(node.NodeId) ? CommonHelper.None : node.NodeId;
+                        } @NodeId
+                    </div>
+                </td>
+                <td class="hover-text width-large">
+                    <div>
+                        @{ string DisplayName = CommonHelper.None;
+                            DisplayName = string.IsNullOrEmpty(node.DisplayName) ? CommonHelper.None : node.DisplayName;
+                        } @DisplayName
+                    </div>
+                </td>
+                <td class="hover-text width-small">
+                    <div>
+                        @{ string PublishingInterval = CommonHelper.None;
+                            PublishingInterval = node.PublishingInterval == null ? CommonHelper.None : node.PublishingInterval.ToString();
+                        } @PublishingInterval
+                    </div>
+                </td>
+                <td class="hover-text width-small">
+                    <div>
+                        @{ string SamplingInterval = CommonHelper.None;
+                            SamplingInterval = node.SamplingInterval == null ? CommonHelper.None : node.SamplingInterval.ToString();
+                        } @SamplingInterval
+                    </div>
+                </td>
+                <td class="hover-text width-small">
+                    <div>
+                        @{ string HeartbeatInterval = CommonHelper.None;
+                            HeartbeatInterval = node.HeartbeatInterval == null ? CommonHelper.None : node.HeartbeatInterval.ToString();
+                        } @HeartbeatInterval
+                    </div>
+                </td>
+                <td></td>
+            </tr>
         }
     </tbody>
 </table>
@@ -84,6 +102,15 @@
     [Parameter]
     public string EndpointId { get; set; } = string.Empty;
 
+    [Parameter]
+    public string DiscovererId { get; set; } = string.Empty;
+
+    [Parameter]
+    public string ApplicationId { get; set; } = string.Empty;
+
+    [Parameter]
+    public string SupervisorId { get; set; } = string.Empty;
+
     public string Status { get; set; }
     private PagedResult<PublishListItemApiModel> _nodeList =
         new PagedResult<PublishListItemApiModel>();
@@ -97,7 +124,7 @@
     /// Notify page change
     /// </summary>
     /// <param name="page"></param>
-    public async Task PagerPageChanged(int page)
+    public async Task PagerPageChanged(int page) 
     {
         CommonHelper.Spinner = "loader-big";
         StateHasChanged();
@@ -114,7 +141,7 @@
     /// <summary>
     /// OnInitialized
     /// </summary>
-    protected override void OnInitialized()
+    protected override void OnInitialized() 
     {
         CommonHelper.Spinner = "loader-big";
     }
@@ -123,9 +150,9 @@
     /// OnAfterRenderAsync
     /// </summary>
     /// <param name="firstRender"></param>
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender) 
     {
-        if (firstRender)
+        if (firstRender) 
         {
             _nodeList = await PublisherHelper.PublishedAsync(EndpointId);
             Page = "1";
@@ -134,5 +161,10 @@
             CommonHelper.CheckErrorOrEmpty<PublishListItemApiModel>(_pagednodeList, ref _tableView, ref _tableEmpty);
             StateHasChanged();
         }
+    }
+
+    private bool IsIdGiven(string id) 
+    {
+        return !string.IsNullOrEmpty(id);
     }
 }

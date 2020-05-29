@@ -224,7 +224,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
                         },
                         User = item.OpcAuthenticationMode != OpcAuthenticationMode.UsernamePassword ?
                                 null : ToUserNamePasswordCredentialAsync(item).Result
-                    },
+                        },
                         // Select and batch nodes into published data set sources
                         item => GetNodeModels(item, legacyCliModel.ScaleTestCount.GetValueOrDefault(1)),
                         // Comparer for connection information

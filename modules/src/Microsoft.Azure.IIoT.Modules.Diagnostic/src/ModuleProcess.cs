@@ -85,6 +85,7 @@ namespace Microsoft.Azure.IIoT.Modules.Diagnostic {
                     IMetricServer server = null;
                     try {
                         var version = GetType().Assembly.GetReleaseVersion().ToString();
+                        logger.Information("Starting module Diagnostic version {version}.", version);
                         await module.StartAsync("diagnostic", SiteId,
                             "Diagnostic", version, this);
                         if (hostScope.TryResolve(out server)) {

@@ -21,6 +21,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
     using System.Threading.Tasks.Dataflow;
     using System.Collections.Generic;
     using System.Collections.Concurrent;
+    using System.Globalization;
 
     /// <summary>
     /// Writer group processing engine
@@ -323,7 +324,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
                             message.ContentType, message.MessageSchema, message.ContentEncoding);
                     }
                     Interlocked.Increment(ref _sentCompleteCount);
-                    kMessagesSent.WithLabels(_iotHubMessageSinkGuid).Inc();
+                    kMessagesSent.WithLabels(_iotHubMessageSinkGuid, _iotHubMessageSinkStartTime).Inc();
                 }
                 catch (Exception ex) {
                     _logger.Error(ex, "Error while sending messages to IoT Hub.");
@@ -340,12 +341,15 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
             private readonly ActionBlock<NetworkMessageModel> _sinkBlock;
             private readonly string _iotHubMessageSinkGuid = Guid.NewGuid().ToString();
             private long _sentCompleteCount;
+
+            private readonly string _iotHubMessageSinkStartTime =
+                DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.FFFFFFFK", CultureInfo.InvariantCulture);
             private static readonly Histogram kSendingDuration = Metrics.CreateHistogram(
                 "iiot_edge_publisher_messages_duration", "Histogram of message sending durations");
             private static readonly Gauge kMessagesSent = Metrics.CreateGauge(
                 "iiot_edge_publisher_messages", "Number of messages sent to IotHub",
                     new GaugeConfiguration {
-                        LabelNames = new[] { "runid" }
+                        LabelNames = new[] { "runid", "timestamp_utc" }
                     });
         }
 
@@ -577,7 +581,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
                 encoder = _encoders.First().Value;
             }
             if (BatchSize.Value == 1) {
-                return encoder.Encode(input);
+                return encoder.Encode(input, (int)MaxNetworkMessageSize.Value);
             }
             return encoder.EncodeBatch(input, (int)MaxNetworkMessageSize.Value);
         }
@@ -587,35 +591,65 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
         /// </summary>
         /// <param name="state"></param>
         private void DiagnosticsOutputTimer_Elapsed(object state) {
-            var totalDuration = DateTime.UtcNow - _diagnosticStart;
+            var totalDuration = (DateTime.UtcNow - _diagnosticStart).TotalSeconds;
             var numberOfConnectionRetries = _subscriptions.Values
                 .Where(sc => sc.Subscription != null)
                 .Select(sc => sc.Subscription)
                 .Sum(sc => sc.NumberOfConnectionRetries);
 
-            var sb = new StringBuilder();
-            sb.AppendLine();
-            sb.AppendLine($"   DIAGNOSTICS INFORMATION for Engine: {WriterGroupId}");
-            sb.AppendLine("   =======================");
-            sb.AppendLine($"   # Ingress data changes (from OPC)  : {_dataChangesCount}" +
-                $" #/s : {_dataChangesCount / totalDuration.TotalSeconds}");
-            sb.AppendLine($"   # Ingress value changes (from OPC) : {_valueChangesCount}" +
-                $" #/s : {_valueChangesCount / totalDuration.TotalSeconds}");
-            sb.AppendLine($"   # Ingress BatchBlock buffer count  : {_engine?.SourceMessageCount}");
-            sb.AppendLine($"   # EncodingBlock input/output count : {_engine?.EncodingInputCount}/{_engine?.EncodingOutputCount}");
-            sb.AppendLine($"   # Outgress Sink input buffer count : {_engine?.SentPendingCount}");
-            sb.AppendLine($"   # Outgress message count (IoT Hub) : {_engine.SentCompleteCount}" +
-                $" #/s : {_engine.SentCompleteCount / totalDuration.TotalSeconds}");
-            sb.AppendLine("   =======================");
-            sb.AppendLine($"   # Number of connection retries since last error: {numberOfConnectionRetries}");
-            sb.AppendLine("   =======================");
-            // TODO: Use structured logging!
-            _logger.Information(sb.ToString());
+            _logger.Information("Identity {deviceId}; {moduleId}", _identity.DeviceId, _identity.ModuleId);
+            _logger.Information("\n   DIAGNOSTICS INFORMATION for Engine : {WriterGroupId}\n" +
+                "   # Ingress DataChanges (from OPC)   : {dataChangesCount} - {dataChangesAverage}/second\n" +
+                "   # Ingress ValueChanges (from OPC)  : {valueChangesCount} - {valueChangesAverage}/second\n" +
+                "   # Ingress BatchBlock buffer size   : {batchDataSetMessageBlockOutputCount}\n" +
+                "   # Encoding Block input/output size : {encodingBlockInputCount}/{encodingBlockOutputCount}\n" +
+              //  "   # Encoder Notifications processed  : {notificationsProcessedCount}\n" +
+              //  "   # Encoder Notifications dropped    : {notificationsDroppedCount}\n" +
+              //  "   # Encoder IoT Messages processed   : {messagesProcessedCount}\n" +
+              //  "   # Encoder avg Notifications/Message: {notificationsPerMessage}\n" +
+              //  "   # Encoder avg IoT Message body size: {messageSizeAverage}\n" +
+                "   # Outgress input buffer count      : {sentPendingCount}\n" +
+                "   # Outgress IoT message count       : {messageSinkSentMessagesCount} - {sentMessagesAverage}/second\n" +
+                "   # Connection retries               : {connectionRetries}\n",
+                WriterGroupId,
+                _dataChangesCount, _dataChangesCount / totalDuration,
+                _valueChangesCount, _valueChangesCount / totalDuration,
+                _engine?.SourceMessageCount,
+                _engine?.EncodingInputCount, _engine?.EncodingOutputCount,
+             //   _messageEncoder.NotificationsProcessedCount,
+             //   _messageEncoder.NotificationsDroppedCount,
+             //   _messageEncoder.MessagesProcessedCount,
+             //   _messageEncoder.AvgNotificationsPerMessage,
+             //   _messageEncoder.AvgMessageSize,
+                _engine?.SentPendingCount,
+                _engine.SentCompleteCount,
+                _engine.SentCompleteCount / totalDuration,
+                numberOfConnectionRetries);
 
-            kValueChangesCount.WithLabels(PublisherId, WriterGroupId).Set(_valueChangesCount);
-            kDataChangesCount.WithLabels(PublisherId, WriterGroupId).Set(_dataChangesCount);
-            kNumberOfConnectionRetries.WithLabels(PublisherId, WriterGroupId).Set(numberOfConnectionRetries);
-            kSentMessagesCount.WithLabels(PublisherId, WriterGroupId).Set(_engine.SentCompleteCount);
+            kDataChangesCount.WithLabels(PublisherId, WriterGroupId)
+                .Set(_dataChangesCount);
+            kDataChangesPerSecond.WithLabels(PublisherId, WriterGroupId)
+                .Set(_valueChangesCount / totalDuration);
+            kValueChangesCount.WithLabels(PublisherId, WriterGroupId)
+                .Set(_valueChangesCount);
+            kValueChangesPerSecond.WithLabels(PublisherId, WriterGroupId)
+                .Set(_valueChangesCount / totalDuration);
+        //    kNotificationsProcessedCount.WithLabels(PublisherId, WriterGroupId)
+        //        .Set(_messageEncoder.NotificationsProcessedCount);
+        //    kNotificationsDroppedCount.WithLabels(PublisherId, WriterGroupId)
+        //        .Set(_messageEncoder.NotificationsDroppedCount);
+        //    kMessagesProcessedCount.WithLabels(PublisherId, WriterGroupId)
+        //        .Set(_messageEncoder.MessagesProcessedCount);
+        //    kNotificationsPerMessageAvg.WithLabels(PublisherId, WriterGroupId)
+        //        .Set(_messageEncoder.AvgNotificationsPerMessage);
+        //    kMesageSizeAvg.WithLabels(PublisherId, WriterGroupId)
+        //        .Set(_messageEncoder.AvgMessageSize);
+            kIoTHubQueueBuffer.WithLabels(PublisherId, WriterGroupId)
+                .Set((long)_engine?.SentPendingCount);
+            kSentMessagesCount.WithLabels(PublisherId, WriterGroupId)
+                .Set(_engine.SentCompleteCount);
+            kNumberOfConnectionRetries.WithLabels(PublisherId, WriterGroupId)
+                .Set(numberOfConnectionRetries);
         }
 
         // Services
@@ -638,16 +672,37 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
         private readonly Timer _diagnosticsOutputTimer;
         private long _valueChangesCount;
         private long _dataChangesCount;
+
         private static readonly GaugeConfiguration kGaugeConfig = new GaugeConfiguration {
             LabelNames = new[] { "publisherid", "triggerid" }
         };
+
         private static readonly Gauge kValueChangesCount = Metrics.CreateGauge(
-            "iiot_edge_publisher_value_changes", "invoke value changes in trigger", kGaugeConfig);
+            "iiot_edge_publisher_value_changes", "Opc ValuesChanges delivered for processing", kGaugeConfig);
+        private static readonly Gauge kValueChangesPerSecond = Metrics.CreateGauge(
+            "iiot_edge_publisher_value_changes_per_second", "Opc ValuesChanges/second delivered for processing", kGaugeConfig);
         private static readonly Gauge kDataChangesCount = Metrics.CreateGauge(
-            "iiot_edge_publisher_data_changes", "invoke data changes in trigger", kGaugeConfig);
+            "iiot_edge_publisher_data_changes", "Opc DataChanges delivered for processing", kGaugeConfig);
+        private static readonly Gauge kDataChangesPerSecond = Metrics.CreateGauge(
+            "iiot_edge_publisher_data_changes_per_second", "Opc DataChanges/second delivered for processing", kGaugeConfig);
+        private static readonly Gauge kIoTHubQueueBuffer = Metrics.CreateGauge(
+            "iiot_edge_publisher_iothub_queue_size", "IoT messages queued sending", kGaugeConfig);
         private static readonly Gauge kSentMessagesCount = Metrics.CreateGauge(
-            "iiot_edge_publisher_sent_messages", "messages sent to IoTHub", kGaugeConfig);
+            "iiot_edge_publisher_sent_iot_messages", "IoT messages sent to hub", kGaugeConfig);
         private static readonly Gauge kNumberOfConnectionRetries = Metrics.CreateGauge(
             "iiot_edge_publisher_connection_retries", "OPC UA connect retries", kGaugeConfig);
+
+        private static readonly Gauge kNotificationsProcessedCount = Metrics.CreateGauge(
+            "iiot_edge_publisher_encoded_notifications", "publisher engine encoded opc notifications count", kGaugeConfig);
+        private static readonly Gauge kNotificationsDroppedCount = Metrics.CreateGauge(
+            "iiot_edge_publisher_dropped_notifications", "publisher engine dropped opc notifications count", kGaugeConfig);
+        private static readonly Gauge kMessagesProcessedCount = Metrics.CreateGauge(
+            "iiot_edge_publisher_processed_messages", "publisher engine processed iot messages count", kGaugeConfig);
+        private static readonly Gauge kNotificationsPerMessageAvg = Metrics.CreateGauge(
+            "iiot_edge_publisher_notifications_per_message_average",
+            "publisher engine opc notifications per iot message average", kGaugeConfig);
+        private static readonly Gauge kMesageSizeAvg = Metrics.CreateGauge(
+            "iiot_edge_publisher_encoded_message_size_average",
+            "publisher engine iot message encoded body size average", kGaugeConfig);
     }
 }
