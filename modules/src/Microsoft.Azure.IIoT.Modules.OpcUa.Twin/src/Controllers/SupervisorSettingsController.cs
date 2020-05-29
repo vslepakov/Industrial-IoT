@@ -23,11 +23,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
     public class SupervisorSettingsController : ISettingsController, ILogAnalyticsConfig {
 
         /// <summary>
-        /// Called based on the reported connected property.
-        /// </summary>
-        public bool Connected { get; set; }
-
-        /// <summary>
         /// Set and get the log level
         /// </summary>
         public string LogLevel {

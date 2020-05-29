@@ -11,16 +11,11 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controllers {
     using System;
 
     /// <summary>
-    /// Publisher settings controller
+    /// Publisher configuration settings controller
     /// </summary>
     [Version(1)]
     [Version(2)]
     public class PublisherSettingsController : ISettingsController, ILogAnalyticsConfig {
-
-        /// <summary>
-        /// Called based on the reported connected property.
-        /// </summary>
-        public bool Connected { get; set; }
 
         /// <summary>
         /// Set and get the log level

@@ -20,13 +20,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
         public string SiteId { get; set; }
 
         /// <summary>
-        /// Publisher discovery configuration
-        /// </summary>
-        [DataMember(Name = "configuration", Order = 1,
-            EmitDefaultValue = false)]
-        public PublisherConfigApiModel Configuration { get; set; }
-
-        /// <summary>
         /// Current log level
         /// </summary>
         [DataMember(Name = "logLevel", Order = 2,

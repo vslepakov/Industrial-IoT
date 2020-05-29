@@ -10,7 +10,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// Writer group event
     /// </summary>
     [DataContract]
-    public class WriterGroupEventModel {
+    public class WriterGroupEventApiModel {
 
         /// <summary>
         /// Event type

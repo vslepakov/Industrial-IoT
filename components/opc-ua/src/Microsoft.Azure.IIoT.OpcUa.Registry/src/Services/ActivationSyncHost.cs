@@ -22,11 +22,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
         /// <param name="activation"></param>
         /// <param name="config"></param>
         /// <param name="logger"></param>
-        public ActivationSyncHost(IEndpointActivation activation, IActivationSyncConfig config,
-            ILogger logger) {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _config = config ?? throw new ArgumentNullException(nameof(config));
+        public ActivationSyncHost(IEndpointActivation activation, ILogger logger,
+            IActivationSyncConfig config = null) {
             _activation = activation ?? throw new ArgumentNullException(nameof(activation));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _config = config;
             _updateTimer = new Timer(OnUpdateTimerFiredAsync);
         }
 
@@ -42,7 +42,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             if (_cts == null) {
                 _cts = new CancellationTokenSource();
                 // Make it so that we run after first interval has expired.
-                _updateTimer.Change(_config.SyncInterval, Timeout.InfiniteTimeSpan);
+                _updateTimer.Change(_config?.ActivationSyncInterval ?? kDefaultInterval,
+                    Timeout.InfiniteTimeSpan);
             }
             return Task.CompletedTask;
         }
@@ -76,9 +77,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             catch (Exception ex) {
                 _logger.Error(ex, "Failed to run endpoint synchronization.");
             }
-            _updateTimer.Change(_config.SyncInterval, Timeout.InfiniteTimeSpan);
+            _updateTimer.Change(_config?.ActivationSyncInterval ?? kDefaultInterval,
+                Timeout.InfiniteTimeSpan);
         }
 
+        private static readonly TimeSpan kDefaultInterval = TimeSpan.FromMinutes(2);
         private readonly ILogger _logger;
         private readonly Timer _updateTimer;
 #pragma warning disable IDE0069 // Disposable fields should be disposed

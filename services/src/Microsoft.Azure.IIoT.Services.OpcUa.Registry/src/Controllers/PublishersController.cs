@@ -30,8 +30,11 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry.Controllers {
         /// Create controller for publisher services
         /// </summary>
         /// <param name="publishers"></param>
-        public PublishersController(IPublisherRegistry publishers) {
+        /// <param name="diagnostics"></param>
+        public PublishersController(IPublisherRegistry publishers,
+            IPublisherDiagnostics diagnostics) {
             _publishers = publishers;
+            _diagnostics = diagnostics;
         }
 
         /// <summary>
@@ -63,6 +66,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry.Controllers {
         /// </remarks>
         /// <param name="publisherId">Publisher identifier</param>
         /// <param name="request">Patch request</param>
+        /// <returns></returns>
         [HttpPatch("{publisherId}")]
         [Authorize(Policy = Policies.CanChange)]
         public async Task UpdatePublisherAsync(string publisherId,
@@ -72,6 +76,36 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry.Controllers {
             }
             await _publishers.UpdatePublisherAsync(publisherId,
                 request.ToServiceModel());
+        }
+
+        /// <summary>
+        /// Get runtime status of supervisor
+        /// </summary>
+        /// <remarks>
+        /// Allows a caller to get runtime status for a supervisor.
+        /// </remarks>
+        /// <param name="publisherId">Publisher identifier</param>
+        /// <returns>Publisher status</returns>
+        [HttpGet("{publisherId}/status")]
+        public async Task<SupervisorStatusApiModel> GetPublisherStatusAsync(
+            string publisherId) {
+            var result = await _diagnostics.GetPublisherStatusAsync(publisherId);
+            return result.ToApiModel();
+        }
+
+        /// <summary>
+        /// Reset supervisor
+        /// </summary>
+        /// <remarks>
+        /// Allows a caller to reset the twin module using its supervisor
+        /// identity identifier.
+        /// </remarks>
+        /// <param name="publisherId">Publisher identifier</param>
+        /// <returns></returns>
+        [HttpPost("{publisherId}/reset")]
+        [Authorize(Policy = Policies.CanManage)]
+        public Task ResetPublisherAsync(string publisherId) {
+            return _diagnostics.ResetPublisherAsync(publisherId);
         }
 
         /// <summary>
@@ -184,5 +218,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry.Controllers {
         }
 
         private readonly IPublisherRegistry _publishers;
+        private readonly IPublisherDiagnostics _diagnostics;
     }
 }

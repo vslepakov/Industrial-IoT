@@ -155,50 +155,45 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
             builder.RegisterModule<NewtonSoftJsonModule>();
 
             if (legacyCliOptions.RunInLegacyMode) {
+
+                // Standalone mode with legacy configuration options.
+
                 builder.AddDiagnostics(config,
                     legacyCliOptions.ToLoggerConfiguration());
                 builder.RegisterInstance(legacyCliOptions)
                     .AsImplementedInterfaces();
 
-                // we overwrite the ModuleHost registration from PerLifetimeScope
-                // (in builder.RegisterModule<ModuleFramework>) to Singleton as
-                // we want to reuse the Client from the ModuleHost in sub-scopes.
-                builder.RegisterType<ModuleHost>()
-                    .AsImplementedInterfaces().SingleInstance();
-                // Local orchestrator
-                builder.RegisterType<LegacyJobOrchestrator>()
-                    .AsImplementedInterfaces().SingleInstance();
-                // Create jobs from published nodes file
-                builder.RegisterType<PublishedNodesJobConverter>()
+                // Configure the processing engine from nodes file
+                builder.RegisterType<PublishedNodesFileLoader>()
                     .SingleInstance();
+
+                // Configure root scope as supervisor
+                WriterGroupContainerFactory.ConfigureServices(builder);
             }
             else {
                 builder.AddDiagnostics(config);
 
-                // Client instance per job
-                builder.RegisterType<PerDependencyClientAccessor>()
+                // Register supervisor services to manage writer group twins
+                builder.RegisterType<SupervisorServices>()
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
-                // Cloud job orchestrator
+                builder.RegisterType<WriterGroupContainerFactory>()
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
+
+                // Resolve writers from cloud endpoint
+                builder.RegisterType<DataSetWriterRegistryLoader>()
+                    .AsImplementedInterfaces().SingleInstance();
                 builder.RegisterType<PublisherEdgeApiClient>()
                     .AsImplementedInterfaces().SingleInstance();
 
-                // ... plus controllers
-                builder.RegisterType<PublisherMethodsController>()
+                // Add controllers
+                builder.RegisterType<SupervisorMethodsController>()
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
             }
 
             builder.RegisterType<PublisherSettingsController>()
                 .AsImplementedInterfaces().InstancePerLifetimeScope();
-
-            // Sessions
             builder.RegisterType<DefaultSessionManager>()
                 .AsImplementedInterfaces().SingleInstance();
-
-            // Register supervisor services
-            builder.RegisterType<SupervisorServices>()
-                .AsImplementedInterfaces().InstancePerLifetimeScope();
-            builder.RegisterType<WriterGroupContainerFactory>()
-                .AsImplementedInterfaces().InstancePerLifetimeScope();
 
             if (_injector != null) {
                 // Inject additional services
@@ -223,8 +218,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
             /// <param name="sessions"></param>
             /// <param name="logger"></param>
             /// <param name="injector"></param>
-            public WriterGroupContainerFactory(ISessionManager sessions, ILogger logger,
-                IInjector injector = null) {
+            public WriterGroupContainerFactory(ISessionManager sessions,
+                ILogger logger, IInjector injector = null) {
                 _sessions = sessions ?? throw new ArgumentNullException(nameof(sessions));
                 _logger = logger ?? throw new ArgumentNullException(nameof(logger));
                 _injector = injector;
@@ -244,18 +239,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                     .ExternallyOwned()
                     .AsImplementedInterfaces();
 
-                // Register other opc ua services
-                builder.RegisterType<VariantEncoderFactory>()
-                    .AsImplementedInterfaces();
-                builder.RegisterType<SubscriptionServices>()
-                    .AsImplementedInterfaces().SingleInstance();
-
-                // Publisher engine
-                builder.RegisterType<DataFlowProcessingEngine>()
-                    .AsImplementedInterfaces().InstancePerLifetimeScope();
-                builder.RegisterType<WriterGroupMessageTrigger>()
-                    .AsImplementedInterfaces().InstancePerLifetimeScope();
-
                 // Register module framework
                 builder.RegisterModule<ModuleFramework>();
                 builder.RegisterModule<NewtonSoftJsonModule>();
@@ -265,12 +248,41 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
                 builder.RegisterType<WriterGroupSettingsController>()
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
+                builder.RegisterType<DataSetWriterSettingsController>()
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
 
+                ConfigureServices(builder);
                 configure?.Invoke(builder);
                 _injector?.Inject(builder);
 
                 // Build twin container
                 return builder.Build();
+            }
+
+            /// <summary>
+            /// Configure container services
+            /// </summary>
+            /// <param name="builder"></param>
+            public static void ConfigureServices(ContainerBuilder builder) {
+
+                // Publisher engine and encoders
+                builder.RegisterType<WriterGroupProcessingEngine>()
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
+                builder.RegisterType<UadpNetworkMessageEncoder>()
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
+                builder.RegisterType<JsonNetworkMessageEncoder>()
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
+                builder.RegisterType<BinarySampleMessageEncoder>()
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
+                builder.RegisterType<JsonSampleMessageEncoder>()
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
+
+                // Register dependent opc ua services
+                builder.RegisterType<VariantEncoderFactory>()
+                    .AsImplementedInterfaces();
+                builder.RegisterType<SubscriptionServices>()
+                    .AsImplementedInterfaces().SingleInstance();
+
             }
 
             private readonly ISessionManager _sessions;

@@ -986,13 +986,11 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
         /// Update publisher
         /// </summary>
         private async Task UpdatePublisherAsync(CliOptions options) {
-            var config = BuildPublisherConfig(options);
             await _registry.UpdatePublisherAsync(GetPublisherId(options),
                 new PublisherUpdateApiModel {
                     SiteId = options.GetValueOrDefault<string>("-s", "--siteId", null),
                     LogLevel = options.GetValueOrDefault<TraceLogLevel>(
-                        "-l", "--log-level", null),
-                    Configuration = config,
+                        "-l", "--log-level", null)
                 });
         }
 
@@ -2552,45 +2550,6 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
         }
 
         /// <summary>
-        /// Build publisher config model from options
-        /// </summary>
-        private PublisherConfigApiModel BuildPublisherConfig(CliOptions options) {
-            var config = new PublisherConfigApiModel();
-            var empty = true;
-
-            var url = options.GetValueOrDefault<string>("-o", "--orchestrator", null);
-            if (url != null) {
-                if (url == "true") {
-                    config.JobOrchestratorUrl = "";
-                }
-                else {
-                    config.JobOrchestratorUrl = url;
-                }
-                empty = false;
-            }
-
-            var maxWorkers = options.GetValueOrDefault<int>("-w", "--max-workers", null);
-            if (maxWorkers != null && maxWorkers >= 0) {
-                config.MaxWorkers = maxWorkers;
-                empty = false;
-            }
-
-            var checkIntervalSec = options.GetValueOrDefault<int>("-c", "--check-interval", null);
-            if (checkIntervalSec != null && checkIntervalSec != 0) {
-                config.JobCheckInterval = TimeSpan.FromSeconds(checkIntervalSec.Value);
-                empty = false;
-            }
-
-            var heartbeatInterval = options.GetValueOrDefault<int>("-h", "--heartbeat", null);
-            if (heartbeatInterval != null && heartbeatInterval != 0) {
-                config.HeartbeatInterval = TimeSpan.FromSeconds(heartbeatInterval.Value);
-                empty = false;
-            }
-
-            return empty ? null : config;
-        }
-
-        /// <summary>
         /// Print help
         /// </summary>
         private void PrintHelp() {
@@ -2981,13 +2940,6 @@ Commands and Options
         -i, --id        Id of publisher to retrieve (mandatory)
         -s, --siteId    Updated site of the publisher.
         -l, --log-level Set publisher module logging level
-        -o, --orchestrator
-                        Orchestrator url
-        -w, --max-workers
-                        Max number of workers to to use
-        -c, --check-interval
-                        Job check interval in seconds
-        -h, --heartbeat Heartbeat interval in seconds
 
      list        List publishers
         with ...

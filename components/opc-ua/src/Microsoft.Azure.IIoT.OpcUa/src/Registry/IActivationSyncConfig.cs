@@ -7,13 +7,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry {
     using System;
 
     /// <summary>
-    /// Endpoint sync configuration
+    /// Activation sync configuration
     /// </summary>
     public interface IActivationSyncConfig {
 
         /// <summary>
-        /// Update interval
+        /// Update sync interval
         /// </summary>
-        TimeSpan SyncInterval { get; }
+        TimeSpan? ActivationSyncInterval { get; }
     }
 }

@@ -332,7 +332,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                     t.ConnectionState = a.IsTwinConnected() ? "Connected" : "Disconnected";
                     return t;
                 })
-                .Select(t => (t, new DeviceModel { Id = t.Id }))
+                .Select(t => (t, new DeviceModel { Id = t.Id, ConnectionState = t.ConnectionState }))
                 .ToList();
         }
 

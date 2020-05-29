@@ -43,6 +43,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry {
     using System;
     using ILogger = Serilog.ILogger;
     using Prometheus;
+    using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients;
 
     /// <summary>
     /// Webservice startup
@@ -239,16 +240,19 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry {
             builder.RegisterType<ApplicationTwinsMigration>()
                 .AsImplementedInterfaces().SingleInstance();
 #endif
-            // Additional registry services
+            // Additional clients needed by registry services
             builder.RegisterType<TwinModuleActivationClient>()
                 .AsImplementedInterfaces();
             builder.RegisterType<TwinModuleCertificateClient>()
                 .AsImplementedInterfaces();
             builder.RegisterType<TwinModuleDiagnosticsClient>()
                 .AsImplementedInterfaces();
+            builder.RegisterType<PublisherModuleActivationClient>()
+                .AsImplementedInterfaces();
+            builder.RegisterType<PublisherModuleDiagnosticsClient>()
+                .AsImplementedInterfaces();
             builder.RegisterType<OnboardingClient>()
                 .AsImplementedInterfaces();
-
 
             builder.RegisterType<IoTHubConfigurationClient>()
                 .AsImplementedInterfaces();

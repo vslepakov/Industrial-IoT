@@ -997,7 +997,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
                 Id = model.Id,
                 SiteId = model.SiteId,
                 LogLevel = (TraceLogLevel?)model.LogLevel,
-                Configuration = model.Configuration.ToApiModel(),
                 OutOfSync = model.OutOfSync,
                 Version = model.Version,
                 Connected = model.Connected
@@ -1018,48 +1017,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
                 Id = model.Id,
                 SiteId = model.SiteId,
                 LogLevel = (OpcUa.Registry.Models.TraceLogLevel?)model.LogLevel,
-                Configuration = model.Configuration.ToServiceModel(),
                 OutOfSync = model.OutOfSync,
                 Version = model.Version,
                 Connected = model.Connected
-            };
-        }
-
-        /// <summary>
-        /// Create api model
-        /// </summary>
-        /// <param name="model"></param>
-        /// <returns></returns>
-        public static PublisherConfigApiModel ToApiModel(
-            this PublisherConfigModel model) {
-            if (model == null) {
-                return null;
-            }
-            return new PublisherConfigApiModel {
-                Capabilities = model.Capabilities?.ToDictionary(k => k.Key, v => v.Value),
-                HeartbeatInterval = model.HeartbeatInterval,
-                JobCheckInterval = model.JobCheckInterval,
-                JobOrchestratorUrl = model.JobOrchestratorUrl,
-                MaxWorkers = model.MaxWorkers
-            };
-        }
-
-        /// <summary>
-        /// Convert to service model
-        /// </summary>
-        /// <param name="model"></param>
-        /// <returns></returns>
-        public static PublisherConfigModel ToServiceModel(
-            this PublisherConfigApiModel model) {
-            if (model == null) {
-                return null;
-            }
-            return new PublisherConfigModel {
-                Capabilities = model.Capabilities?.ToDictionary(k => k.Key, v => v.Value),
-                HeartbeatInterval = model.HeartbeatInterval,
-                JobCheckInterval = model.JobCheckInterval,
-                JobOrchestratorUrl = model.JobOrchestratorUrl,
-                MaxWorkers = model.MaxWorkers
             };
         }
 
@@ -1144,7 +1104,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
             return new PublisherUpdateApiModel {
                 SiteId = model.SiteId,
                 LogLevel = (TraceLogLevel?)model.LogLevel,
-                Configuration = model.Configuration.ToApiModel()
             };
         }
 
@@ -1161,7 +1120,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
             return new PublisherUpdateModel {
                 SiteId = model.SiteId,
                 LogLevel = (OpcUa.Registry.Models.TraceLogLevel?)model.LogLevel,
-                Configuration = model.Configuration.ToServiceModel()
             };
         }
 

@@ -198,7 +198,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Twin.Services {
             /// <returns></returns>
             private async Task BrowseEncodeModelAsync(EndpointModel endpoint,
                 DiagnosticsModel diagnostics, Stream stream, CancellationToken ct) {
-                using (var encoder = new BrowseStreamEncoder(_outer._client, endpoint,
+                using (var encoder = new BrowsedNodeStreamEncoder(_outer._client, endpoint,
                     stream, MimeType, diagnostics, _logger, null)) {
                     await encoder.EncodeAsync(ct);
                 }

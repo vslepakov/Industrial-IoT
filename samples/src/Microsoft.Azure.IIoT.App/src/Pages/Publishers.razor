@@ -27,7 +27,6 @@
     <thead>
         <tr>
             <th>Id</th>
-            <th>Configuration</th>
             <th>Site Id</th>
             <th>Sync Status</th>
             <th>Connection Status</th>
@@ -38,26 +37,6 @@
         {
             <tr>
                 <td>@publisher.Id</td>
-                <td>
-                    @{ string Capabilities = CommonHelper.None;}
-                    @{ string HeartbeatInterval = CommonHelper.None;}
-                    @{ string JobCheckInterval = CommonHelper.None;}
-                    @{ string JobOrchestratorUrl = CommonHelper.None;}
-                    @{ string MaxWorkers = CommonHelper.None;}
-                    @if (publisher.Configuration != null)
-                    {
-                        Capabilities = publisher.Configuration.Capabilities == null ? CommonHelper.None : publisher.Configuration.Capabilities.ToString();
-                        HeartbeatInterval = publisher.Configuration.HeartbeatInterval == null ? CommonHelper.None : publisher.Configuration.HeartbeatInterval.ToString();
-                        JobCheckInterval = publisher.Configuration.JobCheckInterval == null ? CommonHelper.None : publisher.Configuration.JobCheckInterval.ToString();
-                        JobOrchestratorUrl = string.IsNullOrEmpty(publisher.Configuration.JobOrchestratorUrl) ? CommonHelper.None : publisher.Configuration.JobOrchestratorUrl;
-                        MaxWorkers = publisher.Configuration.MaxWorkers == null ? CommonHelper.None : publisher.Configuration.MaxWorkers.ToString();
-                    }
-                    Capabilities: @Capabilities<br />
-                    HeartbeatInterval: @HeartbeatInterval<br />
-                    JobCheckInterval: @JobCheckInterval<br />
-                    JobOrchestratorUrl: @JobOrchestratorUrl<br />
-                    MaxWorkers: @MaxWorkers
-                </td>
                 @{string SiteId = publisher.SiteId == null ? CommonHelper.None : publisher.SiteId;}
                 <td>@SiteId</td>
                 @{string OutOfSync = publisher.OutOfSync == null ? CommonHelper.None : publisher.OutOfSync == true ? "Out Of Sync" : "Synced";}

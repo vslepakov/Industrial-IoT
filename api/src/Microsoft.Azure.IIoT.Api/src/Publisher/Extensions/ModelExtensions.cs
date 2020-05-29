@@ -4,10 +4,8 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
-    using Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models;
     using Microsoft.Azure.IIoT.OpcUa.Api.Core.Models;
     using Microsoft.Azure.IIoT.OpcUa.Core.Models;
-    using Microsoft.Azure.IIoT.OpcUa.Registry.Models;
     using Microsoft.Azure.IIoT.OpcUa.Subscriber.Models;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
     using System.Linq;
@@ -16,44 +14,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// Api model extensions
     /// </summary>
     public static class ModelExtensions {
-
-        /// <summary>
-        /// Create config
-        /// </summary>
-        /// <param name="model"></param>
-        public static PublisherConfigApiModel ToApiModel(
-            this PublisherConfigModel model) {
-            if (model == null) {
-                return null;
-            }
-            return new PublisherConfigApiModel {
-                Capabilities = model.Capabilities?
-                    .ToDictionary(k => k.Key, v => v.Value),
-                HeartbeatInterval = model.HeartbeatInterval,
-                JobCheckInterval = model.JobCheckInterval,
-                JobOrchestratorUrl = model.JobOrchestratorUrl,
-                MaxWorkers = model.MaxWorkers
-            };
-        }
-
-        /// <summary>
-        /// Convert to service model
-        /// </summary>
-        /// <returns></returns>
-        public static PublisherConfigModel ToServiceModel(
-            this PublisherConfigApiModel model) {
-            if (model == null) {
-                return null;
-            }
-            return new PublisherConfigModel {
-                Capabilities = model.Capabilities?
-                    .ToDictionary(k => k.Key, v => v.Value),
-                HeartbeatInterval = model.HeartbeatInterval,
-                JobCheckInterval = model.JobCheckInterval,
-                JobOrchestratorUrl = model.JobOrchestratorUrl,
-                MaxWorkers = model.MaxWorkers
-            };
-        }
 
         /// <summary>
         /// Convert to api model

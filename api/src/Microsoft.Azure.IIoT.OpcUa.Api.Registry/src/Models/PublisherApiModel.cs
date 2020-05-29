@@ -35,13 +35,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
         public TraceLogLevel? LogLevel { get; set; }
 
         /// <summary>
-        /// Publisher agent configuration
-        /// </summary>
-        [DataMember(Name = "configuration", Order = 3,
-            EmitDefaultValue = false)]
-        public PublisherConfigApiModel Configuration { get; set; }
-
-        /// <summary>
         /// Whether the registration is out of sync between
         /// client (module) and server (service) (default: false).
         /// </summary>

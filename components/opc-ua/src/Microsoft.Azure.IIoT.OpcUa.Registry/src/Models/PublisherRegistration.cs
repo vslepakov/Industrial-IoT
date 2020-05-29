@@ -5,10 +5,8 @@
 
 namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
     using Microsoft.Azure.IIoT.Hub;
-    using System;
     using System.Collections.Generic;
     using System.Runtime.Serialization;
-    using System.Threading;
 
     /// <summary>
     /// Publisher agent module registration
@@ -31,36 +29,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         /// </summary>
         [DataMember]
         public TraceLogLevel? LogLevel { get; set; }
-
-        /// <summary>
-        /// Job orchestrator url
-        /// </summary>
-        [DataMember]
-        public string JobOrchestratorUrl { get; set; }
-
-        /// <summary>
-        /// Heartbeat interval
-        /// </summary>
-        [DataMember]
-        public TimeSpan? HeartbeatInterval { get; set; }
-
-        /// <summary>
-        /// Workers to start
-        /// </summary>
-        [DataMember]
-        public int? MaxWorkers { get; set; }
-
-        /// <summary>
-        /// Interval to check for updates
-        /// </summary>
-        [DataMember]
-        public TimeSpan? JobCheckInterval { get; set; }
-
-        /// <summary>
-        /// Match capablities
-        /// </summary>
-        [DataMember]
-        public Dictionary<string, string> Capabilities { get; set; }
 
         /// <summary>
         /// Create registration - for testing purposes
@@ -87,24 +55,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             if (LogLevel != registration.LogLevel) {
                 return false;
             }
-            if (JobOrchestratorUrl != registration.JobOrchestratorUrl) {
-                return false;
-            }
-            if ((MaxWorkers ?? 1) != (registration.MaxWorkers ?? 1)) {
-                return false;
-            }
-            if ((JobCheckInterval ?? Timeout.InfiniteTimeSpan) !=
-                (registration.JobCheckInterval ?? Timeout.InfiniteTimeSpan)) {
-                return false;
-            }
-            if ((HeartbeatInterval ?? Timeout.InfiniteTimeSpan) !=
-                (registration.HeartbeatInterval ?? Timeout.InfiniteTimeSpan)) {
-                return false;
-            }
-            if (!Capabilities.SetEqualsSafe(registration.Capabilities,
-                    (x, y) => x.Key == y.Key && x.Value == y.Value)) {
-                return false;
-            }
             return true;
         }
 
@@ -123,14 +73,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 EqualityComparer<string>.Default.GetHashCode(ModuleId);
             hashCode = (hashCode * -1521134295) +
                 EqualityComparer<TraceLogLevel?>.Default.GetHashCode(LogLevel);
-            hashCode = (hashCode * -1521134295) +
-                EqualityComparer<string>.Default.GetHashCode(JobOrchestratorUrl);
-            hashCode = (hashCode * -1521134295) +
-                EqualityComparer<TimeSpan?>.Default.GetHashCode(HeartbeatInterval ?? Timeout.InfiniteTimeSpan);
-            hashCode = (hashCode * -1521134295) +
-                EqualityComparer<int?>.Default.GetHashCode(MaxWorkers ?? 1);
-            hashCode = (hashCode * -1521134295) +
-                EqualityComparer<TimeSpan?>.Default.GetHashCode(JobCheckInterval ?? Timeout.InfiniteTimeSpan);
             return hashCode;
         }
 

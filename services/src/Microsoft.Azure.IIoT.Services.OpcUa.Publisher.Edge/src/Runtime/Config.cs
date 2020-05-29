@@ -11,8 +11,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime {
     using Microsoft.Azure.IIoT.AspNetCore.OpenApi.Runtime;
     using Microsoft.Azure.IIoT.AspNetCore.ForwardedHeaders;
     using Microsoft.Azure.IIoT.AspNetCore.ForwardedHeaders.Runtime;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs.Runtime;
     using Microsoft.Azure.IIoT.Hosting;
     using Microsoft.Azure.IIoT.Auth.Runtime;
     using Microsoft.Azure.IIoT.Diagnostics;
@@ -22,13 +20,12 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime {
     using Microsoft.Azure.IIoT.Storage.CosmosDb;
     using Microsoft.Azure.IIoT.Storage.CosmosDb.Runtime;
     using Microsoft.Extensions.Configuration;
-    using System;
 
     /// <summary>
     /// Common web service configuration aggregation
     /// </summary>
     public class Config : DiagnosticsConfig, IWebHostConfig, IIoTHubConfig,
-        ICorsConfig, IOpenApiConfig, IOrchestratorConfig, ICosmosDbConfig,
+        ICorsConfig, IOpenApiConfig, ICosmosDbConfig,
         IItemContainerConfig, IForwardedHeadersConfig, IRoleConfig {
 
         /// <inheritdoc/>
@@ -49,9 +46,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime {
         public string ServicePathBase => GetStringOrDefault(
             PcsVariable.PCS_PUBLISHER_ORCHESTRATOR_SERVICE_PATH_BASE,
                 () => _host.ServicePathBase);
-
-        /// <inheritdoc/>
-        public TimeSpan JobStaleTime => _jobs.JobStaleTime;
 
         /// <inheritdoc/>
         public string CorsWhitelist => _cors.CorsWhitelist;
@@ -95,7 +89,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime {
             _hub = new IoTHubConfig(configuration);
             _cors = new CorsConfig(configuration);
             _cosmos = new CosmosDbConfig(configuration);
-            _jobs = new OrchestratorConfig(configuration);
             _fh = new ForwardedHeadersConfig(configuration);
         }
 
@@ -103,7 +96,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime {
         private readonly WebHostConfig _host;
         private readonly CorsConfig _cors;
         private readonly CosmosDbConfig _cosmos;
-        private readonly OrchestratorConfig _jobs;
         private readonly IoTHubConfig _hub;
         private readonly ForwardedHeadersConfig _fh;
     }

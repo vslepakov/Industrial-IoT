@@ -56,24 +56,25 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry {
         }
 
         /// <summary>
-        /// Returns all publisher ids from the registry
+        /// Query all publishers
         /// </summary>
         /// <param name="service"></param>
+        /// <param name="query"></param>
         /// <param name="onlyServerState"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        public static async Task<List<string>> ListAllPublisherIdsAsync(
-            this IPublisherRegistry service, bool onlyServerState = false,
-            CancellationToken ct = default) {
-            var publishers = new List<string>();
-            var result = await service.ListPublishersAsync(null, onlyServerState, null, ct);
-            publishers.AddRange(result.Items.Select(s => s.Id));
+        public static async Task<List<PublisherModel>> QueryAllPublishersAsync(
+            this IPublisherRegistry service, PublisherQueryModel query,
+            bool onlyServerState = false, CancellationToken ct = default) {
+            var supervisors = new List<PublisherModel>();
+            var result = await service.QueryPublishersAsync(query, onlyServerState, null, ct);
+            supervisors.AddRange(result.Items);
             while (result.ContinuationToken != null) {
                 result = await service.ListPublishersAsync(result.ContinuationToken,
                     onlyServerState, null, ct);
-                publishers.AddRange(result.Items.Select(s => s.Id));
+                supervisors.AddRange(result.Items);
             }
-            return publishers;
+            return supervisors;
         }
     }
 }

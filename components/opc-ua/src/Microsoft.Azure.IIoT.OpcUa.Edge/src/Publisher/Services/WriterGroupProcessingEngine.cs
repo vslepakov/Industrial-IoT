@@ -1,0 +1,653 @@
+﻿// ------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All rights reserved.
+//  Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
+// ------------------------------------------------------------
+
+namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
+    using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Models;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
+    using Microsoft.Azure.IIoT.OpcUa.Protocol;
+    using Microsoft.Azure.IIoT.OpcUa.Protocol.Models;
+    using Microsoft.Azure.IIoT.OpcUa.Core;
+    using Microsoft.Azure.IIoT.Module;
+    using Microsoft.Azure.IIoT.Utils;
+    using Serilog;
+    using Prometheus;
+    using System;
+    using System.Linq;
+    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using System.Threading.Tasks.Dataflow;
+    using System.Collections.Generic;
+    using System.Collections.Concurrent;
+
+    /// <summary>
+    /// Writer group processing engine
+    /// </summary>
+    public class WriterGroupProcessingEngine : IWriterGroupProcessingEngine,
+        IDisposable {
+
+        /// <inheritdoc/>
+        public string WriterGroupId { get; set; }
+
+        /// <inheritdoc/>
+        public uint? MaxNetworkMessageSize {
+            get => _maxEncodedMessageSize ?? 256 * 1024;
+            set {
+                if (!value.HasValue || value.Value > 0) {
+                    _maxEncodedMessageSize = value;
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        public TimeSpan? PublishingInterval {
+            get => _publishingInterval;
+            set {
+                if (_publishingInterval != value) {
+                    _engine?.SetBatchTriggerInterval(value);
+                    _publishingInterval = value;
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        public int? BatchSize {
+            get => _batchSize ?? 1;
+            set {
+                if (!value.HasValue || value.Value > 0) {
+                    _batchSize = value;
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        public TimeSpan? DiagnosticsInterval {
+            get => _diagnosticsInterval;
+            set {
+                if (_diagnosticsInterval != value) {
+                    if (value == null) {
+                        _diagnosticsOutputTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                    }
+                    else {
+                        _diagnosticsOutputTimer.Change(value.Value, value.Value);
+                    }
+                    _diagnosticsInterval = value;
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        public string MessageSchema { get; set; }
+
+        /// <inheritdoc/>
+        public string HeaderLayoutUri { get; set; }
+
+        /// <inheritdoc/>
+        public NetworkMessageContentMask? NetworkMessageContentMask { get; set; }
+
+        /// <inheritdoc/>
+        public uint? GroupVersion { get; set; }
+
+        /// <inheritdoc/>
+        public DataSetOrderingType? DataSetOrdering { get; set; }
+
+        /// <inheritdoc/>
+        public double? SamplingOffset { get; set; }
+
+        /// <inheritdoc/>
+        public List<double> PublishingOffset { get; set; }
+
+        /// <inheritdoc/>
+        public TimeSpan? KeepAliveTime { get; set; }
+
+        /// <inheritdoc/>
+        public byte? Priority { get; set; }
+
+        /// <summary>
+        /// Publisher id
+        /// </summary>
+        internal string PublisherId => _identity.DeviceId + "_" + _identity.ModuleId;
+
+        /// <summary>
+        /// Create writer group processor
+        /// </summary>
+        /// <param name="encoders"></param>
+        /// <param name="events"></param>
+        /// <param name="subscriptionManager"></param>
+        /// <param name="logger"></param>
+        /// <param name="identity"></param>
+        public WriterGroupProcessingEngine(IEventEmitter events, ISubscriptionManager subscriptionManager,
+            IEnumerable<INetworkMessageEncoder> encoders, IIdentity identity, ILogger logger) {
+            _events = events ??
+                throw new ArgumentNullException(nameof(events));
+            _encoders = encoders?.ToDictionary(e => e.MessageScheme, e => e) ??
+                throw new ArgumentNullException(nameof(encoders));
+            _logger = logger ??
+                throw new ArgumentNullException(nameof(logger));
+            _identity = identity ??
+                throw new ArgumentNullException(nameof(identity));
+            _subscriptionManager = subscriptionManager ??
+                throw new ArgumentNullException(nameof(subscriptionManager));
+
+            if (_encoders.Count == 0) {
+                // Add at least one encoder
+                _encoders.Add(MessageSchemaTypes.NetworkMessageUadp, new UadpNetworkMessageEncoder());
+            }
+
+            _engine = new DataFlowEngine(this);
+            _subscriptions = new ConcurrentDictionary<string, DataSetWriterSubscription>();
+            _diagnosticsOutputTimer = new Timer(DiagnosticsOutputTimer_Elapsed);
+        }
+
+        /// <inheritdoc/>
+        public void AddWriters(IEnumerable<DataSetWriterModel> dataSetWriters) {
+
+            // TODO capture tasks
+
+            foreach (var writer in dataSetWriters) {
+                _subscriptions.AddOrUpdate(writer.DataSetWriterId, writerId => {
+                    var subscription = new DataSetWriterSubscription(this, writer);
+                    subscription.OpenAsync().ContinueWith(_ => subscription.ActivateAsync());
+                    return subscription;
+                }, (writerId, subscription) => {
+                    subscription.DeactivateAsync().ContinueWith(_ => subscription.Dispose());
+                    subscription = new DataSetWriterSubscription(this, writer);
+                    subscription.OpenAsync().ContinueWith(_ => subscription.ActivateAsync());
+                    return subscription;
+                });
+            }
+        }
+
+        /// <inheritdoc/>
+        public void RemoveWriters(IEnumerable<string> dataSetWriters) {
+
+            // TODO capture tasks
+
+            foreach (var writer in dataSetWriters) {
+                if (_subscriptions.TryRemove(writer, out var subscription)) {
+                    // TODO: Add cleanup
+                    subscription.DeactivateAsync().ContinueWith(_ => subscription.Dispose());
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        public void Dispose() {
+            var subscriptions = _subscriptions.Values.ToList();
+            _subscriptions.Clear();
+            try {
+                // Stop
+                _engine.Dispose();
+                Task.WhenAll(subscriptions.Select(sc => sc.DeactivateAsync())).Wait();
+            }
+            catch {
+                // Nothing...
+            }
+            finally {
+                subscriptions.ForEach(sc => sc.Dispose());
+                _diagnosticsOutputTimer.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Message flow engine
+        /// </summary>
+        private sealed class DataFlowEngine {
+
+            /// <summary>
+            /// Input messages
+            /// </summary>
+            public int SourceMessageCount => _inputBlock.OutputCount;
+
+            /// <summary>
+            /// Encoding input
+            /// </summary>
+            public int EncodingInputCount => _encodingBlock.InputCount;
+
+            /// <summary>
+            /// Encoding output
+            /// </summary>
+            public int EncodingOutputCount => _encodingBlock.OutputCount;
+
+            /// <summary>
+            /// Sent pending
+            /// </summary>
+            public int SentPendingCount => _sinkBlock.InputCount;
+
+            /// <summary>
+            /// Sent messages
+            /// </summary>
+            public long SentCompleteCount => _sentCompleteCount;
+
+            /// <summary>
+            /// Create engine
+            /// </summary>
+            /// <param name="outer"></param>
+            internal DataFlowEngine(WriterGroupProcessingEngine outer) {
+                _outer = outer ?? throw new ArgumentNullException(nameof(outer));
+                _logger = _outer._logger?.ForContext<WriterGroupProcessingEngine>() ??
+                    throw new ArgumentNullException(nameof(_logger));
+                _batchTriggerIntervalTimer = new Timer(BatchTriggerIntervalTimer_Elapsed);
+                _cts = new CancellationTokenSource();
+
+                // Input
+                _inputBlock = new BatchBlock<DataSetMessageModel>(
+                    _outer.BatchSize.Value, new GroupingDataflowBlockOptions {
+                        CancellationToken = _cts.Token,
+                        EnsureOrdered = true
+                    });
+
+                // Encoder
+                _encodingBlock = new TransformManyBlock<DataSetMessageModel[], NetworkMessageModel>(
+                    _outer.EncodeMessages,
+                    new ExecutionDataflowBlockOptions {
+                        SingleProducerConstrained = true,
+                        EnsureOrdered = true,
+                        CancellationToken = _cts.Token
+                    });
+
+                // Writer
+                _sinkBlock = new ActionBlock<NetworkMessageModel>(
+                    SendAsync,
+                    new ExecutionDataflowBlockOptions {
+                        MaxDegreeOfParallelism = 1,
+                        EnsureOrdered = true,
+                        CancellationToken = _cts.Token
+                    });
+
+                // Link it all up
+                _inputBlock.LinkTo(_encodingBlock, new DataflowLinkOptions {
+                    PropagateCompletion = true
+                });
+                _encodingBlock.LinkTo(_sinkBlock, new DataflowLinkOptions {
+                    PropagateCompletion = true
+                });
+            }
+
+            /// <inheritdoc/>
+            public void SetBatchTriggerInterval(TimeSpan? value) {
+                if (value == null) {
+                    _batchTriggerIntervalTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                }
+                else {
+                    _batchTriggerIntervalTimer.Change(value.Value, value.Value);
+                }
+            }
+
+            /// <summary>
+            /// process message
+            /// </summary>
+            /// <param name="message"></param>
+            public void Enqueue(DataSetMessageModel message) {
+                _inputBlock.Post(message);
+            }
+
+            /// <inheritdoc/>
+            public void Dispose() {
+                try {
+                    // Stop
+                    _inputBlock.Complete();
+                    _cts.Cancel();
+                }
+                catch {
+                    // Nothing...
+                }
+                finally {
+                    _batchTriggerIntervalTimer.Dispose();
+                    _cts.Dispose();
+                }
+            }
+
+            /// <summary>
+            /// Batch trigger interval
+            /// </summary>
+            /// <param name="state"></param>
+            private void BatchTriggerIntervalTimer_Elapsed(object state) {
+                _inputBlock.TriggerBatch();
+            }
+
+            /// <summary>
+            /// Send messages
+            /// </summary>
+            /// <param name="message"></param>
+            /// <returns></returns>
+            private async Task SendAsync(NetworkMessageModel message) {
+                if (message == null) {
+                    return;
+                }
+                try {
+                    using (kSendingDuration.NewTimer()) {
+                        await _outer._events.SendEventAsync(message.Body,
+                            message.ContentType, message.MessageSchema, message.ContentEncoding);
+                    }
+                    Interlocked.Increment(ref _sentCompleteCount);
+                    kMessagesSent.WithLabels(_iotHubMessageSinkGuid).Inc();
+                }
+                catch (Exception ex) {
+                    _logger.Error(ex, "Error while sending messages to IoT Hub.");
+                    // we do not set the block into a faulted state.
+                }
+            }
+
+            private readonly WriterGroupProcessingEngine _outer;
+            private readonly ILogger _logger;
+            private readonly Timer _batchTriggerIntervalTimer;
+            private readonly BatchBlock<DataSetMessageModel> _inputBlock;
+            private readonly CancellationTokenSource _cts;
+            private readonly TransformManyBlock<DataSetMessageModel[], NetworkMessageModel> _encodingBlock;
+            private readonly ActionBlock<NetworkMessageModel> _sinkBlock;
+            private readonly string _iotHubMessageSinkGuid = Guid.NewGuid().ToString();
+            private long _sentCompleteCount;
+            private static readonly Histogram kSendingDuration = Metrics.CreateHistogram(
+                "iiot_edge_publisher_messages_duration", "Histogram of message sending durations");
+            private static readonly Gauge kMessagesSent = Metrics.CreateGauge(
+                "iiot_edge_publisher_messages", "Number of messages sent to IotHub",
+                    new GaugeConfiguration {
+                        LabelNames = new[] { "runid" }
+                    });
+        }
+
+        /// <summary>
+        /// A dataset writer
+        /// </summary>
+        private sealed class DataSetWriterSubscription : IDisposable {
+
+            /// <summary>
+            /// Active subscription
+            /// </summary>
+            public ISubscription Subscription { get; set; }
+
+            /// <summary>
+            /// Create subscription from template
+            /// </summary>
+            /// <param name="outer"></param>
+            /// <param name="dataSetWriter"></param>
+            public DataSetWriterSubscription(WriterGroupProcessingEngine outer,
+                DataSetWriterModel dataSetWriter) {
+
+                _outer = outer ??
+                    throw new ArgumentNullException(nameof(outer));
+                _logger = _outer._logger?.ForContext<DataSetWriterSubscription>() ??
+                    throw new ArgumentNullException(nameof(_logger));
+                _dataSetWriter = dataSetWriter.Clone() ??
+                    throw new ArgumentNullException(nameof(dataSetWriter));
+                _subscriptionInfo = _dataSetWriter.ToSubscriptionModel();
+
+                if (dataSetWriter.KeyFrameInterval.HasValue &&
+                   dataSetWriter.KeyFrameInterval.Value > TimeSpan.Zero) {
+                    _keyframeTimer = new System.Timers.Timer(
+                        dataSetWriter.KeyFrameInterval.Value.TotalMilliseconds);
+                    _keyframeTimer.Elapsed += KeyframeTimerElapsedAsync;
+                }
+                else {
+                    _keyFrameCount = dataSetWriter.KeyFrameCount;
+                }
+
+                if (dataSetWriter.DataSetMetaDataSendInterval.HasValue &&
+                    dataSetWriter.DataSetMetaDataSendInterval.Value > TimeSpan.Zero) {
+                    _metaData = dataSetWriter.DataSet?.DataSetMetaData ??
+                        throw new ArgumentNullException(nameof(dataSetWriter.DataSet));
+
+                    _metadataTimer = new System.Timers.Timer(
+                        dataSetWriter.DataSetMetaDataSendInterval.Value.TotalMilliseconds);
+                    _metadataTimer.Elapsed += MetadataTimerElapsed;
+                }
+            }
+
+            /// <summary>
+            /// Open subscription
+            /// </summary>
+            /// <returns></returns>
+            public async Task OpenAsync() {
+                if (Subscription != null) {
+                    _logger.Warning("Subscription already exists");
+                    return;
+                }
+
+                var sc = await _outer._subscriptionManager.GetOrCreateSubscriptionAsync(
+                    _subscriptionInfo);
+                sc.OnSubscriptionChange += OnSubscriptionChangedAsync;
+                await sc.ApplyAsync(_subscriptionInfo.MonitoredItems,
+                    _subscriptionInfo.Configuration, false);
+                Subscription = sc;
+            }
+
+            /// <summary>
+            /// activate a subscription
+            /// </summary>
+            /// <returns></returns>
+            public async Task ActivateAsync() {
+                if (Subscription == null) {
+                    _logger.Warning("Subscription not registered");
+                    return;
+                }
+
+                await Subscription.ApplyAsync(_subscriptionInfo.MonitoredItems,
+                    _subscriptionInfo.Configuration, true);
+
+                if (_keyframeTimer != null) {
+                    _keyframeTimer.Start();
+                }
+
+                if (_metadataTimer != null) {
+                    _metadataTimer.Start();
+                }
+            }
+
+            /// <summary>
+            /// deactivate a subscription
+            /// </summary>
+            /// <returns></returns>
+            public async Task DeactivateAsync() {
+
+                if (Subscription == null) {
+                    _logger.Warning("Subscription not registered");
+                    return;
+                }
+
+                await Subscription.ApplyAsync(_subscriptionInfo.MonitoredItems,
+                    _subscriptionInfo.Configuration, false);
+
+                if (_keyframeTimer != null) {
+                    _keyframeTimer.Stop();
+                }
+
+                if (_metadataTimer != null) {
+                    _metadataTimer.Stop();
+                }
+            }
+
+            /// <inheritdoc/>
+            public void Dispose() {
+                if (Subscription != null) {
+                    Subscription.ApplyAsync(null, _subscriptionInfo.Configuration, false);
+                    Subscription.OnSubscriptionChange -= OnSubscriptionChangedAsync;
+                    Subscription.Dispose();
+                }
+                _keyframeTimer?.Dispose();
+                _metadataTimer?.Dispose();
+                Subscription = null;
+            }
+
+            /// <summary>
+            /// Fire when keyframe timer elapsed to send keyframe message
+            /// </summary>
+            /// <param name="sender"></param>
+            /// <param name="e"></param>
+            private async void KeyframeTimerElapsedAsync(object sender, System.Timers.ElapsedEventArgs e) {
+                try {
+                    _keyframeTimer.Enabled = false;
+
+                    _logger.Debug("Insert keyframe message...");
+                    var sequenceNumber = (uint)Interlocked.Increment(ref _currentSequenceNumber);
+                    var snapshot = await Subscription.GetSnapshotAsync();
+                    if (snapshot != null) {
+                        _outer.ProcessDataSetWriterNotification(_dataSetWriter, sequenceNumber, snapshot);
+                    }
+                }
+                catch (Exception ex) {
+                    _logger.Information(ex, "Failed to send keyframe.");
+                }
+                finally {
+                    _keyframeTimer.Enabled = true;
+                }
+            }
+
+            /// <summary>
+            /// Fired when metadata time elapsed
+            /// </summary>
+            /// <param name="sender"></param>
+            /// <param name="e"></param>
+            private void MetadataTimerElapsed(object sender, System.Timers.ElapsedEventArgs e) {
+                // Send(_metaData)
+            }
+
+            /// <summary>
+            /// Handle subscription change messages
+            /// </summary>
+            /// <param name="sender"></param>
+            /// <param name="notification"></param>
+            private async void OnSubscriptionChangedAsync(
+                object sender, SubscriptionNotificationModel notification) {
+                var sequenceNumber = (uint)Interlocked.Increment(ref _currentSequenceNumber);
+                if (_keyFrameCount.HasValue && _keyFrameCount.Value != 0 &&
+                    (sequenceNumber % _keyFrameCount.Value) == 0) {
+                    var snapshot = await Try.Async(() => Subscription.GetSnapshotAsync());
+                    if (snapshot != null) {
+                        notification = snapshot;
+                    }
+                }
+                _outer.ProcessDataSetWriterNotification(_dataSetWriter, sequenceNumber, notification);
+            }
+
+            private readonly System.Timers.Timer _keyframeTimer;
+            private readonly System.Timers.Timer _metadataTimer;
+            private readonly DataSetMetaDataModel _metaData;
+            private readonly uint? _keyFrameCount;
+            private long _currentSequenceNumber;
+            private readonly WriterGroupProcessingEngine _outer;
+            private readonly DataSetWriterModel _dataSetWriter;
+            private readonly SubscriptionModel _subscriptionInfo;
+            private readonly ILogger _logger;
+        }
+
+        /// <summary>
+        /// handle subscription change messages
+        /// </summary>
+        /// <param name="dataSetWriter"></param>
+        /// <param name="sequenceNumber"></param>
+        /// <param name="notification"></param>
+        private void ProcessDataSetWriterNotification(DataSetWriterModel dataSetWriter,
+            uint sequenceNumber, SubscriptionNotificationModel notification) {
+            try {
+                var notifications = notification.Notifications.ToList();
+                var message = new DataSetMessageModel {
+                    // TODO: Filter changes on the monitored items contained in the template
+                    Notifications = notifications,
+                    ServiceMessageContext = notification.ServiceMessageContext,
+                    SubscriptionId = notification.SubscriptionId,
+                    SequenceNumber = sequenceNumber,
+                    ContentMask = (uint?)NetworkMessageContentMask,
+                    PublisherId = PublisherId,
+                    ApplicationUri = notification.ApplicationUri,
+                    EndpointUrl = notification.EndpointUrl,
+                    TimeStamp = DateTime.UtcNow,
+                    Writer = dataSetWriter
+                };
+                Interlocked.Add(ref _valueChangesCount, notifications.Count);
+                Interlocked.Increment(ref _dataChangesCount);
+                _engine.Enqueue(message);
+            }
+            catch (Exception ex) {
+                _logger.Debug(ex, "Failed to produce message");
+            }
+        }
+
+        /// <summary>
+        /// Encode dataset messages using the configured encoder
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        private IEnumerable<NetworkMessageModel> EncodeMessages(IEnumerable<DataSetMessageModel> input) {
+            // Select encoder
+            if (MessageSchema == null || !_encoders.TryGetValue(MessageSchema, out var encoder)) {
+                // Use first encoder
+                encoder = _encoders.First().Value;
+            }
+            if (BatchSize.Value == 1) {
+                return encoder.Encode(input);
+            }
+            return encoder.EncodeBatch(input, (int)MaxNetworkMessageSize.Value);
+        }
+
+        /// <summary>
+        /// Diagnostics timer
+        /// </summary>
+        /// <param name="state"></param>
+        private void DiagnosticsOutputTimer_Elapsed(object state) {
+            var totalDuration = DateTime.UtcNow - _diagnosticStart;
+            var numberOfConnectionRetries = _subscriptions.Values
+                .Where(sc => sc.Subscription != null)
+                .Select(sc => sc.Subscription)
+                .Sum(sc => sc.NumberOfConnectionRetries);
+
+            var sb = new StringBuilder();
+            sb.AppendLine();
+            sb.AppendLine($"   DIAGNOSTICS INFORMATION for Engine: {WriterGroupId}");
+            sb.AppendLine("   =======================");
+            sb.AppendLine($"   # Ingress data changes (from OPC)  : {_dataChangesCount}" +
+                $" #/s : {_dataChangesCount / totalDuration.TotalSeconds}");
+            sb.AppendLine($"   # Ingress value changes (from OPC) : {_valueChangesCount}" +
+                $" #/s : {_valueChangesCount / totalDuration.TotalSeconds}");
+            sb.AppendLine($"   # Ingress BatchBlock buffer count  : {_engine?.SourceMessageCount}");
+            sb.AppendLine($"   # EncodingBlock input/output count : {_engine?.EncodingInputCount}/{_engine?.EncodingOutputCount}");
+            sb.AppendLine($"   # Outgress Sink input buffer count : {_engine?.SentPendingCount}");
+            sb.AppendLine($"   # Outgress message count (IoT Hub) : {_engine.SentCompleteCount}" +
+                $" #/s : {_engine.SentCompleteCount / totalDuration.TotalSeconds}");
+            sb.AppendLine("   =======================");
+            sb.AppendLine($"   # Number of connection retries since last error: {numberOfConnectionRetries}");
+            sb.AppendLine("   =======================");
+            // TODO: Use structured logging!
+            _logger.Information(sb.ToString());
+
+            kValueChangesCount.WithLabels(PublisherId, WriterGroupId).Set(_valueChangesCount);
+            kDataChangesCount.WithLabels(PublisherId, WriterGroupId).Set(_dataChangesCount);
+            kNumberOfConnectionRetries.WithLabels(PublisherId, WriterGroupId).Set(numberOfConnectionRetries);
+            kSentMessagesCount.WithLabels(PublisherId, WriterGroupId).Set(_engine.SentCompleteCount);
+        }
+
+        // Services
+        private readonly ISubscriptionManager _subscriptionManager;
+        private readonly IEventEmitter _events;
+        private readonly ILogger _logger;
+        private readonly IIdentity _identity;
+        private readonly Dictionary<string, INetworkMessageEncoder> _encoders;
+
+        // State
+        private readonly ConcurrentDictionary<string, DataSetWriterSubscription> _subscriptions;
+        private uint? _maxEncodedMessageSize;
+        private int? _batchSize;
+        private TimeSpan? _publishingInterval;
+        private readonly DataFlowEngine _engine;
+
+        // Diagnostics
+        private readonly DateTime _diagnosticStart = DateTime.UtcNow;
+        private TimeSpan? _diagnosticsInterval;
+        private readonly Timer _diagnosticsOutputTimer;
+        private long _valueChangesCount;
+        private long _dataChangesCount;
+        private static readonly GaugeConfiguration kGaugeConfig = new GaugeConfiguration {
+            LabelNames = new[] { "publisherid", "triggerid" }
+        };
+        private static readonly Gauge kValueChangesCount = Metrics.CreateGauge(
+            "iiot_edge_publisher_value_changes", "invoke value changes in trigger", kGaugeConfig);
+        private static readonly Gauge kDataChangesCount = Metrics.CreateGauge(
+            "iiot_edge_publisher_data_changes", "invoke data changes in trigger", kGaugeConfig);
+        private static readonly Gauge kSentMessagesCount = Metrics.CreateGauge(
+            "iiot_edge_publisher_sent_messages", "messages sent to IoTHub", kGaugeConfig);
+        private static readonly Gauge kNumberOfConnectionRetries = Metrics.CreateGauge(
+            "iiot_edge_publisher_connection_retries", "OPC UA connect retries", kGaugeConfig);
+    }
+}

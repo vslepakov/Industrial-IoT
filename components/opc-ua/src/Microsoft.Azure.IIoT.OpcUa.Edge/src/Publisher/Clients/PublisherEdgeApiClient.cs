@@ -5,10 +5,9 @@
 
 namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients {
     using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Clients;
     using Microsoft.Azure.IIoT.Auth;
-    using Microsoft.Azure.IIoT.Exceptions;
     using Microsoft.Azure.IIoT.Serializers;
     using Microsoft.Azure.IIoT.Http;
     using System;
@@ -17,34 +16,32 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients {
     using System.Threading.Tasks;
 
     /// <summary>
-    /// Job orchestrator client that connects to the cloud endpoint.
+    /// Produces writer group and reconfigures the existing group
     /// </summary>
-    public class PublisherEdgeClient : IPublisherEdgeClient {
+    public class PublisherEdgeApiClient : IDataSetWriterRegistryEdgeClient {
 
         /// <summary>
         /// Create connector
         /// </summary>
-        /// <param name="config"></param>
         /// <param name="httpClient"></param>
         /// <param name="tokenProvider"></param>
         /// <param name="serializer"></param>
-        public PublisherEdgeClient(IHttpClient httpClient, IAgentConfigProvider config,
-            ISasTokenGenerator tokenProvider, ISerializer serializer) {
+        public PublisherEdgeApiClient(IHttpClient httpClient, ISasTokenGenerator tokenProvider,
+            ISerializer serializer) {
             _tokenProvider = tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider));
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
-            _config = config ?? throw new ArgumentNullException(nameof(config));
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         }
 
         /// <inheritdoc/>
-        public async Task<DataSetWriterModel> GetDataSetWriterAsync(string dataSetWriterId,
-            CancellationToken ct) {
+        public async Task<DataSetWriterModel> GetDataSetWriterAsync(string serviceUrl,
+            string dataSetWriterId, CancellationToken ct) {
+            var uri = serviceUrl?.TrimEnd('/');
+            if (uri == null) {
+                throw new ArgumentNullException(nameof(serviceUrl));
+            }
             if (string.IsNullOrEmpty(dataSetWriterId)) {
                 throw new ArgumentNullException(nameof(dataSetWriterId));
-            }
-            var uri = _config?.Config?.JobOrchestratorUrl?.TrimEnd('/');
-            if (uri == null) {
-                throw new InvalidConfigurationException("Client not configured");
             }
             var request = _httpClient.NewRequest($"{uri}/v2/writers/{dataSetWriterId}");
             var token = await _tokenProvider.GenerateTokenAsync(request.Uri.ToString());
@@ -59,7 +56,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients {
 
         private readonly ISasTokenGenerator _tokenProvider;
         private readonly ISerializer _serializer;
-        private readonly IAgentConfigProvider _config;
         private readonly IHttpClient _httpClient;
     }
 }

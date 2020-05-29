@@ -6,7 +6,6 @@
 namespace Microsoft.Azure.IIoT.OpcUa.Cli {
     using Microsoft.Azure.IIoT.OpcUa.Core.Models;
     using Microsoft.Azure.IIoT.OpcUa.Edge.Twin.Services;
-    using Microsoft.Azure.IIoT.OpcUa.Edge.Twin.Services;
     using Microsoft.Azure.IIoT.OpcUa.Protocol;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Sample;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Services;
@@ -314,7 +313,7 @@ Operations (Mutually exclusive):
                         IgnoreDefaultValues = true,
                         UseAdvancedEncoding = true
                     })
-                    using (var browser = new BrowseStreamEncoder(_client, endpoint, encoder,
+                    using (var browser = new BrowsedNodeStreamEncoder(_client, endpoint, encoder,
                         null, _logger, null)) {
                         await browser.EncodeAsync(CancellationToken.None);
                     }
@@ -365,7 +364,7 @@ Operations (Mutually exclusive):
                 IgnoreDefaultValues = true,
                 UseAdvancedEncoding = true
             })
-            using (var browser = new BrowseStreamEncoder(client, endpoint, encoder,
+            using (var browser = new BrowsedNodeStreamEncoder(client, endpoint, encoder,
                 null, logger.Logger, null)) {
                 await browser.EncodeAsync(CancellationToken.None);
             }
@@ -422,7 +421,7 @@ Operations (Mutually exclusive):
                             using (var zipped = zip ?
                                 new DeflateStream(stream, CompressionLevel.Optimal) :
                                 (Stream)new GZipStream(stream, CompressionLevel.Optimal))
-                            using (var browser = new BrowseStreamEncoder(client, endpoint, zipped,
+                            using (var browser = new BrowsedNodeStreamEncoder(client, endpoint, zipped,
                                 run.Value, null, logger.Logger, null)) {
                                 await browser.EncodeAsync(CancellationToken.None);
                             }
@@ -448,7 +447,7 @@ Operations (Mutually exclusive):
                         Console.WriteLine($"Reading into {filename}...");
                         using (var stream = new FileStream(filename, FileMode.Create)) {
                             using (var zipped = new DeflateStream(stream, CompressionLevel.Optimal))
-                            using (var browser = new BrowseStreamEncoder(client, endpoint, zipped,
+                            using (var browser = new BrowsedNodeStreamEncoder(client, endpoint, zipped,
                                 ContentMimeType.UaJson, null, logger.Logger, null)) {
                                 await browser.EncodeAsync(CancellationToken.None);
                             }
@@ -464,11 +463,11 @@ Operations (Mutually exclusive):
                     var sw = Stopwatch.StartNew();
                     using (var file = File.Open(filename, FileMode.OpenOrCreate)) {
                         using (var unzipped = new DeflateStream(file, CompressionMode.Decompress)) {
-                           // TODO
-                           // var writer = new SourceStreamImporter(new ItemContainerFactory(database),
-                           //     new VariantEncoderFactory(), logger.Logger);
-                           // await writer.ImportAsync(unzipped, Path.GetFullPath(filename + i),
-                           //     ContentMimeType.UaJson, null, CancellationToken.None);
+                            // TODO
+                            // var writer = new SourceStreamImporter(new ItemContainerFactory(database),
+                            //     new VariantEncoderFactory(), logger.Logger);
+                            // await writer.ImportAsync(unzipped, Path.GetFullPath(filename + i),
+                            //     ContentMimeType.UaJson, null, CancellationToken.None);
                         }
                     }
                     var elapsed = sw.Elapsed;

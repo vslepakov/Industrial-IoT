@@ -26,11 +26,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         public TraceLogLevel? LogLevel { get; set; }
 
         /// <summary>
-        /// Publisher configuration
-        /// </summary>
-        public PublisherConfigModel Configuration { get; set; }
-
-        /// <summary>
         /// Whether the registration is out of sync between
         /// client (module) and server (service) (default: false).
         /// </summary>

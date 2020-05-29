@@ -19,12 +19,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
     using System.Threading.Tasks;
     using System.Threading;
     using System.Collections.Generic;
+    using Microsoft.Azure.IIoT.Utils;
 
     /// <summary>
     /// Publisher registry which uses the IoT Hub twin services for publisher
     /// and writer group identity management.
     /// </summary>
-    public sealed class PublisherRegistry : IPublisherRegistry,
+    public sealed class PublisherRegistry : IPublisherRegistry, IPublisherOrchestration,
         IWriterGroupRegistryListener, IDataSetWriterRegistryListener {
 
         /// <summary>
@@ -33,12 +34,15 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
         /// <param name="iothub"></param>
         /// <param name="broker"></param>
         /// <param name="serializer"></param>
+        /// <param name="activation"></param>
         /// <param name="logger"></param>
         public PublisherRegistry(IIoTHubTwinServices iothub, IJsonSerializer serializer,
+            IActivationServices<WriterGroupPlacementModel> activation,
             IRegistryEventBroker<IPublisherRegistryListener> broker, ILogger logger) {
             _iothub = iothub ?? throw new ArgumentNullException(nameof(iothub));
             _broker = broker ?? throw new ArgumentNullException(nameof(broker));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _activation = activation ?? throw new ArgumentNullException(nameof(activation));
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
         }
 
@@ -85,6 +89,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                         throw new ResourceNotFoundException(
                             $"{publisherId} is not a publisher registration.");
                     }
+
                     // Update registration from update request
                     var patched = registration.ToServiceModel();
                     if (request.SiteId != null) {
@@ -97,36 +102,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                             null : request.LogLevel;
                     }
 
-                    if (request.Configuration != null) {
-                        if (patched.Configuration == null) {
-                            patched.Configuration = new PublisherConfigModel();
-                        }
-                        if (request.Configuration.JobOrchestratorUrl != null) {
-                            patched.Configuration.JobOrchestratorUrl =
-                                string.IsNullOrEmpty(
-                                    request.Configuration.JobOrchestratorUrl.Trim()) ?
-                                        null : request.Configuration.JobOrchestratorUrl;
-                        }
-                        if (request.Configuration.HeartbeatInterval != null) {
-                            patched.Configuration.HeartbeatInterval =
-                                request.Configuration.HeartbeatInterval;
-                        }
-                        if (request.Configuration.JobCheckInterval != null) {
-                            patched.Configuration.JobCheckInterval =
-                                request.Configuration.JobCheckInterval.Value.Ticks == 0 ?
-                                    null : request.Configuration.JobCheckInterval;
-                        }
-                        if (request.Configuration.MaxWorkers != null) {
-                            patched.Configuration.MaxWorkers =
-                                request.Configuration.MaxWorkers <= 0 ?
-                                    null : request.Configuration.MaxWorkers;
-                        }
-                        if (request.Configuration.Capabilities != null) {
-                            patched.Configuration.Capabilities =
-                                request.Configuration.Capabilities.Count == 0 ?
-                                    null : request.Configuration.Capabilities;
-                        }
-                    }
                     // Patch
                     twin = await _iothub.PatchAsync(registration.Patch(
                         patched.ToPublisherRegistration(), _serializer), false, ct);
@@ -203,9 +178,28 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             await _iothub.CreateOrUpdateAsync(group.ToDeviceTwin(_serializer),
                 false, CancellationToken.None);
 
-            // assign writer group to a publisher
+            // Immediately try assign writer group to a publisher
+            await PlaceWriterGroupAsync(group, CancellationToken.None);
+        }
 
+        /// <inheritdoc/>
+        public async Task SynchronizeWriterGroupPlacementsAsync(CancellationToken ct) {
+            // Find all writer groups currently not connected
+            var query = $"SELECT * FROM devices WHERE " +
+                $"NOT IS_DEFINED(tags.{nameof(WriterGroupRegistration.IsDisabled)}) AND " +
+                $"connectionState != 'Connected' AND " +
+                $"tags.{nameof(EntityRegistration.DeviceType)} = '{IdentityType.WriterGroup}' ";
 
+            var result = new List<DeviceTwinModel>();
+            string continuation = null;
+            do {
+                var devices = await _iothub.QueryDeviceTwinsAsync(query, null, null, ct);
+                foreach (var writerGroup in devices.Items.Select(d => d.ToWriterGroupRegistration(false))) {
+                    await PlaceWriterGroupAsync(writerGroup, ct);
+                }
+                continuation = devices.ContinuationToken;
+            }
+            while (continuation != null);
         }
 
         /// <inheritdoc/>
@@ -263,7 +257,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                 //
                 // The variable and event updates do not carry a full model but we can quickly
                 // get the missing information by finding twins where this dataset is defined
-                // - should only be one -
+                //      - should only be one -
                 // and patch them
                 //
                 var twins = await _iothub.QueryAllDeviceTwinsAsync(
@@ -319,12 +313,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                     Properties = new TwinPropertiesModel {
                         Desired = new Dictionary<string, VariantValue> {
                             [IdentityType.DataSet + "_" + dataSetWriterId] =
-                        remove ? null : _serializer.FromObject(
-                            new {
-                                DataSetWriterId = dataSetWriterId,
-                                // This will cause an update
-                                Tag = Guid.NewGuid().ToString(),
-                            })
+                                remove ? null : DateTime.UtcNow.ToString()
                         }
                     }
                 });
@@ -335,9 +324,83 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             }
         }
 
+        /// <summary>
+        /// Try to activate endpoint on any supervisor in site
+        /// </summary>
+        /// <param name="writerGroup"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        private async Task<bool> PlaceWriterGroupAsync(WriterGroupRegistration writerGroup,
+            CancellationToken ct) {
+            try {
+                if (string.IsNullOrEmpty(writerGroup?.SiteId)) {
+                    _logger.Error(
+                        "Writer group {writerGroupId} is null or has no site assigned!",
+                        writerGroup?.WriterGroupId);
+                    return false;
+                }
+
+                // Get registration
+                var writerGroupDevice = await _iothub.GetRegistrationAsync(
+                    WriterGroupRegistrationEx.ToDeviceId(writerGroup.WriterGroupId), null, ct);
+                if (string.IsNullOrEmpty(writerGroupDevice?.Authentication?.PrimaryKey)) {
+                    // No writer group registration
+                    return false;
+                }
+
+                if (writerGroupDevice.IsConnected() ?? false) {
+                    // Query state is delayed and writer group is already connected
+                    return true;
+                }
+
+                // Get all supervisors in site
+                var publishersInSite = await this.QueryAllPublishersAsync(
+                    new PublisherQueryModel { SiteId = writerGroup.SiteId });
+                var candidates = publishersInSite.Select(s => s.Id).ToList();
+                if (candidates.Count == 0) {
+                    // No candidates found to assign to
+                    _logger.Warning(
+                        "Found no publishers in {SiteId} to assign writer group {writerGroupId}!",
+                        writerGroup.SiteId, writerGroup.WriterGroupId);
+
+                    // TODO: Consider Update writer group state to flag site has no publishers
+                    return false;
+                }
+
+                // Loop through all randomly and try to take one that works.
+                foreach (var publisherId in candidates.Shuffle()) {
+                    try {
+                        await _activation.ActivateAsync(new WriterGroupPlacementModel {
+                            WriterGroupId = writerGroup.WriterGroupId,
+                            PublisherId = publisherId,
+                        }, writerGroupDevice.Authentication.PrimaryKey, ct);
+                        _logger.Information(
+                            "Activated writer group {writerGroupId} on publisher {publisherId}!",
+                             writerGroup.WriterGroupId, publisherId);
+
+                        // Done - writer group was assigned
+                        return true;
+                    }
+                    catch (Exception ex) {
+                        _logger.Debug(ex, "Failed to activate writer group" +
+                            " {writerGroupId} on Publisher {publisherId} - trying next...",
+                             writerGroup.WriterGroupId, publisherId);
+                    }
+                }
+                // Failed
+                return false;
+            }
+            catch (Exception ex) {
+                _logger.Debug(ex, "Failed to activate writer group {writerGroupId}. ",
+                    writerGroup.WriterGroupId);
+                return false;
+            }
+        }
+
         private readonly IIoTHubTwinServices _iothub;
         private readonly IJsonSerializer _serializer;
         private readonly IRegistryEventBroker<IPublisherRegistryListener> _broker;
         private readonly ILogger _logger;
+        private readonly IActivationServices<WriterGroupPlacementModel> _activation;
     }
 }

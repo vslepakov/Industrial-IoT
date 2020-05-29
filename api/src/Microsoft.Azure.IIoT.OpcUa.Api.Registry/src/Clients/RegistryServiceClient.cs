@@ -557,6 +557,31 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Clients {
         }
 
         /// <inheritdoc/>
+        public async Task<SupervisorStatusApiModel> GetPublisherStatusAsync(
+            string publisherId, CancellationToken ct) {
+            if (string.IsNullOrEmpty(publisherId)) {
+                throw new ArgumentNullException(nameof(publisherId));
+            }
+            var uri = new UriBuilder($"{_serviceUri}/v2/publishers/{publisherId}/status");
+            var request = _httpClient.NewRequest(uri.Uri, Resource.Platform);
+            _serializer.SetAcceptHeaders(request);
+            var response = await _httpClient.GetAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<SupervisorStatusApiModel>(response);
+        }
+
+        /// <inheritdoc/>
+        public async Task ResetPublisherAsync(string publisherId, CancellationToken ct) {
+            if (string.IsNullOrEmpty(publisherId)) {
+                throw new ArgumentNullException(nameof(publisherId));
+            }
+            var uri = new UriBuilder($"{_serviceUri}/v2/publishers/{publisherId}/reset");
+            var request = _httpClient.NewRequest(uri.Uri, Resource.Platform);
+            var response = await _httpClient.PostAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+        }
+
+        /// <inheritdoc/>
         public async Task<PublisherApiModel> GetPublisherAsync(
             string publisherId, bool? onlyServerState, CancellationToken ct) {
             if (string.IsNullOrEmpty(publisherId)) {

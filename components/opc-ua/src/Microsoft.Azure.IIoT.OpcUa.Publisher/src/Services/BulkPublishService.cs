@@ -4,7 +4,7 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs;
+    using Microsoft.Azure.IIoT.OpcUa.Edge;
     using Microsoft.Azure.IIoT.OpcUa.Twin;
     using Microsoft.Azure.IIoT.OpcUa.Twin.Models;
     using System;
@@ -20,10 +20,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
         /// Create client
         /// </summary>
         /// <param name="transfer"></param>
-        /// <param name="endpoint"></param>
-        public BulkPublishService(ITransferServices<T> transfer, IOrchestratorEndpoint endpoint) {
+        /// <param name="service"></param>
+        public BulkPublishService(ITransferServices<T> transfer, IServiceEndpoint service) {
             _transfer = transfer ?? throw new ArgumentNullException(nameof(transfer));
-            _endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
+            _service = service ?? throw new ArgumentNullException(nameof(service));
         }
 
         /// <inhertidoc/>
@@ -32,12 +32,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                 throw new ArgumentNullException(nameof(endpoint));
             }
             await _transfer.ModelUploadStartAsync(endpoint, new ModelUploadStartRequestModel {
-                UploadEndpointUrl = _endpoint.JobOrchestratorUrl,
+                UploadEndpointUrl = _service.ServiceEndpointUrl + "/endpoints", // TODO
                 AuthorizationHeader = null
             });
         }
 
         private readonly ITransferServices<T> _transfer;
-        private readonly IOrchestratorEndpoint _endpoint;
+        private readonly IServiceEndpoint _service;
     }
 }

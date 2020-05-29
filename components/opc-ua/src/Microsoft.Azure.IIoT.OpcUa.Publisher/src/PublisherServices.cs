@@ -20,8 +20,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher {
         /// <param name="builder"></param>
         protected override void Load(ContainerBuilder builder) {
 
-
-            builder.RegisterType<PublisherService>()
+            builder.RegisterType<WriterGroupServices>()
                 .AsImplementedInterfaces().SingleInstance();
 
             builder.RegisterType<DataSetWriterEventBroker>()

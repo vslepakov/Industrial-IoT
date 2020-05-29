@@ -44,9 +44,9 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
         public const string SkipFirstDefault = "DefaultSkipFirst";
 
         /// <summary>
-        /// Key for the messaging mode
+        /// Network message type for pub/sub messages
         /// </summary>
-        public const string MessagingMode = "MessagingMode";
+        public const string NetworkMessageType = "NetworkMessageType";
 
         /// <summary>
         /// Flag to demand full featured message creation from publisher
@@ -84,7 +84,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
         public const string BatchTriggerInterval = "BatchTriggerInterval";
 
         /// <summary>
-        /// Key for the max (IoT Hub D2C)message size 
+        /// Key for the max (IoT Hub D2C)message size
         /// </summary>
         public const string MaxMessageSize = "MaxMessageSize";
 

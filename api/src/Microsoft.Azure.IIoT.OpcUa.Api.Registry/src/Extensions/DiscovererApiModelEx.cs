@@ -34,6 +34,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
                 .Patch(discoverer.RequestedConfig);
             discoverer.DiscoveryConfig = (update.DiscoveryConfig ?? new DiscoveryConfigApiModel())
                 .Patch(discoverer.DiscoveryConfig);
+            discoverer.Version = update.Version;
             return discoverer;
         }
     }

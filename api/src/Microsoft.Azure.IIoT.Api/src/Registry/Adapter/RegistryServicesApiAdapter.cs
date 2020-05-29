@@ -17,7 +17,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Clients {
     /// </summary>
     public sealed class RegistryServicesApiAdapter : IEndpointRegistry, ISupervisorRegistry,
         IApplicationRegistry, IPublisherRegistry, IDiscoveryServices, ISupervisorDiagnostics,
-        IEndpointActivation {
+        IPublisherDiagnostics, IEndpointActivation {
 
         /// <summary>
         /// Create registry services
@@ -134,6 +134,18 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Clients {
             bool onlyServerState, CancellationToken ct) {
             var result = await _client.GetPublisherAsync(id, onlyServerState, ct);
             return result.ToServiceModel();
+        }
+
+        /// <inheritdoc/>
+        public async Task<SupervisorStatusModel> GetPublisherStatusAsync(string id,
+            CancellationToken ct) {
+            var result = await _client.GetPublisherStatusAsync(id, ct);
+            return result.ToServiceModel();
+        }
+
+        /// <inheritdoc/>
+        public Task ResetPublisherAsync(string id, CancellationToken ct) {
+            return _client.ResetPublisherAsync(id, ct);
         }
 
         /// <inheritdoc/>

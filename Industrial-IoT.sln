@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.29201.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Azure.IIoT.Modules.OpcUa.Publisher", "modules\src\Microsoft.Azure.IIoT.Modules.OpcUa.Publisher\src\Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.csproj", "{F0B9B85E-9D2E-46B2-9986-5D98B21904EE}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge", "services\src\Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge\src\Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.csproj", "{4073F4E2-FAA8-4509-A47A-855D527588FC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Azure.IIoT.Services.OpcUa.Edge", "services\src\Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge\src\Microsoft.Azure.IIoT.Services.OpcUa.Edge.csproj", "{4073F4E2-FAA8-4509-A47A-855D527588FC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Cli", "modules\src\Microsoft.Azure.IIoT.Modules.OpcUa.Publisher\cli\Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Cli.csproj", "{7FEE3528-FE99-4F1A-91C0-DCFBC9236871}"
 EndProject

@@ -6,7 +6,7 @@
 namespace Microsoft.Azure.IIoT.Hub {
 
     /// <summary>
-    /// Common IIoT device twin properties
+    /// Common IIoT module and device twin properties
     /// </summary>
     public static class TwinProperty {
 
@@ -24,5 +24,10 @@ namespace Microsoft.Azure.IIoT.Hub {
         /// Version property name constant
         /// </summary>
         public const string Version = "__version__";
+
+        /// <summary>
+        /// Service endpoint url
+        /// </summary>
+        public const string ServiceEndpoint = nameof(ServiceEndpoint);
     }
 }

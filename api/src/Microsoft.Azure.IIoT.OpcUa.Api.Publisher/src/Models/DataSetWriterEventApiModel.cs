@@ -10,7 +10,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// Dataset writer event
     /// </summary>
     [DataContract]
-    public class DataSetWriterEventModel {
+    public class DataSetWriterEventApiModel {
 
         /// <summary>
         /// Event type

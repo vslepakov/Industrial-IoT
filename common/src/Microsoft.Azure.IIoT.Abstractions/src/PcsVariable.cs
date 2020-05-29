@@ -202,9 +202,9 @@ namespace Microsoft.Azure.IIoT {
         /// <summary> OPC publisher service endpoint url </summary>
         public const string PCS_PUBLISHER_SERVICE_URL =
             "PCS_PUBLISHER_SERVICE_URL";
-        /// <summary> Publisher orchestrator service endpoint url </summary>
-        public const string PCS_PUBLISHER_ORCHESTRATOR_SERVICE_URL =
-            "PCS_PUBLISHER_ORCHESTRATOR_SERVICE_URL";
+        /// <summary> Edge service endpoint url </summary>
+        public const string PCS_EDGE_SERVICE_URL =
+            "PCS_EDGE_SERVICE_URL";
         /// <summary> OPC history service endpoint url </summary>
         public const string PCS_HISTORY_SERVICE_URL =
             "PCS_HISTORY_SERVICE_URL";

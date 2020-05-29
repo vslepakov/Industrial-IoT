@@ -33,9 +33,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events.Api {
                 Publisher = new PublisherModel {
                     SiteId = "TestSite",
                     Connected = null,
-                    Configuration = new PublisherConfigModel {
-                        HeartbeatInterval = TimeSpan.FromSeconds(5)
-                    },
                     LogLevel = IIoT.OpcUa.Registry.Models.TraceLogLevel.Verbose
                 }
             };
@@ -50,10 +47,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events.Api {
 
                 Assert.True(result.Task.IsCompleted);
                 var received = result.Task.Result;
-                Assert.NotNull(received?.Publisher?.Configuration);
                 Assert.Null(received?.Publisher?.Connected);
-                Assert.Equal(TimeSpan.FromSeconds(5),
-                    expected.Publisher.Configuration.HeartbeatInterval);
                 Assert.Equal(expected.Publisher.SiteId, received.Publisher.SiteId);
                 Assert.Equal(expected.Publisher.LogLevel,
                     (IIoT.OpcUa.Registry.Models.TraceLogLevel)received.Publisher.LogLevel);

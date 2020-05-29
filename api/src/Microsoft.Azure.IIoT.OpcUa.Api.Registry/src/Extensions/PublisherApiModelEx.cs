@@ -27,8 +27,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
             publisher.LogLevel = update.LogLevel;
             publisher.OutOfSync = update.OutOfSync;
             publisher.SiteId = update.SiteId;
-            publisher.Configuration = (update.Configuration ?? new PublisherConfigApiModel())
-                .Patch(publisher.Configuration);
+            publisher.Version = update.Version;
             return publisher;
         }
     }
