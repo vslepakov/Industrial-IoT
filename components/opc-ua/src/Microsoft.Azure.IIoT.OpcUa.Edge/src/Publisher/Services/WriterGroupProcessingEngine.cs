@@ -466,8 +466,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
             /// <inheritdoc/>
             public void Dispose() {
                 if (Subscription != null) {
-                    Subscription.ApplyAsync(null, _subscriptionInfo.Configuration, false);
                     Subscription.OnSubscriptionChange -= OnSubscriptionChangedAsync;
+                    Subscription.ApplyAsync(null, _subscriptionInfo.Configuration, false);
                     Subscription.Dispose();
                 }
                 _keyframeTimer?.Dispose();
@@ -557,7 +557,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
                     PublisherId = PublisherId,
                     ApplicationUri = notification.ApplicationUri,
                     EndpointUrl = notification.EndpointUrl,
-                    TimeStamp = DateTime.UtcNow,
+                    TimeStamp = notification.Timestamp,
                     Writer = dataSetWriter
                 };
                 Interlocked.Add(ref _valueChangesCount, notifications.Count);
@@ -597,34 +597,49 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
                 .Select(sc => sc.Subscription)
                 .Sum(sc => sc.NumberOfConnectionRetries);
 
-            _logger.Information("Identity {deviceId}; {moduleId}", _identity.DeviceId, _identity.ModuleId);
-            _logger.Information("\n   DIAGNOSTICS INFORMATION for Engine : {WriterGroupId}\n" +
-                "   # Ingress DataChanges (from OPC)   : {dataChangesCount} - {dataChangesAverage}/second\n" +
-                "   # Ingress ValueChanges (from OPC)  : {valueChangesCount} - {valueChangesAverage}/second\n" +
-                "   # Ingress BatchBlock buffer size   : {batchDataSetMessageBlockOutputCount}\n" +
-                "   # Encoding Block input/output size : {encodingBlockInputCount}/{encodingBlockOutputCount}\n" +
-              //  "   # Encoder Notifications processed  : {notificationsProcessedCount}\n" +
-              //  "   # Encoder Notifications dropped    : {notificationsDroppedCount}\n" +
-              //  "   # Encoder IoT Messages processed   : {messagesProcessedCount}\n" +
-              //  "   # Encoder avg Notifications/Message: {notificationsPerMessage}\n" +
-              //  "   # Encoder avg IoT Message body size: {messageSizeAverage}\n" +
-                "   # Outgress input buffer count      : {sentPendingCount}\n" +
-                "   # Outgress IoT message count       : {messageSinkSentMessagesCount} - {sentMessagesAverage}/second\n" +
-                "   # Connection retries               : {connectionRetries}\n",
-                WriterGroupId,
-                _dataChangesCount, _dataChangesCount / totalDuration,
-                _valueChangesCount, _valueChangesCount / totalDuration,
-                _engine?.SourceMessageCount,
-                _engine?.EncodingInputCount, _engine?.EncodingOutputCount,
-             //   _messageEncoder.NotificationsProcessedCount,
-             //   _messageEncoder.NotificationsDroppedCount,
-             //   _messageEncoder.MessagesProcessedCount,
-             //   _messageEncoder.AvgNotificationsPerMessage,
-             //   _messageEncoder.AvgMessageSize,
-                _engine?.SentPendingCount,
-                _engine.SentCompleteCount,
-                _engine.SentCompleteCount / totalDuration,
-                numberOfConnectionRetries);
+            if (_dataChangesCount > 0 || _valueChangesCount > 0 || _engine.SentCompleteCount > 0) {
+                var diagInfo = new StringBuilder();
+                diagInfo.AppendLine();
+                diagInfo.AppendLine("   DIAGNOSTICS INFORMATION for         : {deviceId}; {moduleId}");
+                diagInfo.AppendLine("   # Ingestion duration                : {duration,14:dd\\:hh\\:mm\\:ss} (dd:hh:mm:ss)");
+                diagInfo.AppendLine("   # Ingress DataChanges (from OPC)    : {dataChangesCount,14:0}({dataChangesAverage:0.##}/s)");
+                diagInfo.AppendLine("   # Ingress ValueChanges (from OPC)   : {valueChangesCount,14:0}({valueChangesAverage:0.##}/s)");
+
+                diagInfo.AppendLine("   # Ingress BatchBlock buffer size    : {batchDataSetMessageBlockOutputCount,14:0}");
+                diagInfo.AppendLine("   # Encoding Block input/output size  : {encodingBlockInputCount,14:0} | {encodingBlockOutputCount:0}");
+             // diagInfo.AppendLine("   # Encoder Notifications processed   : {notificationsProcessedCount,14:0}");
+             // diagInfo.AppendLine("   # Encoder Notifications dropped     : {notificationsDroppedCount,14:0}");
+             // diagInfo.AppendLine("   # Encoder IoT Messages processed    : {messagesProcessedCount,14:0}");
+             // diagInfo.AppendLine("   # Encoder avg Notifications/Message : {notificationsPerMessage,14:0}");
+             // diagInfo.AppendLine("   # Encoder avg IoT Message body size : {messageSizeAverage,14:0}");
+                diagInfo.AppendLine("   # Outgress Batch Block buffer size  : {batchNetworkMessageBlockOutputCount,14:0}");
+                diagInfo.AppendLine("   # Outgress input buffer count       : {sinkBlockInputCount,14:0}");
+                diagInfo.AppendLine("   # Outgress IoT message count        : {messageSinkSentMessagesCount,14:0}({sentMessagesAverage:0.##}/s)");
+                diagInfo.AppendLine("   # Connection retries                : {connectionRetries,14:0}");
+
+                var dataChangesAverage = _dataChangesCount > 0 && totalDuration > 0 ?
+                    _dataChangesCount / totalDuration : 0;
+                var valueChangesAverage = _valueChangesCount > 0 && totalDuration > 0 ?
+                    _valueChangesCount / totalDuration : 0;
+                var sentMessagesAverage = _engine.SentCompleteCount > 0 && totalDuration > 0 ?
+                    _engine.SentCompleteCount / totalDuration : 0;
+
+                _logger.Information(diagInfo.ToString(),
+                    _identity.DeviceId, _identity.ModuleId,
+                    TimeSpan.FromSeconds(totalDuration),
+                    _dataChangesCount, dataChangesAverage,
+                    _valueChangesCount, valueChangesAverage,
+                    _engine?.SourceMessageCount,
+                    _engine?.EncodingInputCount, _engine?.EncodingOutputCount,
+                  // _messageEncoder.NotificationsProcessedCount,
+                  // _messageEncoder.NotificationsDroppedCount,
+                  // _messageEncoder.MessagesProcessedCount,
+                  // _messageEncoder.AvgNotificationsPerMessage,
+                  // _messageEncoder.AvgMessageSize,
+                    _engine?.SentPendingCount,
+                    _engine.SentCompleteCount, sentMessagesAverage,
+                    numberOfConnectionRetries);
+            }
 
             kDataChangesCount.WithLabels(PublisherId, WriterGroupId)
                 .Set(_dataChangesCount);

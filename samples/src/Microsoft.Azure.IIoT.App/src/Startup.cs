@@ -8,6 +8,8 @@ namespace Microsoft.Azure.IIoT.App {
     using Microsoft.Azure.IIoT.App.Services;
     using Microsoft.Azure.IIoT.App.Runtime;
     using Microsoft.Azure.IIoT.App.Common;
+    using Microsoft.Azure.IIoT.App.Models;
+    using Microsoft.Azure.IIoT.App.Validation;
     using Microsoft.Azure.IIoT.AspNetCore.Auth.Clients;
     using Microsoft.Azure.IIoT.AspNetCore.Auth;
     using Microsoft.Azure.IIoT.AspNetCore.Storage;
@@ -38,6 +40,7 @@ namespace Microsoft.Azure.IIoT.App {
     using Blazored.SessionStorage;
     using Blazored.Modal;
     using Prometheus;
+    using FluentValidation;
 
     /// <summary>
     /// Webapp startup
@@ -136,6 +139,9 @@ namespace Microsoft.Azure.IIoT.App {
             services.AddSession(option => {
                 option.Cookie.IsEssential = true;
             });
+
+            services.AddValidatorsFromAssemblyContaining<DiscovererInfoValidator>();
+            services.AddValidatorsFromAssemblyContaining<ListNodeValidator>();
 
             // Protect anything using keyvault and storage persisted keys
             services.AddAzureDataProtection(Config.Configuration);
