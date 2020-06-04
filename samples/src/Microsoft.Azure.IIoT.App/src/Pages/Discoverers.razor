@@ -35,7 +35,7 @@
     </a>
     @if (DiscovererData != null)
         {
-        if (DiscovererData.IsSearching && DiscovererData.isAdHocDiscovery) 
+        if (DiscovererData.IsSearching && DiscovererData.isAdHocDiscovery)
         {
             <div class="spinnermargin loader"></div>
         }
@@ -58,7 +58,7 @@
     </thead>
     <tbody>
         @{string connectStatus = "Disconnected"; }
-        @foreach (var discoverer in _pagedDiscovererList.Results) 
+        @foreach (var discoverer in _pagedDiscovererList.Results)
         {
             <tr>
                 @if (discoverer.HasApplication == true)
@@ -77,7 +77,24 @@
                 }
                 @{connectStatus = discoverer.DiscovererModel.Connected == true ? "Connected" : "Disconnected";}
                 <td class="hover-text width-medium">
-                    <div>@connectStatus</div>
+                    <div>
+                        @{
+                            string alt = connectStatus;
+
+                            switch (@connectStatus)
+                            {
+                                case "Connected":
+                                    <i class="material-icons" title="@alt">wifi</i>
+                                    break;
+                                case "Disconnected":
+                                    <i class="material-icons" title="@alt">wifi_off</i>
+                                    break;
+                                default:
+                                    <i class="material-icons" title="@alt">help</i>
+                                    break;
+                            }
+                        }
+                    </div>
                 </td>
                 <td class="width-medium">
                     @{bool isDisconnected = discoverer.DiscovererModel.Connected != true;}

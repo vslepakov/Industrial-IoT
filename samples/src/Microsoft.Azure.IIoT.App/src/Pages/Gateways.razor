@@ -49,7 +49,22 @@
                 @{string connectStatus = gateway.Connected == null ? CommonHelper.None : gateway.Connected == true ? "Connected" : "Disconnected";}
                 <td class="hover-text width-large">
                     <div>
-                        @connectStatus
+                        @{
+                            string alt = connectStatus;
+
+                            switch (@connectStatus)
+                            {
+                                case "Connected":
+                                    <i class="material-icons" title="@alt">wifi</i>
+                                    break;
+                                case "Disconnected":
+                                    <i class="material-icons" title="@alt">wifi_off</i>
+                                    break;
+                                default:
+                                    <i class="material-icons" title="@alt">help</i>
+                                    break;
+                            }
+                        }
                     </div>
                 </td>
             </tr>

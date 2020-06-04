@@ -12,6 +12,7 @@
 @using Microsoft.Azure.IIoT.App.Components.Pager
 @using Microsoft.Azure.IIoT.App.Components.ErrorMessage
 @using Microsoft.Azure.IIoT.App.Data
+@using Microsoft.Azure.IIoT.OpcUa.Api.Core.Models;
 @using Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models;
 @using Microsoft.Azure.IIoT.OpcUa.Api.Registry;
 @using Microsoft.Azure.IIoT.App.Models;
@@ -69,7 +70,7 @@
         {
             <tr class="@GetEndpointVisibilityString(endpoint)">
                 @if (endpoint.EndpointModel.EndpointState == EndpointConnectivityState.Ready ||
-                 endpoint.EndpointModel.EndpointState == EndpointConnectivityState.Unauthorized)
+                endpoint.EndpointModel.EndpointState == EndpointConnectivityState.Unauthorized)
                 {
                     <td class="hover-text width-large">
                         <div>
@@ -92,13 +93,45 @@
                 }
                 <td class="hover-text width-small">
                     <div>
-                        @endpoint.EndpointModel.Registration.Endpoint.SecurityMode
+                        @{
+                            string alt = endpoint.EndpointModel.Registration.Endpoint.SecurityMode.ToString();
+
+                            switch (endpoint.EndpointModel.Registration.Endpoint.SecurityMode)
+                            {
+                                case SecurityMode.Best:
+                                    <i class="material-icons" title="@alt">policy</i>
+                                    break;
+                                case SecurityMode.SignAndEncrypt:
+                                    <i class="material-icons" title="@alt">lock</i>
+                                    break;
+                                case SecurityMode.Sign:
+                                    <i class="material-icons" title="Client">create</i>
+                                    break;
+                                case SecurityMode.None:
+                                    <i class="material-icons" title="@alt">lock_open</i>
+                                    break;
+                                default:
+                                    <i class="material-icons" title="@alt">help</i>
+                                    break;
+                            }
+                        }
                     </div>
                 </td>
                 @{ var securityPolicy = endpoint.EndpointModel.Registration.Endpoint.SecurityPolicy[(endpoint.EndpointModel.Registration.Endpoint.SecurityPolicy.LastIndexOf("#") + 1)..endpoint.EndpointModel.Registration.Endpoint.SecurityPolicy.Length];}
                 <td class="hover-text width-small">
                     <div>
-                        @securityPolicy
+                        @{
+                            alt = securityPolicy;
+
+                            if (securityPolicy.ToUpperInvariant().Contains("NONE"))
+                            {
+                                <i class="material-icons" title="@alt">lock_open</i>
+                            }
+                            else
+                            {
+                                <i class="material-icons" title="@alt">lock</i>
+                            }
+                        }
                     </div>
                 </td>
                 <td class="hover-text width-small">
@@ -108,12 +141,67 @@
                 </td>
                 <td class="hover-text width-small">
                     <div>
-                        @(endpoint.EndpointModel.EndpointState?.ToString() ?? "Disconnected")
+                        @{
+                            alt = endpoint.EndpointModel.EndpointState?.ToString() ?? "Disconnected";
+
+                            switch (endpoint.EndpointModel.EndpointState)
+                            {
+                                case EndpointConnectivityState.Busy:
+                                    <i class="material-icons" title="@alt">wifi_off</i>
+                                    break;
+                                case EndpointConnectivityState.CertificateInvalid:
+                                    <i class="material-icons" title="@alt">wifi_off</i>
+                                    break;
+                                case EndpointConnectivityState.Connecting:
+                                    <i class="material-icons" title="Client">leak_add</i>
+                                    break;
+                                case EndpointConnectivityState.Disconnected:
+                                    <i class="material-icons" title="@alt">wifi_off</i>
+                                    break;
+                                case EndpointConnectivityState.Error:
+                                    <i class="material-icons" title="@alt">wifi_off</i>
+                                    break;
+                                case EndpointConnectivityState.NotReachable:
+                                    <i class="material-icons" title="@alt">wifi_off</i>
+                                    break;
+                                case EndpointConnectivityState.NoTrust:
+                                    <i class="material-icons" title="@alt">wifi_off</i>
+                                    break;
+                                case EndpointConnectivityState.Ready:
+                                    <i class="material-icons" title="@alt">wifi</i>
+                                    break;
+                                case EndpointConnectivityState.Unauthorized:
+                                    <i class="material-icons" title="@alt">wifi_off</i>
+                                    break;
+                                default:
+                                    <i class="material-icons" title="@alt">help</i>
+                                    break;
+                            }
+                        }
                     </div>
                 </td>
                 <td class="hover-text width-medium">
                     <div>
-                        @endpoint.EndpointModel.ActivationState.ToString()
+                        @{
+                            alt = endpoint.EndpointModel.ActivationState.ToString();
+
+                            switch (endpoint.EndpointModel.ActivationState)
+                            {
+                                case EndpointActivationState.Activated:
+                                    <i class="material-icons" title="@alt">check_circle</i>
+                                    break;
+                                case EndpointActivationState.ActivatedAndConnected:
+                                    <i class="material-icons" title="Activated">check_circle</i>
+                                    <i class="material-icons" title="Connected">wifi</i>
+                                    break;
+                                case EndpointActivationState.Deactivated:
+                                    <i class="material-icons" title="Client">cancel</i>
+                                    break;
+                                default:
+                                    <i class="material-icons" title="@alt">help</i>
+                                    break;
+                            }
+                        }
                     </div>
                 </td>
                 <td class="width-medium">
