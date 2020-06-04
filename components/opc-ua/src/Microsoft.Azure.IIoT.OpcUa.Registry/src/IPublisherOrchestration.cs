@@ -16,8 +16,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
         /// <summary>
         /// Place worker groups
         /// </summary>
-        /// <param name="token"></param>
+        /// <param name="ct"></param>
         /// <returns></returns>
-        Task SynchronizeWriterGroupPlacementsAsync(CancellationToken token);
+        Task SynchronizeWriterGroupPlacementsAsync(
+            CancellationToken ct = default);
     }
+
 }

@@ -14,12 +14,29 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher {
     public interface IPublisherServiceEvents {
 
         /// <summary>
+        /// Subscribe to writer group events
+        /// </summary>
+        /// <param name="callback"></param>
+        /// <returns></returns>
+        Task<IAsyncDisposable> SubscribeWriterGroupEventsAsync(
+            Func<WriterGroupEventApiModel, Task> callback);
+
+        /// <summary>
+        /// Subscribe to dataset writer events
+        /// </summary>
+        /// <param name="callback"></param>
+        /// <returns></returns>
+        Task<IAsyncDisposable> SubscribeDataSetWriterEventsAsync(
+            Func<DataSetWriterEventApiModel, Task> callback);
+
+        /// <summary>
         /// Subscribe to monitored item messages
         /// </summary>
         /// <param name="endpointId"></param>
         /// <param name="callback"></param>
         /// <returns></returns>
         Task<IAsyncDisposable> NodePublishSubscribeByEndpointAsync(
-            string endpointId, Func<MonitoredItemMessageApiModel, Task> callback);
+            string endpointId,
+            Func<MonitoredItemMessageApiModel, Task> callback);
     }
 }

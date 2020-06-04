@@ -3,13 +3,13 @@
 //  Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.v2.Supervisor.History.Endpoint {
+namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Supervisor.History.Api {
     using Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Tests;
-    using Microsoft.Azure.IIoT.OpcUa.Registry.Models;
-    using Microsoft.Azure.IIoT.OpcUa.Core.Models;
+    using Microsoft.Azure.IIoT.OpcUa.Api.Core.Models;
     using Microsoft.Azure.IIoT.OpcUa.Testing.Fixtures;
     using Microsoft.Azure.IIoT.OpcUa.Testing.Tests;
     using Microsoft.Azure.IIoT.OpcUa.History;
+    using Microsoft.Azure.IIoT.OpcUa.Core.Models;
     using System.Net;
     using System.Threading.Tasks;
     using Xunit;
@@ -23,17 +23,12 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.v2.Supervisor.History.Endpoint
             _module = module;
         }
 
-        private HistoryReadValuesTests<EndpointRegistrationModel> GetTests() {
-            return new HistoryReadValuesTests<EndpointRegistrationModel>(
-                () => _module.HubContainer.Resolve<IHistorianServices<EndpointRegistrationModel>>(),
-                new EndpointRegistrationModel {
-                    Endpoint = new EndpointModel {
-                        Url = $"opc.tcp://{Dns.GetHostName()}:{_server.Port}/UA/SampleServer",
-                        Certificate = _server.Certificate?.RawData?.ToThumbprint()
-                    },
-                    Id = "testid",
-                    SupervisorId = SupervisorModelEx.CreateSupervisorId(
-                        _module.DeviceId, _module.ModuleId)
+        private HistoryReadValuesTests<EndpointApiModel> GetTests() {
+            return new HistoryReadValuesTests<EndpointApiModel>(
+                () => _module.HubContainer.Resolve<IHistorianServices<EndpointApiModel>>(),
+                new EndpointApiModel {
+                    Url = $"opc.tcp://{Dns.GetHostName()}:{_server.Port}/UA/SampleServer",
+                    Certificate = _server.Certificate?.RawData?.ToThumbprint()
                 });
         }
 

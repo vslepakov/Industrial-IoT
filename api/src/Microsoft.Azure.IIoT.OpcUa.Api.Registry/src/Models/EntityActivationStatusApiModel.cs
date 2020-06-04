@@ -8,10 +8,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
     using System.ComponentModel.DataAnnotations;
 
     /// <summary>
-    /// Endpoint Activation status model
+    /// Entity activation status model
     /// </summary>
     [DataContract]
-    public class EndpointActivationStatusApiModel {
+    public class EntityActivationStatusApiModel {
 
         /// <summary>
         /// Identifier of the endoint
@@ -25,6 +25,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
         /// </summary>
         [DataMember(Name = "activationState", Order = 1,
             EmitDefaultValue = false)]
-        public EndpointActivationState? ActivationState { get; set; }
+        public EntityActivationState? ActivationState { get; set; }
     }
 }

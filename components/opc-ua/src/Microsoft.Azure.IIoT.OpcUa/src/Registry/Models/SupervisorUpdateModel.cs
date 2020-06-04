@@ -11,11 +11,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
     public class SupervisorUpdateModel {
 
         /// <summary>
-        /// Site of the supervisor
-        /// </summary>
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Current log level
         /// </summary>
         public TraceLogLevel? LogLevel { get; set; }

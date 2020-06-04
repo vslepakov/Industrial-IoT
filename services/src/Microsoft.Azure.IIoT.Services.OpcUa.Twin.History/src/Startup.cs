@@ -138,9 +138,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.History {
             app.UseCorrelation();
             app.UseSwagger();
 
-            app.UseMetricServer();
-            app.UseHttpMetrics();
-
             app.UseEndpoints(endpoints => {
                 endpoints.MapMetrics();
                 endpoints.MapControllers();

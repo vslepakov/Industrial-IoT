@@ -27,7 +27,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
             supervisor.Id = update.Id;
             supervisor.LogLevel = update.LogLevel;
             supervisor.OutOfSync = update.OutOfSync;
-            supervisor.SiteId = update.SiteId;
             supervisor.Version = update.Version;
             return supervisor;
         }

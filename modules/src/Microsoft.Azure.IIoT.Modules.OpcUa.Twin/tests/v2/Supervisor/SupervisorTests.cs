@@ -3,7 +3,7 @@
 //  Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.v2.Supervisor {
+namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Supervisor {
     using Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Tests;
     using Microsoft.Azure.IIoT.OpcUa.Registry;
     using Microsoft.Azure.IIoT.OpcUa.Registry.Models;
@@ -71,7 +71,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.v2.Supervisor {
                     // Assert
                     Assert.Equal(status.DeviceId, device);
                     Assert.Equal(status.ModuleId, module);
-                    Assert.Null(status.SiteId);
                     Assert.Empty(status.Entities);
                 });
             }
@@ -111,7 +110,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.v2.Supervisor {
                     // Assert
                     Assert.Equal(device, status.DeviceId);
                     Assert.Equal(module, status.ModuleId);
-                    Assert.Null(status.SiteId);
                     Assert.Single(status.Entities);
                     Assert.Equal(ep1.Registration.Id, status.Entities.Single().Id);
                     Assert.Equal(EntityActivationState.ActivatedAndConnected, status.Entities.Single().ActivationState);
@@ -161,7 +159,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.v2.Supervisor {
                     // Assert
                     Assert.Equal(device, status.DeviceId);
                     Assert.Equal(module, status.ModuleId);
-                    Assert.Null(status.SiteId);
                     Assert.Empty(status.Entities);
                     Assert.Equal(EntityActivationState.Deactivated, ep3.ActivationState);
                     Assert.Equal(EndpointConnectivityState.Disconnected, ep3.EndpointState);
@@ -208,7 +205,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.v2.Supervisor {
                     // Assert
                     Assert.Equal(device, status.DeviceId);
                     Assert.Equal(module, status.ModuleId);
-                    Assert.Null(status.SiteId);
                     Assert.Empty(status.Entities);
                     Assert.Equal(EntityActivationState.Deactivated, ep3.ActivationState);
                     Assert.Equal(EndpointConnectivityState.Disconnected, ep3.EndpointState);
@@ -254,7 +250,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.v2.Supervisor {
                     // Assert
                     Assert.Equal(device, status.DeviceId);
                     Assert.Equal(module, status.ModuleId);
-                    Assert.Null(status.SiteId);
                     Assert.Empty(status.Entities);
                     Assert.True(endpoints.All(ep => ep.ActivationState == EntityActivationState.Deactivated));
                     Assert.True(endpoints.All(ep => ep.EndpointState == EndpointConnectivityState.Disconnected));

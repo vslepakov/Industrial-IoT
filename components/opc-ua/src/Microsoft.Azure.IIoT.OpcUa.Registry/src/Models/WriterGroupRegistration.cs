@@ -21,6 +21,19 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         public override string DeviceType => IdentityType.WriterGroup;
 
         /// <summary>
+        /// Site of the registration
+        /// </summary>
+        [DataMember]
+        public string SiteId { get; set; }
+
+        /// <summary>
+        /// Searchable grouping (either device or site id)
+        /// </summary>
+        [DataMember]
+        public string SiteOrGatewayId =>
+            !string.IsNullOrEmpty(SiteId) ? SiteId : DeviceId;
+
+        /// <summary>
         /// Group id
         /// </summary>
         [DataMember]
@@ -111,6 +124,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             if (!base.Equals(registration)) {
                 return false;
             }
+            if (SiteId != registration.SiteId) {
+                return false;
+            }
             if (MessageType != registration.MessageType) {
                 return false;
             }
@@ -171,6 +187,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         public override int GetHashCode() {
             var hashCode = base.GetHashCode();
 
+            hashCode = (hashCode * -1521134295) +
+                EqualityComparer<string>.Default.GetHashCode(SiteId);
             hashCode = (hashCode * -1521134295) +
                 EqualityComparer<NetworkMessageType?>.Default.GetHashCode(MessageType);
             hashCode = (hashCode * -1521134295) +

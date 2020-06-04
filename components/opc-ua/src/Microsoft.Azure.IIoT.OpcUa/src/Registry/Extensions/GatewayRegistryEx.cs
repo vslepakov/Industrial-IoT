@@ -55,22 +55,24 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry {
         }
 
         /// <summary>
-        /// Returns all edge gateway ids from the registry
+        /// Query all edge gateways
         /// </summary>
         /// <param name="service"></param>
+        /// <param name="query"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        public static async Task<List<string>> ListAllGatewayIdsAsync(
-            this IGatewayRegistry service, CancellationToken ct = default) {
-            var publishers = new List<string>();
-            var result = await service.ListGatewaysAsync(null, null, ct);
-            publishers.AddRange(result.Items.Select(s => s.Id));
+        public static async Task<List<GatewayModel>> QueryAllGatewaysAsync(
+            this IGatewayRegistry service, GatewayQueryModel query,
+            CancellationToken ct = default) {
+            var supervisors = new List<GatewayModel>();
+            var result = await service.QueryGatewaysAsync(query, null, ct);
+            supervisors.AddRange(result.Items);
             while (result.ContinuationToken != null) {
                 result = await service.ListGatewaysAsync(result.ContinuationToken,
                     null, ct);
-                publishers.AddRange(result.Items.Select(s => s.Id));
+                supervisors.AddRange(result.Items);
             }
-            return publishers;
+            return supervisors;
         }
     }
 }

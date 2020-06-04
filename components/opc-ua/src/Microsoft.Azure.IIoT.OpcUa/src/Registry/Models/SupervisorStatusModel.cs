@@ -22,11 +22,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         public string ModuleId { get; set; }
 
         /// <summary>
-        /// Site id
-        /// </summary>
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Entity diagnostics
         /// </summary>
         public List<EntityActivationStatusModel> Entities { get; set; }

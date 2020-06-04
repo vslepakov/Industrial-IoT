@@ -123,8 +123,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
         public string TriggerId { get; set; }
 
         /// <summary>
-        /// Hidden trigger that triggers reporting this variable on
-        /// at a minimum interval.  Mutually exclusive with TriggerId.
+        /// Triggers reporting this variable on a minimum interval.
         /// (Publisher extension)
         /// </summary>
         [DataMember(Name = "heartbeatInterval", Order = 15,

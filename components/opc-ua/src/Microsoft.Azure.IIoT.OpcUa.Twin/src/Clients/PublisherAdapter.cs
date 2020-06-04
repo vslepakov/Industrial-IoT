@@ -4,6 +4,7 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.OpcUa.Twin.Clients {
+    using Microsoft.Azure.IIoT.Exceptions;
     using Microsoft.Azure.IIoT.OpcUa.Publisher;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
     using Microsoft.Azure.IIoT.OpcUa.Twin;
@@ -53,7 +54,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Clients {
             var result = await _dataSets.AddVariablesToDefaultDataSetWriterAsync(endpointId,
                 new DataSetAddVariableBatchRequestModel {
                     DataSetPublishingInterval = request.Item.PublishingInterval,
-                    User = request.Header.Elevation,
+                    User = request.Header?.Elevation,
                     Variables = new List<DataSetAddVariableRequestModel> {
                         new DataSetAddVariableRequestModel {
                             PublishedVariableNodeId = request.Item.NodeId,
@@ -105,7 +106,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Clients {
                 var add = await _dataSets.AddVariablesToDefaultDataSetWriterAsync(endpointId,
                     new DataSetAddVariableBatchRequestModel {
                         DataSetPublishingInterval = publishingInterval,
-                        User = request.Header.Elevation,
+                        User = request.Header?.Elevation,
                         Variables = request.NodesToAdd
                             .Select(n => new DataSetAddVariableRequestModel {
                                 PublishedVariableNodeId = n.NodeId,
@@ -169,8 +170,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Clients {
             if (request == null) {
                 throw new ArgumentNullException(nameof(request));
             }
-            var writer = await Try.Async(() => _writers.GetDataSetWriterAsync(endpointId));
-            var dataset = writer?.DataSet?.DataSetSource?.PublishedVariables?.PublishedData;
+            var writer = await _writers.GetDataSetWriterAsync(endpointId);
+            var dataset = writer.DataSet?.DataSetSource?.PublishedVariables?.PublishedData;
             return new PublishedNodeListModel {
                 Items = dataset?.Select(d => new PublishedNodeModel {
                     DisplayName = d.PublishedVariableDisplayName,

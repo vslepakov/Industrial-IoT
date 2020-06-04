@@ -111,7 +111,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             }
             if (model?.SiteOrGatewayId != null) {
                 // If site or gateway id search provided, include it in search
-                query += $"AND tags.{nameof(EntityRegistration.SiteOrGatewayId)} = " +
+                query += $"AND tags.{nameof(ApplicationRegistration.SiteOrGatewayId)} = " +
                     $"'{model.SiteOrGatewayId}' ";
             }
 
@@ -128,7 +128,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
         /// <inheritdoc/>
         public async Task<ApplicationSiteListModel> ListSitesAsync(
             string continuation, int? pageSize, CancellationToken ct) {
-            var tag = nameof(EntityRegistration.SiteOrGatewayId);
+            var tag = nameof(ApplicationRegistration.SiteOrGatewayId);
             var query = $"SELECT tags.{tag}, COUNT() FROM devices WHERE " +
                 $"tags.{nameof(EntityRegistration.DeviceType)} = '{IdentityType.Application}' " +
                 $"GROUP BY tags.{tag}";

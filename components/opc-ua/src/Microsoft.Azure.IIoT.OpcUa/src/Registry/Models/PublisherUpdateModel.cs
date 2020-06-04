@@ -11,11 +11,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
     public class PublisherUpdateModel {
 
         /// <summary>
-        /// Site of the publisher
-        /// </summary>
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Current log level
         /// </summary>
         public TraceLogLevel? LogLevel { get; set; }

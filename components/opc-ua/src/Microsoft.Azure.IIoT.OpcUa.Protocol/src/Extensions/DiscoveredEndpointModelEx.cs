@@ -19,24 +19,21 @@ namespace Microsoft.Azure.IIoT.OpcUa.Protocol.Models {
         /// </summary>
         /// <param name="result"></param>
         /// <param name="hostAddress"></param>
-        /// <param name="siteId"></param>
-        /// <param name="gatewayId"></param>
-        /// <param name="moduleId"></param>
         /// <param name="serializer"></param>
         /// <returns></returns>
         public static ApplicationRegistrationModel ToServiceModel(this DiscoveredEndpointModel result,
-            string hostAddress, string siteId, string gatewayId, string moduleId,
-            IJsonSerializer serializer) {
+            string hostAddress, IJsonSerializer serializer) {
             var type = result.Description.Server.ApplicationType.ToServiceType() ??
                 ApplicationType.Server;
-            var discovererId = DiscovererModelEx.CreateDiscovererId(gatewayId, moduleId);
             return new ApplicationRegistrationModel {
                 Application = new ApplicationInfoModel {
-                    SiteId = siteId,
-                    DiscovererId = discovererId,
+
+                    // Assigned at application processing time - leave null
+                    ApplicationId = null,
+                    DiscovererId = null,
+                    SiteId = null,
+
                     ApplicationType = type,
-                    ApplicationId = ApplicationInfoModelEx.CreateApplicationId(siteId ?? gatewayId,
-                        result.Description.Server.ApplicationUri, type), // TODO: Assign at onboarder and leave null
                     ProductUri = result.Description.Server.ProductUri,
                     ApplicationUri = result.Description.Server.ApplicationUri,
                     DiscoveryUrls = new HashSet<string>(result.Description.Server.DiscoveryUrls),
@@ -53,8 +50,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Protocol.Models {
                 },
                 Endpoints = new List<EndpointRegistrationModel> {
                     new EndpointRegistrationModel {
-                        SiteId = siteId,
-                        DiscovererId = discovererId,
+                        // Assigned at endpoint processing time - leave null
+                        SiteId = null,
+                        DiscovererId = null,
                         SupervisorId = null,
                         Id = null,
                         SecurityLevel = result.Description.SecurityLevel,

@@ -12,6 +12,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
     using Microsoft.Azure.IIoT.Exceptions;
     using Microsoft.Azure.IIoT.Hub.Models;
     using Microsoft.Azure.IIoT.Hub;
+    using Microsoft.Azure.IIoT.Utils;
     using Microsoft.Azure.IIoT.Serializers;
     using Serilog;
     using System;
@@ -19,14 +20,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
     using System.Threading.Tasks;
     using System.Threading;
     using System.Collections.Generic;
-    using Microsoft.Azure.IIoT.Utils;
 
     /// <summary>
     /// Publisher registry which uses the IoT Hub twin services for publisher
     /// and writer group identity management.
     /// </summary>
     public sealed class PublisherRegistry : IPublisherRegistry, IPublisherOrchestration,
-        IWriterGroupRegistryListener, IDataSetWriterRegistryListener {
+        IWriterGroupRegistryListener, IDataSetWriterRegistryListener, IWriterGroupStatus {
 
         /// <summary>
         /// Create registry services
@@ -34,16 +34,18 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
         /// <param name="iothub"></param>
         /// <param name="broker"></param>
         /// <param name="serializer"></param>
+        /// <param name="gateways"></param>
         /// <param name="activation"></param>
         /// <param name="logger"></param>
         public PublisherRegistry(IIoTHubTwinServices iothub, IJsonSerializer serializer,
-            IActivationServices<WriterGroupPlacementModel> activation,
+            IGatewayRegistry gateways, IActivationServices<WriterGroupPlacementModel> activation,
             IRegistryEventBroker<IPublisherRegistryListener> broker, ILogger logger) {
             _iothub = iothub ?? throw new ArgumentNullException(nameof(iothub));
             _broker = broker ?? throw new ArgumentNullException(nameof(broker));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _activation = activation ?? throw new ArgumentNullException(nameof(activation));
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
+            _gateways = gateways ?? throw new ArgumentNullException(nameof(gateways));
         }
 
         /// <inheritdoc/>
@@ -92,10 +94,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
 
                     // Update registration from update request
                     var patched = registration.ToServiceModel();
-                    if (request.SiteId != null) {
-                        patched.SiteId = string.IsNullOrEmpty(request.SiteId) ?
-                            null : request.SiteId;
-                    }
 
                     if (request.LogLevel != null) {
                         patched.LogLevel = request.LogLevel == TraceLogLevel.Information ?
@@ -125,7 +123,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             var query = "SELECT * FROM devices.modules WHERE " +
                 $"properties.reported.{TwinProperty.Type} = '{IdentityType.Publisher}' " +
                 $"AND NOT IS_DEFINED(tags.{nameof(EntityRegistration.NotSeenSince)})";
-            var devices = await _iothub.QueryDeviceTwinsAsync(query, continuation, pageSize, ct);
+            var devices = await _iothub.QueryDeviceTwinsAsync(continuation == null ? query : null,
+                continuation, pageSize, ct);
             return new PublisherListModel {
                 ContinuationToken = devices.ContinuationToken,
                 Items = devices.Items
@@ -141,13 +140,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
 
             var query = "SELECT * FROM devices.modules WHERE " +
                 $"properties.reported.{TwinProperty.Type} = '{IdentityType.Publisher}'";
-
-            if (model?.SiteId != null) {
-                // If site id provided, include it in search
-                query += $"AND (properties.reported.{TwinProperty.SiteId} = " +
-                    $"'{model.SiteId}' OR properties.desired.{TwinProperty.SiteId} = " +
-                    $"'{model.SiteId}' OR deviceId = '{model.SiteId}') ";
-            }
 
             if (model?.Connected != null) {
                 // If flag provided, include it in search
@@ -200,6 +192,27 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                 continuation = devices.ContinuationToken;
             }
             while (continuation != null);
+        }
+
+        /// <inheritdoc/>
+        public async Task<EntityActivationStatusListModel> ListWriterGroupActivationsAsync(
+            string continuation, bool onlyConnected, int? pageSize, CancellationToken ct) {
+            // Find all writer groups currently not connected
+            var query = $"SELECT * FROM devices WHERE " +
+                $"NOT IS_DEFINED(tags.{nameof(WriterGroupRegistration.IsDisabled)}) AND ";
+            if (onlyConnected) {
+                query += "connectionState = 'Connected' AND ";
+            }
+            query += $"tags.{nameof(EntityRegistration.DeviceType)} = '{IdentityType.WriterGroup}' ";
+
+            var devices = await _iothub.QueryDeviceTwinsAsync(query, continuation, pageSize, ct);
+            return new EntityActivationStatusListModel {
+                ContinuationToken = devices.ContinuationToken,
+                Items = devices.Items
+                    .Select(t => t.ToWriterGroupRegistration(false))
+                    .Select(s => s.ToServiceModel())
+                    .ToList()
+            };
         }
 
         /// <inheritdoc/>
@@ -353,22 +366,28 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                     return true;
                 }
 
-                // Get all supervisors in site
-                var publishersInSite = await this.QueryAllPublishersAsync(
-                    new PublisherQueryModel { SiteId = writerGroup.SiteId });
-                var candidates = publishersInSite.Select(s => s.Id).ToList();
-                if (candidates.Count == 0) {
+                // Get all gateways in site
+                var gatewaysInSite = await _gateways.QueryAllGatewaysAsync(
+                    new GatewayQueryModel { SiteId = writerGroup.SiteId, Connected = true });
+                var candidateGateways = gatewaysInSite.Select(s => s.Id).ToList();
+                if (candidateGateways.Count == 0) {
                     // No candidates found to assign to
                     _logger.Warning(
-                        "Found no publishers in {SiteId} to assign writer group {writerGroupId}!",
+                        "Found no gateways in {SiteId} to assign writer group {writerGroupId}!",
                         writerGroup.SiteId, writerGroup.WriterGroupId);
 
-                    // TODO: Consider Update writer group state to flag site has no publishers
+                    // TODO: Consider Update writer group state to flag site has no gateways
                     return false;
                 }
 
                 // Loop through all randomly and try to take one that works.
-                foreach (var publisherId in candidates.Shuffle()) {
+                foreach (var gatewayId in candidateGateways.Shuffle()) {
+                    var gateway = await _gateways.FindGatewayAsync(gatewayId, false, ct);
+                    var publisherId = gateway?.Modules?.Publisher?.Id;
+                    if (string.IsNullOrEmpty(publisherId)) {
+                        // No publisher in gateway
+                        continue;
+                    }
                     try {
                         await _activation.ActivateAsync(new WriterGroupPlacementModel {
                             WriterGroupId = writerGroup.WriterGroupId,
@@ -399,6 +418,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
 
         private readonly IIoTHubTwinServices _iothub;
         private readonly IJsonSerializer _serializer;
+        private readonly IGatewayRegistry _gateways;
         private readonly IRegistryEventBroker<IPublisherRegistryListener> _broker;
         private readonly ILogger _logger;
         private readonly IActivationServices<WriterGroupPlacementModel> _activation;

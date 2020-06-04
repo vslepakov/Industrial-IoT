@@ -51,15 +51,39 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         }
 
+        /// <inheritdoc/>
+        public async Task<IAsyncDisposable> SubscribeWriterGroupEventsAsync(
+            Func<WriterGroupEventApiModel, Task> callback) {
+            if (callback == null) {
+                throw new ArgumentNullException(nameof(callback));
+            }
+            var hub = await _client.GetHubAsync($"{_serviceUri}/v2/groups/events",
+                Resource.Platform);
+            var registration = hub.Register(EventTargets.GroupEventTarget, callback);
+            return new AsyncDisposable(registration);
+        }
 
         /// <inheritdoc/>
-        public async Task<IAsyncDisposable> NodePublishSubscribeByEndpointAsync(string endpointId,
-            Func<MonitoredItemMessageApiModel, Task> callback) {
+        public async Task<IAsyncDisposable> SubscribeDataSetWriterEventsAsync(
+            Func<DataSetWriterEventApiModel, Task> callback) {
+            if (callback == null) {
+                throw new ArgumentNullException(nameof(callback));
+            }
+            var hub = await _client.GetHubAsync($"{_serviceUri}/v2/writers/events",
+                Resource.Platform);
+            var registration = hub.Register(EventTargets.WriterEventTarget, callback);
+            return new AsyncDisposable(registration);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IAsyncDisposable> NodePublishSubscribeByEndpointAsync(
+            string endpointId, Func<MonitoredItemMessageApiModel, Task> callback) {
 
             if (callback == null) {
                 throw new ArgumentNullException(nameof(callback));
             }
-            var hub = await _client.GetHubAsync($"{_serviceUri}/v2/publishers/events", Resource.Platform);
+            var hub = await _client.GetHubAsync($"{_serviceUri}/v2/publishers/events",
+                Resource.Platform);
             var registration = hub.Register(EventTargets.PublisherSampleTarget, callback);
             try {
                 await NodePublishSubscribeByEndpointAsync(endpointId, hub.ConnectionId,
@@ -75,8 +99,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher {
         }
 
         /// <inheritdoc/>
-        public async Task NodePublishSubscribeByEndpointAsync(string endpointId, string connectionId,
-            CancellationToken ct) {
+        public async Task NodePublishSubscribeByEndpointAsync(string endpointId,
+            string connectionId, CancellationToken ct) {
             if (string.IsNullOrEmpty(endpointId)) {
                 throw new ArgumentNullException(nameof(endpointId));
             }
@@ -91,8 +115,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher {
         }
 
         /// <inheritdoc/>
-        public async Task NodePublishUnsubscribeByEndpointAsync(string endpointId, string connectionId,
-            CancellationToken ct) {
+        public async Task NodePublishUnsubscribeByEndpointAsync(string endpointId,
+            string connectionId, CancellationToken ct) {
             if (string.IsNullOrEmpty(endpointId)) {
                 throw new ArgumentNullException(nameof(endpointId));
             }
@@ -100,7 +124,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher {
                 throw new ArgumentNullException(nameof(connectionId));
             }
             var request = _httpClient.NewRequest(
-                $"{_serviceUri}/v2/telemetry/{endpointId}/samples/{connectionId}", Resource.Platform);
+                $"{_serviceUri}/v2/telemetry/{endpointId}/samples/{connectionId}",
+                Resource.Platform);
             var response = await _httpClient.DeleteAsync(request, ct).ConfigureAwait(false);
             response.Validate();
         }

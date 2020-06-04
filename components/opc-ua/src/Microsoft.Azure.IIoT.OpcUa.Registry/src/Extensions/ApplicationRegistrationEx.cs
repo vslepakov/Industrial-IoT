@@ -67,7 +67,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             }
 
             if (update?.SiteOrGatewayId != existing?.SiteOrGatewayId) {
-                twin.Tags.Add(nameof(EntityRegistration.SiteOrGatewayId), update?.SiteOrGatewayId);
+                twin.Tags.Add(nameof(ApplicationRegistration.SiteOrGatewayId), update?.SiteOrGatewayId);
             }
 
             if (update?.DiscovererId != existing?.DiscovererId) {
@@ -75,7 +75,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             }
 
             if (update?.SiteId != existing?.SiteId) {
-                twin.Tags.Add(nameof(EntityRegistration.SiteId), update?.SiteId);
+                twin.Tags.Add(nameof(ApplicationRegistration.SiteId), update?.SiteId);
             }
 
             twin.Tags.Add(nameof(EntityRegistration.DeviceType), update?.DeviceType);

@@ -53,14 +53,14 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Models {
         /// Create from service model
         /// </summary>
         /// <param name="model"></param>
-        public static EndpointActivationStatusApiModel ToApiModel(
+        public static EntityActivationStatusApiModel ToApiModel(
             this EntityActivationStatusModel model) {
             if (model == null) {
                 return null;
             }
-            return new EndpointActivationStatusApiModel {
+            return new EntityActivationStatusApiModel {
                 Id = model.Id,
-                ActivationState = (IIoT.OpcUa.Api.Registry.Models.EndpointActivationState?)model.ActivationState
+                ActivationState = (IIoT.OpcUa.Api.Registry.Models.EntityActivationState?)model.ActivationState
             };
         }
 
@@ -69,7 +69,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Models {
         /// </summary>
         /// <returns></returns>
         public static EntityActivationStatusModel ToServiceModel(
-            this EndpointActivationStatusApiModel model) {
+            this EntityActivationStatusApiModel model) {
             if (model == null) {
                 return null;
             }

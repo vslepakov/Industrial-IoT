@@ -27,11 +27,6 @@ namespace Microsoft.Azure.IIoT.Modules.Diagnostic {
     public class ModuleProcess : IProcessControl {
 
         /// <summary>
-        /// Site of the module
-        /// </summary>
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Whethr the module is running
         /// </summary>
 
@@ -46,7 +41,6 @@ namespace Microsoft.Azure.IIoT.Modules.Diagnostic {
             _exitCode = 0;
             _exit = new TaskCompletionSource<bool>();
             AssemblyLoadContext.Default.Unloading += _ => _exit.TrySetResult(true);
-            SiteId = _config?.GetValue<string>("site", null);
         }
 
         /// <inheritdoc/>
@@ -86,7 +80,7 @@ namespace Microsoft.Azure.IIoT.Modules.Diagnostic {
                     try {
                         var version = GetType().Assembly.GetReleaseVersion().ToString();
                         logger.Information("Starting module Diagnostic version {version}.", version);
-                        await module.StartAsync("diagnostic", SiteId,
+                        await module.StartAsync("diagnostic",
                             "Diagnostic", version, this);
                         if (hostScope.TryResolve(out server)) {
                             server.Start();

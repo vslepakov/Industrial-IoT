@@ -37,11 +37,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
     public class ModuleProcess : IProcessControl {
 
         /// <summary>
-        /// Site of the module
-        /// </summary>
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Whethr the module is running
         /// </summary>
 
@@ -58,7 +53,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
             _exitCode = 0;
             _exit = new TaskCompletionSource<bool>();
             AssemblyLoadContext.Default.Unloading += _ => _exit.TrySetResult(true);
-            SiteId = _config?.GetValue<string>("site", null);
         }
 
         /// <inheritdoc/>
@@ -101,7 +95,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                         var version = GetType().Assembly.GetReleaseVersion().ToString();
                         logger.Information("Starting module OpcPublisher version {version}.",
                             version);
-                        await module.StartAsync(IdentityType.Publisher, SiteId,
+                        await module.StartAsync(IdentityType.Publisher,
                             "OpcPublisher", version, this);
                         if (hostScope.TryResolve(out server)) {
                             server.Start();
@@ -166,7 +160,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                     .AsImplementedInterfaces();
 
                 // Configure the processing engine from nodes file
-                builder.RegisterType<PublishedNodesFileLoader>()
+                builder.RegisterType<PublishedNodesLoader>()
                     .SingleInstance();
 
                 // Configure root scope as supervisor

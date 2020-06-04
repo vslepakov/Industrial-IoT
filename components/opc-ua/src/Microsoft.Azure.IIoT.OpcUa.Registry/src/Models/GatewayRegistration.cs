@@ -19,6 +19,19 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         public override string DeviceType => IdentityType.Gateway;
 
         /// <summary>
+        /// Site of the registration
+        /// </summary>
+        [DataMember]
+        public string SiteId { get; set; }
+
+        /// <summary>
+        /// Searchable grouping (either device or site id)
+        /// </summary>
+        [DataMember]
+        public string SiteOrGatewayId =>
+            !string.IsNullOrEmpty(SiteId) ? SiteId : DeviceId;
+
+        /// <summary>
         /// Create registration - for testing purposes
         /// </summary>
         /// <param name="deviceId"></param>
@@ -29,6 +42,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         /// <inheritdoc/>
         public override bool Equals(object obj) {
             var registration = obj as GatewayRegistration;
+            if (SiteId != registration.SiteId) {
+                return false;
+            }
             return base.Equals(registration);
         }
 
@@ -43,6 +59,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         /// <inheritdoc/>
         public override int GetHashCode() {
             var hashCode = base.GetHashCode();
+            hashCode = (hashCode * -1521134295) +
+                EqualityComparer<string>.Default.GetHashCode(SiteId);
             return hashCode;
         }
 

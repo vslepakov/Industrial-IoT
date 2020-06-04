@@ -42,9 +42,6 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
         public string ModuleId { get; private set; }
 
         /// <inheritdoc/>
-        public string SiteId { get; private set; }
-
-        /// <inheritdoc/>
         public string Gateway { get; private set; }
 
         /// <inheritdoc/>
@@ -92,14 +89,13 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
                 }
                 finally {
                     kModuleStart.WithLabels(DeviceId ?? "", ModuleId ?? "", _moduleGuid, "",
-                        DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.FFFFFFFK", 
+                        DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.FFFFFFFK",
                         CultureInfo.InvariantCulture)).Set(0);
                     Client?.Dispose();
                     Client = null;
                     _reported?.Clear();
                     DeviceId = null;
                     ModuleId = null;
-                    SiteId = null;
                     Gateway = null;
                     _lock.Release();
                 }
@@ -107,7 +103,7 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
         }
 
         /// <inheritdoc/>
-        public async Task StartAsync(string type, string siteId, string productInfo,
+        public async Task StartAsync(string type, string productInfo,
             string version, IProcessControl reset) {
             if (Client == null) {
                 try {
@@ -134,12 +130,6 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
                             [TwinProperty.Type] = type
                         };
 
-                        // Set site if provided
-                        if (string.IsNullOrEmpty(SiteId)) {
-                            SiteId = siteId;
-                            twinSettings[TwinProperty.SiteId] = SiteId;
-                        }
-
                         // Set version information
                         twinSettings[TwinProperty.Version] = version;
                         await Client.UpdateReportedPropertiesAsync(twinSettings);
@@ -164,7 +154,6 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
                     _reported?.Clear();
                     DeviceId = null;
                     ModuleId = null;
-                    SiteId = null;
                     Gateway = null;
                     throw ex;
                 }
@@ -511,10 +500,8 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
             IDictionary<string, VariantValue> processed = null) {
             switch (key.ToLowerInvariant()) {
                 case TwinProperty.Version:
-                case TwinProperty.Type:
-                    break;
                 case TwinProperty.SiteId:
-                    SiteId = (string)value;
+                case TwinProperty.Type:
                     break;
                 default:
                     return false;

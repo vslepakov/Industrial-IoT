@@ -24,6 +24,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
     using Xunit;
     using Xunit.Sdk;
     using Autofac;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Services;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default;
 
     public class PublisherAdapterTests {
 
@@ -31,6 +33,14 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
         public async Task StartPublishTest1Async() {
 
             using (var mock = Setup((v, q) => {
+                var expected = "SELECT * FROM r WHERE r.DataSetWriterId = 'endpoint1' " +
+                    "AND r.ClassType = 'DataSetEntity' AND r.Type = 'Variable'";
+                if (q == expected) {
+                    return v
+                        .Where(o => o.Value["ClassType"] == "DataSetEntity")
+                        .Where(o => o.Value["Type"] == "Variable")
+                        .Where(o => o.Value["DataSetWriterId"] == "endpoint1");
+                }
                 throw new AssertActualExpectedException(null, q, "Query");
             })) {
 
@@ -64,6 +74,14 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
         public async Task StartPublishTest2Async() {
 
             using (var mock = Setup((v, q) => {
+                var expected = "SELECT * FROM r WHERE r.DataSetWriterId = 'endpoint1' " +
+                    "AND r.ClassType = 'DataSetEntity' AND r.Type = 'Variable'";
+                if (q == expected) {
+                    return v
+                        .Where(o => o.Value["ClassType"] == "DataSetEntity")
+                        .Where(o => o.Value["Type"] == "Variable")
+                        .Where(o => o.Value["DataSetWriterId"] == "endpoint1");
+                }
                 throw new AssertActualExpectedException(null, q, "Query");
             })) {
 
@@ -95,6 +113,14 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
         public async Task StartStopPublishTestAsync() {
 
             using (var mock = Setup((v, q) => {
+                var expected = "SELECT * FROM r WHERE r.DataSetWriterId = 'endpoint1' " +
+                    "AND r.ClassType = 'DataSetEntity' AND r.Type = 'Variable'";
+                if (q == expected) {
+                    return v
+                        .Where(o => o.Value["ClassType"] == "DataSetEntity")
+                        .Where(o => o.Value["Type"] == "Variable")
+                        .Where(o => o.Value["DataSetWriterId"] == "endpoint1");
+                }
                 throw new AssertActualExpectedException(null, q, "Query");
             })) {
 
@@ -130,8 +156,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
         public async Task StartTwicePublishTest1Async() {
 
             using (var mock = Setup((v, q) => {
-                    throw new AssertActualExpectedException(null, q, "Query");
-                })) {
+                var expected = "SELECT * FROM r WHERE r.DataSetWriterId = 'endpoint1' " +
+                    "AND r.ClassType = 'DataSetEntity' AND r.Type = 'Variable'";
+                if (q == expected) {
+                    return v
+                        .Where(o => o.Value["ClassType"] == "DataSetEntity")
+                        .Where(o => o.Value["Type"] == "Variable")
+                        .Where(o => o.Value["DataSetWriterId"] == "endpoint1");
+                }
+                throw new AssertActualExpectedException(null, q, "Query");
+            })) {
 
                 IPublishServices service = mock.Create<PublisherAdapter>();
 
@@ -159,11 +193,18 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
                 // Assert
                 Assert.NotNull(list);
                 Assert.NotNull(result);
-                Assert.Single(list.Items);
+                Assert.Collection(list.Items,
+                    a => {
+                        Assert.Equal("i=2258", a.NodeId);
+                        Assert.Equal(TimeSpan.FromSeconds(2), a.PublishingInterval);
+                        Assert.Equal(TimeSpan.FromSeconds(1), a.SamplingInterval);
+                    },
+                    b => {
+                        Assert.Equal("i=2258", b.NodeId);
+                        Assert.Equal(TimeSpan.FromSeconds(2), b.PublishingInterval);
+                        Assert.Equal(TimeSpan.FromSeconds(1), b.SamplingInterval);
+                    });
                 Assert.Null(list.ContinuationToken);
-                Assert.Equal("i=2258", list.Items.Single().NodeId);
-                Assert.Equal(TimeSpan.FromSeconds(2), list.Items.Single().PublishingInterval);
-                Assert.Equal(TimeSpan.FromSeconds(1), list.Items.Single().SamplingInterval);
             }
         }
 
@@ -171,8 +212,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
         public async Task StartTwicePublishTest2Async() {
 
             using (var mock = Setup((v, q) => {
-                    throw new AssertActualExpectedException(null, q, "Query");
-                })) {
+                var expected = "SELECT * FROM r WHERE r.DataSetWriterId = 'endpoint1' " +
+                    "AND r.ClassType = 'DataSetEntity' AND r.Type = 'Variable'";
+                if (q == expected) {
+                    return v
+                        .Where(o => o.Value["ClassType"] == "DataSetEntity")
+                        .Where(o => o.Value["Type"] == "Variable")
+                        .Where(o => o.Value["DataSetWriterId"] == "endpoint1");
+                }
+                throw new AssertActualExpectedException(null, q, "Query");
+            })) {
 
                 IPublishServices service = mock.Create<PublisherAdapter>();
 
@@ -200,10 +249,18 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
                 // Assert
                 Assert.NotNull(list);
                 Assert.NotNull(result);
-                Assert.Equal(2, list.Items.Count);
+                Assert.Collection(list.Items,
+                    a => {
+                        Assert.Equal("i=2258", a.NodeId);
+                        Assert.Equal(TimeSpan.FromSeconds(2), a.PublishingInterval);
+                        Assert.Equal(TimeSpan.FromSeconds(1), a.SamplingInterval);
+                    },
+                    b => {
+                        Assert.Equal("i=2259", b.NodeId);
+                        Assert.Equal(TimeSpan.FromSeconds(2), b.PublishingInterval);
+                        Assert.Equal(TimeSpan.FromSeconds(1), b.SamplingInterval);
+                    });
                 Assert.Null(list.ContinuationToken);
-                Assert.Equal(TimeSpan.FromSeconds(2), list.Items.First().PublishingInterval);
-                Assert.Equal(TimeSpan.FromSeconds(1), list.Items.First().SamplingInterval);
             }
         }
 
@@ -211,8 +268,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
         public async Task StartTwicePublishTest3Async() {
 
             using (var mock = Setup((v, q) => {
-                    throw new AssertActualExpectedException(null, q, "Query");
-                })) {
+                var expected = "SELECT * FROM r WHERE r.DataSetWriterId = 'endpoint1' " +
+                    "AND r.ClassType = 'DataSetEntity' AND r.Type = 'Variable'";
+                if (q == expected) {
+                    return v
+                        .Where(o => o.Value["ClassType"] == "DataSetEntity")
+                        .Where(o => o.Value["Type"] == "Variable")
+                        .Where(o => o.Value["DataSetWriterId"] == "endpoint1");
+                }
+                throw new AssertActualExpectedException(null, q, "Query");
+            })) {
 
                 IPublishServices service = mock.Create<PublisherAdapter>();
 
@@ -239,11 +304,18 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
                 // Assert
                 Assert.NotNull(list);
                 Assert.NotNull(result);
-                Assert.Single(list.Items);
+                Assert.Collection(list.Items,
+                    a => {
+                        Assert.Equal("i=2258", a.NodeId);
+                        Assert.Equal(TimeSpan.FromSeconds(3), a.PublishingInterval);
+                        Assert.Equal(TimeSpan.FromSeconds(1), a.SamplingInterval);
+                    },
+                    b => {
+                        Assert.Equal("i=2258", b.NodeId);
+                        Assert.Equal(TimeSpan.FromSeconds(3), b.PublishingInterval);
+                        Assert.Equal(TimeSpan.FromSeconds(2), b.SamplingInterval);
+                    });
                 Assert.Null(list.ContinuationToken);
-                Assert.Equal("i=2258", list.Items.Single().NodeId);
-                Assert.Equal(TimeSpan.FromSeconds(3), list.Items.Single().PublishingInterval);
-                Assert.Equal(TimeSpan.FromSeconds(2), list.Items.Single().SamplingInterval);
             }
         }
 
@@ -251,8 +323,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
         public async Task StartStopMultiplePublishTestAsync() {
 
             using (var mock = Setup((v, q) => {
-                    throw new AssertActualExpectedException(null, q, "Query");
-                })) {
+                var expected = "SELECT * FROM r WHERE r.DataSetWriterId = 'endpoint1' " +
+                    "AND r.ClassType = 'DataSetEntity' AND r.Type = 'Variable'";
+                if (q == expected) {
+                    return v
+                        .Where(o => o.Value["ClassType"] == "DataSetEntity")
+                        .Where(o => o.Value["Type"] == "Variable")
+                        .Where(o => o.Value["DataSetWriterId"] == "endpoint1");
+                }
+                throw new AssertActualExpectedException(null, q, "Query");
+            })) {
 
                 IPublishServices service = mock.Create<PublisherAdapter>();
 
@@ -328,14 +408,22 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
                 builder.RegisterType<MockConfig>().As<IItemContainerConfig>();
                 var registry = new Mock<IEndpointRegistry>();
                 registry
-                    .Setup(e => e.GetEndpointAsync(It.IsAny<string>(), false, CancellationToken.None))
+                    .Setup(e => e.GetEndpointAsync(It.IsAny<string>(), false, It.IsAny<CancellationToken>()))
                     .Returns(Task.FromResult(new EndpointInfoModel {
                         Registration = new EndpointRegistrationModel {
                             EndpointUrl = "fakeurl",
-                            Id = "endpoint1"
+                            Id = "endpoint1",
+                            SiteId = "fakesite",
+                            Endpoint = new EndpointModel {
+                                Url = "fakeurl"
+                            }
                         }
                     }));
                 builder.RegisterMock(registry);
+                builder.RegisterType<DataSetEntityDatabase>().AsImplementedInterfaces();
+                builder.RegisterType<DataSetWriterDatabase>().AsImplementedInterfaces();
+                builder.RegisterType<WriterGroupDatabase>().AsImplementedInterfaces();
+                builder.RegisterType<WriterGroupServices>().AsImplementedInterfaces();
                 builder.RegisterType<PublisherAdapter>().As<IPublishServices>();
             });
             return mock;

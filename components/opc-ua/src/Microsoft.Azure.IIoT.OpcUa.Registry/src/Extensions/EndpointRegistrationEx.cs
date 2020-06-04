@@ -67,7 +67,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             }
 
             if (update?.SiteOrGatewayId != existing?.SiteOrGatewayId) {
-                twin.Tags.Add(nameof(EntityRegistration.SiteOrGatewayId), update?.SiteOrGatewayId);
+                twin.Tags.Add(nameof(EndpointRegistration.SiteOrGatewayId), update?.SiteOrGatewayId);
             }
 
             if (update?.SupervisorId != existing?.SupervisorId) {
@@ -79,7 +79,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             }
 
             if (update?.SiteId != existing?.SiteId) {
-                twin.Tags.Add(nameof(EntityRegistration.SiteId), update?.SiteId);
+                twin.Tags.Add(nameof(EndpointRegistration.SiteId), update?.SiteId);
             }
 
             twin.Tags.Add(nameof(EntityRegistration.DeviceType), update?.DeviceType);
@@ -208,7 +208,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 SupervisorId =
                     tags.GetValueOrDefault<string>(nameof(EndpointRegistration.SupervisorId), null),
                 DiscovererId =
-                    tags.GetValueOrDefault<string>(nameof(EndpointRegistration.DiscovererId),
+                    tags.GetValueOrDefault(nameof(EndpointRegistration.DiscovererId),
                         tags.GetValueOrDefault<string>(nameof(EndpointRegistration.SupervisorId), null)),
                 Activated =
                     tags.GetValueOrDefault<bool>(nameof(EndpointRegistration.Activated), null),
@@ -220,6 +220,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                     tags.GetValueOrDefault<Dictionary<string, VariantValue>>(nameof(EndpointRegistration.AuthenticationMethods), null),
                 EndpointRegistrationUrl =
                     tags.GetValueOrDefault<string>(nameof(EndpointRegistration.EndpointRegistrationUrl), null),
+                SiteId =
+                    tags.GetValueOrDefault<string>(nameof(EndpointRegistration.SiteId), null),
 
                 // Properties
 
@@ -227,9 +229,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                     properties.GetValueOrDefault<string>(TwinProperty.Type, null),
                 State =
                     properties.GetValueOrDefault(nameof(EndpointRegistration.State), EndpointConnectivityState.Disconnected),
-                SiteId =
-                    properties.GetValueOrDefault(TwinProperty.SiteId,
-                        tags.GetValueOrDefault<string>(nameof(EndpointRegistration.SiteId), null)),
                 EndpointUrl =
                     properties.GetValueOrDefault<string>(nameof(EndpointRegistration.EndpointUrl), null),
                 AlternativeUrls =
@@ -334,18 +333,20 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         /// <param name="disabled"></param>
         /// <param name="discoverId"></param>
         /// <param name="supervisorId"></param>
+        /// <param name="applicationId"></param>
+        /// <param name="siteId"></param>
         /// <returns></returns>
         public static EndpointRegistration ToEndpointRegistration(this EndpointInfoModel model,
             IJsonSerializer serializer, bool? disabled = null, string discoverId = null,
-            string supervisorId = null) {
+            string supervisorId = null, string applicationId = null, string siteId = null) {
             if (model == null) {
                 throw new ArgumentNullException(nameof(model));
             }
             return new EndpointRegistration {
                 IsDisabled = disabled,
                 NotSeenSince = model.NotSeenSince,
-                ApplicationId = model.ApplicationId,
-                SiteId = model.Registration?.SiteId,
+                ApplicationId = applicationId ?? model.ApplicationId,
+                SiteId = siteId ?? model.Registration?.SiteId,
                 SupervisorId = supervisorId ?? model.Registration?.SupervisorId,
                 DiscovererId = discoverId ?? model.Registration?.DiscovererId,
                 SecurityLevel = model.Registration?.SecurityLevel,

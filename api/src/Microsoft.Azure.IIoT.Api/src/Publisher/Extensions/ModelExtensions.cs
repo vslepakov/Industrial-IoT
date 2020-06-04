@@ -1213,7 +1213,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new DataSetAddEventRequestApiModel {
-                DataSetWriterId = model.DataSetWriterId,
                 DiscardNew = model.DiscardNew,
                 EventNotifier = model.EventNotifier,
                 BrowsePath = model.BrowsePath,
@@ -1237,7 +1236,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new DataSetAddEventRequestModel {
-                DataSetWriterId = model.DataSetWriterId,
                 DiscardNew = model.DiscardNew,
                 EventNotifier = model.EventNotifier,
                 BrowsePath = model.BrowsePath,
@@ -1626,7 +1624,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 QueueSize = model.QueueSize,
                 SamplingInterval = model.SamplingInterval,
                 TriggerId = model.TriggerId,
-                // HeartbeatInterval = model.HeartbeatInterval,
+                HeartbeatInterval = model.HeartbeatInterval,
                 PublishedVariableDisplayName = model.PublishedVariableDisplayName,
                 SubstituteValue = model.SubstituteValue?.Copy()
             };
@@ -1651,7 +1649,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 QueueSize = model.QueueSize,
                 SamplingInterval = model.SamplingInterval,
                 TriggerId = model.TriggerId,
-               // HeartbeatInterval = model.HeartbeatInterval,
+                HeartbeatInterval = model.HeartbeatInterval,
                 PublishedVariableDisplayName = model.PublishedVariableDisplayName,
                 SubstituteValue = model.SubstituteValue?.Copy()
             };
@@ -1723,7 +1721,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 EndpointId = model.EndpointId,
                 ExtensionFields = model.ExtensionFields
                     .ToDictionary(kv => kv.Key, kv => kv.Value),
-                Name = model.Name,
+                DataSetName = model.DataSetName,
                 SubscriptionSettings = model.SubscriptionSettings.ToApiModel(),
                 User = model.User.ToApiModel()
             };
@@ -1747,7 +1745,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 EndpointId = model.EndpointId,
                 ExtensionFields = model.ExtensionFields
                     .ToDictionary(kv => kv.Key, kv => kv.Value),
-                Name = model.Name,
+                DataSetName = model.DataSetName,
                 SubscriptionSettings = model.SubscriptionSettings.ToServiceModel(),
                 User = model.User.ToServiceModel()
             };

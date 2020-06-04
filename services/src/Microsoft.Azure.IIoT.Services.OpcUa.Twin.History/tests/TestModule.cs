@@ -30,7 +30,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.History {
         public string Gateway => Dns.GetHostName();
         public string DeviceId => Gateway;
         public string ModuleId => "TestModule";
-        public string SiteId => "TestSite";
     }
 
     /// <summary>

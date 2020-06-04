@@ -7,25 +7,25 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
     using System.Runtime.Serialization;
 
     /// <summary>
-    /// Activation state of the endpoint twin
+    /// Activation state of the entity twin
     /// </summary>
     [DataContract]
-    public enum EndpointActivationState {
+    public enum EntityActivationState {
 
         /// <summary>
-        /// Endpoint twin is deactivated (default)
+        /// Entity twin is deactivated (default)
         /// </summary>
         [EnumMember]
         Deactivated,
 
         /// <summary>
-        /// Endpoint twin is activated but not connected
+        /// Entity twin is activated but not connected
         /// </summary>
         [EnumMember]
         Activated,
 
         /// <summary>
-        /// Endoint twin is activated and connected to hub
+        /// Entity twin is activated and connected to hub
         /// </summary>
         [EnumMember]
         ActivatedAndConnected

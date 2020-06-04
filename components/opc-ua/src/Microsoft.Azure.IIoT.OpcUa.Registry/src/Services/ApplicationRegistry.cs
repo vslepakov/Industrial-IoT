@@ -237,11 +237,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             var found = events.Select(ev => {
                 //
                 // Ensure we set the site id and discoverer id in the found applications
-                // to a consistent value.  This works around where the reported events
-                // do not contain what we were asked to process with.
+                // have correct values.  Also set application id even though it should
+                // automatically happen later
                 //
                 ev.Application.SiteId = siteId;
                 ev.Application.DiscovererId = discovererId;
+                ev.Application.ApplicationId = ApplicationInfoModelEx.CreateApplicationId(siteId,
+                    ev.Application.ApplicationUri, ev.Application.ApplicationType);
                 return ev.Application;
             });
 
@@ -252,10 +254,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                     .Select(ev => {
                         //
                         // Ensure the site id and discoverer id in the found endpoints
-                        // also set to a consistent value, same as applications earlier.
+                        // have correct values, same as applications earlier.
                         //
                         ev.Registration.SiteId = siteId;
                         ev.Registration.DiscovererId = discovererId;
+                        ev.Registration.SupervisorId = supervisorId;
                         return new EndpointInfoModel {
                             ApplicationId = group.Key,
                             Registration = ev.Registration
@@ -332,12 +335,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             foreach (var addition in add) {
                 try {
                     var application = addition.Clone();
-                    application.ApplicationId =
-                        ApplicationInfoModelEx.CreateApplicationId(application);
                     application.Created = context;
-                    application.NotSeenSince = null;
-                    application.DiscovererId = discovererId;
-                    application.SiteId = siteId;
 
                     var app = await _database.AddAsync(application, false);
 
@@ -347,8 +345,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
 
                     // Now - add all new endpoints
                     endpoints.TryGetValue(app.ApplicationId, out var epFound);
-                    await _bulk.ProcessDiscoveryEventsAsync(epFound, result,
-                        discovererId, supervisorId, null, false);
+                    await _bulk.ProcessDiscoveryEventsAsync(epFound, result, discovererId,
+                        supervisorId, siteId, null, false);
                     added++;
                 }
                 catch (ConflictingResourceException) {
@@ -400,8 +398,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                         endpoints.TryGetValue(app.ApplicationId, out var epFound);
 
                         // TODO: Handle case where we take ownership of all endpoints
-                        await _bulk.ProcessDiscoveryEventsAsync(epFound, result, discovererId,
-                            supervisorId, app.ApplicationId, false);
+                        await _bulk.ProcessDiscoveryEventsAsync(epFound, result, discovererId, supervisorId,
+                            siteId, app.ApplicationId, false);
 
                         await _broker.NotifyAllAsync(l => l.OnApplicationUpdatedAsync(context, app));
                     }

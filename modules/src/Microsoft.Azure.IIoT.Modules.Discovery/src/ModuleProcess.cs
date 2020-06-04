@@ -32,11 +32,6 @@ namespace Microsoft.Azure.IIoT.Modules.Discovery {
     public class ModuleProcess : IProcessControl {
 
         /// <summary>
-        /// Site of the module
-        /// </summary>
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Whether the module is running
         /// </summary>
 
@@ -51,7 +46,6 @@ namespace Microsoft.Azure.IIoT.Modules.Discovery {
             _exitCode = 0;
             _exit = new TaskCompletionSource<bool>();
             AssemblyLoadContext.Default.Unloading += _ => _exit.TrySetResult(true);
-            SiteId = _config?.GetValue<string>("site", null);
         }
 
         /// <inheritdoc/>
@@ -93,9 +87,9 @@ namespace Microsoft.Azure.IIoT.Modules.Discovery {
                     try {
                         // Start module
                         var version = GetType().Assembly.GetReleaseVersion().ToString();
-                        logger.Information("Starting module OpcDiscovery version {version}.", 
+                        logger.Information("Starting module OpcDiscovery version {version}.",
                             version);
-                        await module.StartAsync(IdentityType.Discoverer, SiteId,
+                        await module.StartAsync(IdentityType.Discoverer,
                             "OpcDiscovery", version, this);
                         kDiscoveryModuleStart.WithLabels(
                             identity.DeviceId ?? "", identity.ModuleId ?? "").Inc();

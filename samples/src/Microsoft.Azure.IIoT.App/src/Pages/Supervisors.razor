@@ -29,7 +29,6 @@
     <thead>
         <tr>
             <th class="width-large">Id</th>
-            <th class="width-medium">Site Id</th>
             <th class="width-medium">Connection Status</th>
             <th class="width-medium">Sync Status</th>
             <th class="width-small">Version</th>
@@ -45,12 +44,6 @@
                         <a href='endpoints/1/@RegistryHelper.PathAll/@RegistryHelper.PathAll/@supervisor.Id'>
                             @supervisor.Id
                         </a>
-                    </div>
-                </td>
-                @{string siteId = supervisor.SiteId == null ? CommonHelper.None : supervisor.SiteId;}
-                <td class="hover-text width-medium">
-                    <div>
-                        @siteId
                     </div>
                 </td>
                 @{string connectStatus = supervisor.Connected == null ? CommonHelper.None : supervisor.Connected == true ? "Connected" : "Disconnected";}

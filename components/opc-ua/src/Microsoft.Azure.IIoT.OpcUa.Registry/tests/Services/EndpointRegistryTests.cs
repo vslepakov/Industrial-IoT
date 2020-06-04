@@ -326,9 +326,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                     t.Properties.Reported = new Dictionary<string, VariantValue> {
                         [TwinProperty.Type] = "Twin"
                     };
-                    if (a.Registration.SiteId != null) {
-                        t.Properties.Reported.Add(TwinProperty.SiteId, a.Registration.SiteId);
-                    }
                     t.ConnectionState = a.IsTwinConnected() ? "Connected" : "Disconnected";
                     return t;
                 })

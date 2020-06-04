@@ -21,13 +21,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
         public string Id { get; set; }
 
         /// <summary>
-        /// Site of the supervisor
-        /// </summary>
-        [DataMember(Name = "siteId", Order = 1,
-            EmitDefaultValue = false)]
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Current log level
         /// </summary>
         [DataMember(Name = "logLevel", Order = 2,

@@ -235,8 +235,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                     throw new ArgumentException(nameof(request.WriterGroupId),
                         "Dataset writer group not found.");
                 }
-                if (group.SiteId != endpoint.Registration.SiteId &&
-                    group.SiteId != endpoint.Registration.DiscovererId) {
+                if (group.SiteId != endpoint.Registration.SiteId) {
                     throw new ArgumentException(nameof(request.WriterGroupId),
                         "Dataset writer group not in same site as endpoint");
                 }
@@ -477,6 +476,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                 if (request.SamplingInterval != null) {
                     existing.SamplingInterval = request.SamplingInterval <= TimeSpan.Zero ?
                         null : request.SamplingInterval;
+                    updated = true;
+                }
+                if (request.HeartbeatInterval != null) {
+                    existing.HeartbeatInterval = request.HeartbeatInterval <= TimeSpan.Zero ?
+                        null : request.HeartbeatInterval;
                     updated = true;
                 }
                 if (request.TriggerId != null) {
@@ -851,11 +855,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
         private async Task<DataSetWriterModel> GetDataSetWriterAsync(
             DataSetWriterInfoModel writerInfo, CancellationToken ct) {
             var endpoint = string.IsNullOrEmpty(writerInfo.DataSet.EndpointId) ? null :
-                await _endpoints.GetEndpointAsync(writerInfo.DataSet.EndpointId, true, ct);
+                await _endpoints.GetEndpointAsync(writerInfo.DataSet.EndpointId, false, ct);
             var connection = endpoint.Registration?.Endpoint == null ? null :
                 new ConnectionModel {
                     Endpoint = endpoint.Registration.Endpoint.Clone(),
-                    User = writerInfo.DataSet.User.Clone()
+                    User = writerInfo.DataSet?.User.Clone()
                 };
             // Find event
             var events = await _dataSets.FindEventDataSetAsync(writerInfo.DataSetWriterId, ct);
@@ -927,10 +931,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
             TimeSpan? publishingInterval, CredentialModel user, CancellationToken ct) {
             // Find the specified endpoint and fail if not exist
             var endpoint = await Try.Async(() => _endpoints.GetEndpointAsync(
-                endpointId, true, ct));
+                endpointId, false, ct));
             ct.ThrowIfCancellationRequested();
             if (endpoint == null) {
-                throw new ArgumentException(nameof(endpointId), "Endpoint not found");
+                throw new ArgumentException(nameof(endpointId), "Endpoint not found.");
+            }
+            if (string.IsNullOrEmpty(endpoint.Registration?.SiteId)) {
+                throw new ResourceInvalidStateException("Endpoint has not site id.");
             }
 
             var added = false;

@@ -3,7 +3,7 @@
 //  Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.v2.Twin.StartStop {
+namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Twin.StartStop {
     using Microsoft.Azure.IIoT.OpcUa.Testing.Fixtures;
     using Xunit;
 

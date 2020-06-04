@@ -13,11 +13,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
     public class DataSetAddEventRequestModel {
 
         /// <summary>
-        /// Identifier of data set writer to add to
-        /// </summary>
-        public string DataSetWriterId { get; set; }
-
-        /// <summary>
         /// Event notifier to subscribe to (or start node)
         /// </summary>
         public string EventNotifier { get; set; }

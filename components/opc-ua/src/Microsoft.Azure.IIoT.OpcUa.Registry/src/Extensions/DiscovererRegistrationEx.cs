@@ -53,11 +53,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                     DateTime.UtcNow : (DateTime?)null);
             }
 
-            if (update?.SiteOrGatewayId != existing?.SiteOrGatewayId) {
-                twin.Tags.Add(nameof(DiscovererRegistration.SiteOrGatewayId),
-                    update?.SiteOrGatewayId);
-            }
-
             var policiesUpdate = update?.SecurityPoliciesFilter.DecodeAsList().SequenceEqualsSafe(
                 existing?.SecurityPoliciesFilter?.DecodeAsList());
             if (!(policiesUpdate ?? true)) {
@@ -149,10 +144,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                     update?.MinPortProbesPercent);
             }
 
-            if (update?.SiteId != existing?.SiteId) {
-                twin.Properties.Desired.Add(TwinProperty.SiteId, update?.SiteId);
-            }
-
             twin.Tags.Add(nameof(DiscovererRegistration.DeviceType), update?.DeviceType);
             twin.Id = update?.DeviceId ?? existing?.DeviceId;
             twin.ModuleId = update?.ModuleId ?? existing?.ModuleId;
@@ -221,8 +212,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 Locales =
                     properties.GetValueOrDefault<Dictionary<string, string>>(nameof(DiscovererRegistration.Locales), null),
 
-                SiteId =
-                    properties.GetValueOrDefault<string>(TwinProperty.SiteId, null),
                 Version =
                     properties.GetValueOrDefault<string>(TwinProperty.Version, null),
                 Type =
@@ -271,10 +260,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             connected = consolidated.Connected;
             if (desired != null) {
                 desired.Connected = connected;
-                if (desired.SiteId == null && consolidated.SiteId != null) {
-                    // Not set by user, but by config, so fake user desiring it.
-                    desired.SiteId = consolidated.SiteId;
-                }
                 if (desired.LogLevel == null && consolidated.LogLevel != null) {
                     // Not set by user, but reported, so set as desired
                     desired.LogLevel = consolidated.LogLevel;
@@ -328,8 +313,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 Locales = model.RequestedConfig?.Locales?.
                     EncodeAsDictionary(),
                 Connected = model.Connected ?? false,
-                Version = null,
-                SiteId = model.SiteId,
+                Version = null
             };
         }
 
@@ -346,7 +330,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 Discovery = registration.Discovery != DiscoveryMode.Off ?
                     registration.Discovery : (DiscoveryMode?)null,
                 Id = DiscovererModelEx.CreateDiscovererId(registration.DeviceId, registration.ModuleId),
-                SiteId = registration.SiteId,
                 Version = registration.Version,
                 LogLevel = registration.LogLevel,
                 DiscoveryConfig = registration.ToConfigModel(),
@@ -445,7 +428,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             }
             return
                 desired != null &&
-                reported.SiteId == desired.SiteId &&
                 reported.LogLevel == desired.LogLevel &&
                 reported.Discovery == desired.Discovery &&
                 (string.IsNullOrEmpty(desired.AddressRangesToScan) ||

@@ -12,7 +12,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controllers {
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Threading.Tasks;
 
     /// <summary>
     /// Synchronizes dataset writers with cloud endpoint

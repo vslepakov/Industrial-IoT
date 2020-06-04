@@ -29,17 +29,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
         public string ModuleId { get; set; }
 
         /// <summary>
-        /// Site id
-        /// </summary>
-        [DataMember(Name = "siteId", Order = 2,
-            EmitDefaultValue = false)]
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Endpoint activation status
         /// </summary>
-        [DataMember(Name = "endpoints", Order = 3,
+        [DataMember(Name = "entities", Order = 2,
             EmitDefaultValue = false)]
-        public List<EndpointActivationStatusApiModel> Endpoints { get; set; }
+        public List<EntityActivationStatusApiModel> Entities { get; set; }
     }
 }

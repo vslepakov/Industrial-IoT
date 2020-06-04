@@ -17,12 +17,11 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Services {
         /// Start module host
         /// </summary>
         /// <param name="type"></param>
-        /// <param name="siteId"></param>
         /// <param name="productInfo"></param>
         /// <param name="version"></param>
         /// <param name="control"></param>
         /// <returns></returns>
-        Task StartAsync(string type, string siteId,
+        Task StartAsync(string type,
             string productInfo, string version,
             IProcessControl control = null);
 

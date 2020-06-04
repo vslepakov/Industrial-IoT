@@ -89,5 +89,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
         [DataMember(Name = "triggerId", Order = 10,
             EmitDefaultValue = false)]
         public string TriggerId { get; set; }
+
+        /// <summary>
+        /// Triggers reporting this variable on a minimum interval.
+        /// (Publisher extension)
+        /// </summary>
+        [DataMember(Name = "heartbeatInterval", Order = 11,
+            EmitDefaultValue = false)]
+        public TimeSpan? HeartbeatInterval { get; set; }
     }
 }

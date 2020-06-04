@@ -170,7 +170,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Vault.Services {
             }
             return new EntityInfoModel {
                 Name = supervisorId,
-                Uris = new List<string> { $"urn:twin:{twinModule.SiteId}:{supervisorId}" },
+                Uris = new List<string> { $"urn:twin:{supervisorId}" },
                 Id = supervisorId,
                 Role = EntityRoleType.Client,
                 Type = EntityType.Twin,
@@ -193,7 +193,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Vault.Services {
             }
             return new EntityInfoModel {
                 Name = publisherId,
-                Uris = new List<string> { $"urn:publisher:{publisher.SiteId}:{publisherId}" },
+                Uris = new List<string> { $"urn:publisher:{publisherId}" },
                 Id = publisherId,
                 Role = EntityRoleType.Client,
                 Type = EntityType.Publisher,

@@ -288,9 +288,6 @@ Operations (Mutually exclusive):
             public string ModuleId { get; } = "";
 
             /// <inheritdoc/>
-            public string SiteId => null;
-
-            /// <inheritdoc/>
             public async Task SendEventAsync(byte[] data, string contentType,
                 string eventSchema, string contentEncoding) {
                 var ev = JsonConvert.DeserializeObject<DiscoveryEventModel>(

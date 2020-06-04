@@ -85,6 +85,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
 
             using (var mock = AutoMock.GetLoose(builder => {
                 // Setup
+                builder.RegisterModule<NewtonSoftJsonModule>();
                 builder.RegisterInstance(registry).As<IIoTHubTwinServices>();
                 builder.RegisterType<ApplicationTwins>().As<IApplicationRepository>();
                 builder.RegisterType<DiscovererRegistry>().As<IDiscovererRegistry>();
@@ -444,21 +445,18 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             var module = fix.Create<string>();
             var discovererx = discoverer = DiscovererModelEx.CreateDiscovererId(gateway, module);
             var Discoverer = (new DiscovererModel {
-                SiteId = site,
                 Id = discovererx
             }.ToDiscovererRegistration().ToDeviceTwin(_serializer),
                     new DeviceModel { Id = gateway, ModuleId = module });
             module = fix.Create<string>();
             var supervisorx = supervisor = SupervisorModelEx.CreateSupervisorId(gateway, module);
             var Supervisor = (new SupervisorModel {
-                SiteId = site,
                 Id = supervisorx
             }.ToSupervisorRegistration().ToDeviceTwin(_serializer),
                     new DeviceModel { Id = gateway, ModuleId = module });
             module = fix.Create<string>();
             var publisherx = publisher = PublisherModelEx.CreatePublisherId(gateway, module);
             var Publisher = (new PublisherModel {
-                SiteId = site,
                 Id = publisherx
             }.ToPublisherRegistration().ToDeviceTwin(_serializer),
                     new DeviceModel { Id = gateway, ModuleId = module });

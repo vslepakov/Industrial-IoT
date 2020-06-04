@@ -7,7 +7,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.Api.Binary {
     using Microsoft.Azure.IIoT.Http.Default;
     using Microsoft.Azure.IIoT.Serializers;
     using Microsoft.Azure.IIoT.OpcUa.Core.Models;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Twin;
     using Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients;
     using Microsoft.Azure.IIoT.OpcUa.Testing.Fixtures;
     using Microsoft.Azure.IIoT.OpcUa.Testing.Tests;

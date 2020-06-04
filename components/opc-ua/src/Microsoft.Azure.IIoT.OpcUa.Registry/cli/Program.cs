@@ -351,9 +351,6 @@ Operations (Mutually exclusive):
             public string ModuleId { get; } = "";
 
             /// <inheritdoc/>
-            public string SiteId => null;
-
-            /// <inheritdoc/>
             public Task SendEventAsync(byte[] data, string contentType,
                 string eventSchema, string contentEncoding) {
                 var json = Encoding.UTF8.GetString(data);

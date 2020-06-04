@@ -409,7 +409,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
             }
             return new DiscovererApiModel {
                 Id = model.Id,
-                SiteId = model.SiteId,
                 LogLevel = (TraceLogLevel?)model.LogLevel,
                 RequestedMode = (DiscoveryMode?)model.RequestedMode,
                 RequestedConfig = model.RequestedConfig.ToApiModel(),
@@ -433,7 +432,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
             }
             return new DiscovererModel {
                 Id = model.Id,
-                SiteId = model.SiteId,
                 LogLevel = (OpcUa.Registry.Models.TraceLogLevel?)model.LogLevel,
                 RequestedMode = (OpcUa.Registry.Models.DiscoveryMode?)model.RequestedMode,
                 RequestedConfig = model.RequestedConfig.ToServiceModel(),
@@ -473,7 +471,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
                 return null;
             }
             return new DiscovererQueryModel {
-                SiteId = model.SiteId,
                 Connected = model.Connected,
                 Discovery = (OpcUa.Registry.Models.DiscoveryMode?)model.Discovery
             };
@@ -489,7 +486,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
                 return null;
             }
             return new DiscovererUpdateModel {
-                SiteId = model.SiteId,
                 LogLevel = (OpcUa.Registry.Models.TraceLogLevel?)model.LogLevel,
                 Discovery = (OpcUa.Registry.Models.DiscoveryMode?)model.Discovery,
                 DiscoveryConfig = model.DiscoveryConfig.ToServiceModel()
@@ -643,14 +639,14 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
-        public static EndpointActivationStatusApiModel ToApiModel(
+        public static EntityActivationStatusApiModel ToApiModel(
             this EntityActivationStatusModel model) {
             if (model == null) {
                 return null;
             }
-            return new EndpointActivationStatusApiModel {
+            return new EntityActivationStatusApiModel {
                 Id = model.Id,
-                ActivationState = (EndpointActivationState?)model.ActivationState
+                ActivationState = (EntityActivationState?)model.ActivationState
             };
         }
 
@@ -660,7 +656,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
         /// <param name="model"></param>
         /// <returns></returns>
         public static EntityActivationStatusModel ToServiceModel(
-            this EndpointActivationStatusApiModel model) {
+            this EntityActivationStatusApiModel model) {
             if (model == null) {
                 return null;
             }
@@ -722,7 +718,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
                 ApplicationId = model.ApplicationId,
                 NotSeenSince = model.NotSeenSince,
                 Registration = model.Registration.ToApiModel(),
-                ActivationState = (EndpointActivationState?)model.ActivationState,
+                ActivationState = (EntityActivationState?)model.ActivationState,
                 EndpointState = (EndpointConnectivityState?)model.EndpointState,
                 OutOfSync = model.OutOfSync
             };
@@ -995,7 +991,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
             }
             return new PublisherApiModel {
                 Id = model.Id,
-                SiteId = model.SiteId,
                 LogLevel = (TraceLogLevel?)model.LogLevel,
                 OutOfSync = model.OutOfSync,
                 Version = model.Version,
@@ -1015,7 +1010,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
             }
             return new PublisherModel {
                 Id = model.Id,
-                SiteId = model.SiteId,
                 LogLevel = (OpcUa.Registry.Models.TraceLogLevel?)model.LogLevel,
                 OutOfSync = model.OutOfSync,
                 Version = model.Version,
@@ -1070,7 +1064,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
                 return null;
             }
             return new PublisherQueryApiModel {
-                SiteId = model.SiteId,
                 Connected = model.Connected
             };
         }
@@ -1086,7 +1079,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
                 return null;
             }
             return new PublisherQueryModel {
-                SiteId = model.SiteId,
                 Connected = model.Connected
             };
         }
@@ -1102,7 +1094,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
                 return null;
             }
             return new PublisherUpdateApiModel {
-                SiteId = model.SiteId,
                 LogLevel = (TraceLogLevel?)model.LogLevel,
             };
         }
@@ -1118,7 +1109,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
                 return null;
             }
             return new PublisherUpdateModel {
-                SiteId = model.SiteId,
                 LogLevel = (OpcUa.Registry.Models.TraceLogLevel?)model.LogLevel,
             };
         }
@@ -1184,7 +1174,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
             }
             return new SupervisorApiModel {
                 Id = model.Id,
-                SiteId = model.SiteId,
                 LogLevel = (TraceLogLevel?)model.LogLevel,
                 OutOfSync = model.OutOfSync,
                 Version = model.Version,
@@ -1204,7 +1193,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
             }
             return new SupervisorModel {
                 Id = model.Id,
-                SiteId = model.SiteId,
                 LogLevel = (OpcUa.Registry.Models.TraceLogLevel?)model.LogLevel,
                 OutOfSync = model.OutOfSync,
                 Version = model.Version,
@@ -1259,7 +1247,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
                 return null;
             }
             return new SupervisorQueryApiModel {
-                SiteId = model.SiteId,
                 EndpointId = model.EndpointId,
                 Connected = model.Connected
             };
@@ -1276,7 +1263,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
                 return null;
             }
             return new SupervisorQueryModel {
-                SiteId = model.SiteId,
                 EndpointId = model.EndpointId,
                 Connected = model.Connected
             };
@@ -1295,8 +1281,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
             return new SupervisorStatusApiModel {
                 DeviceId = model.DeviceId,
                 ModuleId = model.ModuleId,
-                SiteId = model.SiteId,
-                Endpoints = model.Entities?
+                Entities = model.Entities?
                     .Select(e => e.ToApiModel())
                     .ToList()
             };
@@ -1315,8 +1300,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
             return new SupervisorStatusModel {
                 DeviceId = model.DeviceId,
                 ModuleId = model.ModuleId,
-                SiteId = model.SiteId,
-                Entities = model.Endpoints?
+                Entities = model.Entities?
                     .Select(e => e.ToServiceModel())
                     .ToList()
             };
@@ -1333,7 +1317,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
                 return null;
             }
             return new SupervisorUpdateApiModel {
-                SiteId = model.SiteId,
                 LogLevel = (TraceLogLevel?)model.LogLevel
             };
         }
@@ -1349,7 +1332,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
                 return null;
             }
             return new SupervisorUpdateModel {
-                SiteId = model.SiteId,
                 LogLevel = (OpcUa.Registry.Models.TraceLogLevel?)model.LogLevel
             };
         }

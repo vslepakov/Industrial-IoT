@@ -52,21 +52,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                     DateTime.UtcNow : (DateTime?)null);
             }
 
-            if (update?.SiteOrGatewayId != existing?.SiteOrGatewayId) {
-                twin.Tags.Add(nameof(SupervisorRegistration.SiteOrGatewayId),
-                    update?.SiteOrGatewayId);
-            }
-
             // Settings
 
             if (update?.LogLevel != existing?.LogLevel) {
                 twin.Properties.Desired.Add(nameof(SupervisorRegistration.LogLevel),
                     update?.LogLevel == null ?
                     null : serializer.FromObject(update.LogLevel.ToString()));
-            }
-
-            if (update?.SiteId != existing?.SiteId) {
-                twin.Properties.Desired.Add(TwinProperty.SiteId, update?.SiteId);
             }
 
             twin.Tags.Add(nameof(SupervisorRegistration.DeviceType), update?.DeviceType);
@@ -109,8 +100,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 LogLevel =
                     properties.GetValueOrDefault<TraceLogLevel>(nameof(SupervisorRegistration.LogLevel), null),
 
-                SiteId =
-                    properties.GetValueOrDefault<string>(TwinProperty.SiteId, null),
                 Version =
                     properties.GetValueOrDefault<string>(TwinProperty.Version, null),
                 Type =
@@ -161,10 +150,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             connected = consolidated.Connected;
             if (desired != null) {
                 desired.Connected = connected;
-                if (desired.SiteId == null && consolidated.SiteId != null) {
-                    // Not set by user, but by config, so fake user desiring it.
-                    desired.SiteId = consolidated.SiteId;
-                }
                 if (desired.LogLevel == null && consolidated.LogLevel != null) {
                     // Not set by user, but reported, so set as desired
                     desired.LogLevel = consolidated.LogLevel;
@@ -200,8 +185,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 ModuleId = moduleId,
                 LogLevel = model.LogLevel,
                 Version = null,
-                Connected = model.Connected ?? false,
-                SiteId = model.SiteId,
+                Connected = model.Connected ?? false
             };
         }
 
@@ -216,7 +200,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             }
             return new SupervisorModel {
                 Id = SupervisorModelEx.CreateSupervisorId(registration.DeviceId, registration.ModuleId),
-                SiteId = registration.SiteId,
                 LogLevel = registration.LogLevel,
                 Version = registration.Version,
                 Connected = registration.IsConnected() ? true : (bool?)null,
@@ -236,7 +219,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             }
             return
                 other != null &&
-                registration.SiteId == other.SiteId &&
                 registration.LogLevel == other.LogLevel;
         }
     }

@@ -13,13 +13,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
     public class PublisherQueryApiModel {
 
         /// <summary>
-        /// Site for the publishers
-        /// </summary>
-        [DataMember(Name = "siteId", Order = 0,
-            EmitDefaultValue = false)]
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Included connected or disconnected
         /// </summary>
         [DataMember(Name = "connected", Order = 1,

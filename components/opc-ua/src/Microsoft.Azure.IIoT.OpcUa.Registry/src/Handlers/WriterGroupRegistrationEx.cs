@@ -38,7 +38,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             WriterGroupRegistration update, IJsonSerializer serializer) {
 
             var twin = new DeviceTwinModel {
-                Id = existing.DeviceId,
+                Id = (existing?.DeviceId ?? update?.DeviceId)
+                    ?? throw new ArgumentException("DeviceId must not be null"),
                 Etag = existing?.Etag,
                 Tags = new Dictionary<string, VariantValue>(),
                 Properties = new TwinPropertiesModel {
@@ -63,7 +64,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             }
 
             if (update?.SiteId != existing?.SiteId) {
-                twin.Tags.Add(nameof(EntityRegistration.SiteId), update?.SiteId);
+                twin.Tags.Add(nameof(WriterGroupRegistration.SiteId), update?.SiteId);
             }
 
             twin.Tags.Add(nameof(EntityRegistration.DeviceType), update?.DeviceType);
@@ -175,12 +176,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                     tags.GetValueOrDefault<DateTime>(nameof(WriterGroupRegistration.NotSeenSince), null),
                 WriterGroupId =
                     tags.GetValueOrDefault<string>(nameof(WriterGroupRegistration.WriterGroupId), null),
+                SiteId =
+                    tags.GetValueOrDefault<string>(nameof(WriterGroupRegistration.SiteId), null),
 
                 // Properties
 
-                SiteId =
-                    properties.GetValueOrDefault(TwinProperty.SiteId,
-                        tags.GetValueOrDefault<string>(nameof(WriterGroupRegistration.SiteId), null)),
                 Type =
                     properties.GetValueOrDefault<string>(TwinProperty.Type, null),
                 BatchSize =
@@ -278,6 +278,22 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 NetworkMessageContentMask = model.MessageSettings?.NetworkMessageContentMask,
                 PublishingOffset = model.MessageSettings?.PublishingOffset?.EncodeAsDictionary(),
                 SamplingOffset = model.MessageSettings?.SamplingOffset
+            };
+        }
+
+        /// <summary>
+        /// Convert to service model
+        /// </summary>
+        /// <param name="registration"></param>
+        /// <returns></returns>
+        public static EntityActivationStatusModel ToServiceModel(this WriterGroupRegistration registration) {
+            if (registration == null) {
+                return null;
+            }
+            return new EntityActivationStatusModel {
+                Id = registration.WriterGroupId,
+                ActivationState = registration.Connected ?
+                    EntityActivationState.ActivatedAndConnected : EntityActivationState.Activated
             };
         }
 

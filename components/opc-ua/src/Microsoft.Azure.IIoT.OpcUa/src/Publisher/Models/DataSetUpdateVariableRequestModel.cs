@@ -67,5 +67,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
         /// (Publisher extension)
         /// </summary>
         public string TriggerId { get; set; }
+
+        /// <summary>
+        /// Triggers reporting this variable on a minimum interval.
+        /// (Publisher extension)
+        /// </summary>
+        public TimeSpan? HeartbeatInterval { get; set; }
     }
 }

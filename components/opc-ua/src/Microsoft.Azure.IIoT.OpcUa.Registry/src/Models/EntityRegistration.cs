@@ -21,22 +21,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         public virtual string DeviceId { get; set; }
 
         /// <summary>
-        /// Site of the registration
+        /// Etag of the registration
         /// </summary>
-        [DataMember]
-        public virtual string SiteId { get; set; }
-
-        /// <summary>
-        /// Searchable grouping (either device or site id)
-        /// </summary>
-        [DataMember]
-        public virtual string SiteOrGatewayId =>
-            !string.IsNullOrEmpty(SiteId) ? SiteId : DeviceId;
-
-        /// <summary>
-        /// Etag id
-        /// </summary>
-        [DataMember(Name = "_etag")]
         public string Etag { get; set; }
 
         /// <summary>
@@ -86,9 +72,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             if (DeviceType != registration.DeviceType) {
                 return false;
             }
-            if (SiteId != registration.SiteId) {
-                return false;
-            }
             if ((IsDisabled ?? false) != (registration.IsDisabled ?? false)) {
                 return false;
             }
@@ -113,8 +96,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 EqualityComparer<string>.Default.GetHashCode(DeviceId);
             hashCode = (hashCode * -1521134295) +
                 EqualityComparer<string>.Default.GetHashCode(DeviceType);
-            hashCode = (hashCode * -1521134295) +
-                EqualityComparer<string>.Default.GetHashCode(SiteId);
             hashCode = (hashCode * -1521134295) +
                 EqualityComparer<bool>.Default.GetHashCode(IsDisabled ?? false);
             hashCode = (hashCode * -1521134295) +

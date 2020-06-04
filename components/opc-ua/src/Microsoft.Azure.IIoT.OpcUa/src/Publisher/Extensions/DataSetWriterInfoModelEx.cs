@@ -76,7 +76,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
                 GenerationId = null,
                 WriterGroupId = model.WriterGroupId,
                 DataSet = new PublishedDataSetSourceInfoModel {
-                    Name = model.Name,
+                    Name = model.DataSetName,
                     EndpointId = model.EndpointId,
                     ExtensionFields = model.ExtensionFields,
                     User = model.User.Clone(),

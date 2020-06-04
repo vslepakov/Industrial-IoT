@@ -35,11 +35,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin {
     public class ModuleProcess : IProcessControl {
 
         /// <summary>
-        /// Site of the module
-        /// </summary>
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Whethr the module is running
         /// </summary>
 
@@ -56,7 +51,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin {
             _exitCode = 0;
             _exit = new TaskCompletionSource<bool>();
             AssemblyLoadContext.Default.Unloading += _ => _exit.TrySetResult(true);
-            SiteId = _config?.GetValue<string>("site", null);
         }
 
         /// <inheritdoc/>
@@ -97,9 +91,9 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin {
                     IMetricServer server = null;
                     try {
                         var version = GetType().Assembly.GetReleaseVersion().ToString();
-                        logger.Information("Starting module OpcTwin version {version}.", 
+                        logger.Information("Starting module OpcTwin version {version}.",
                             version);
-                        await module.StartAsync(IdentityType.Supervisor, SiteId,
+                        await module.StartAsync(IdentityType.Supervisor,
                             "OpcTwin", version, this);
                         if (hostScope.TryResolve(out server)) {
                             server.Start();

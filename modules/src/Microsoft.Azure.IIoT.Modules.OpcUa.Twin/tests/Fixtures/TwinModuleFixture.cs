@@ -83,8 +83,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Tests {
 
             _config = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string> {
-                    {"EnableMetrics", "false"},
-                    {"PkiRootPath", ClientPkiRootPath}
+                    { "PkiRootPath", ClientPkiRootPath }
                 })
                 .Build();
             HubContainer = CreateHubContainer();
@@ -210,7 +209,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Tests {
             // Assert
             Assert.Equal("Connected", twin.ConnectionState);
             Assert.Equal(IdentityType.Supervisor, twin.Properties.Reported[TwinProperty.Type]);
-            Assert.False(twin.Properties.Reported.TryGetValue(TwinProperty.SiteId, out _));
         }
 
         /// <summary>

@@ -326,7 +326,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
                 var sw = Stopwatch.StartNew();
                 while (true) {
                     ep = await _registry.GetEndpointAsync(endpoint.Id);
-                    if (ep.ActivationState == EndpointActivationState.ActivatedAndConnected) {
+                    if (ep.ActivationState == EntityActivationState.ActivatedAndConnected) {
                         break;
                     }
                     if (sw.ElapsedMilliseconds > 60000) {
@@ -370,7 +370,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
                 sw.Restart();
                 while (true) {
                     ep = await _registry.GetEndpointAsync(endpoint.Id);
-                    if (ep.ActivationState == EndpointActivationState.Deactivated) {
+                    if (ep.ActivationState == EntityActivationState.Deactivated) {
                         break;
                     }
                     if (sw.ElapsedMilliseconds > 60000) {
@@ -396,7 +396,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
             var sw = Stopwatch.StartNew();
             while (true) {
                 ep = await _registry.GetEndpointAsync(endpoint.Id);
-                if (ep.ActivationState == EndpointActivationState.ActivatedAndConnected &&
+                if (ep.ActivationState == EntityActivationState.ActivatedAndConnected &&
                     ep.EndpointState == EndpointConnectivityState.Ready) {
                     break;
                 }
@@ -430,7 +430,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
             sw.Restart();
             while (true) {
                 ep = await _registry.GetEndpointAsync(endpoint.Id);
-                if (ep.ActivationState == EndpointActivationState.Deactivated) {
+                if (ep.ActivationState == EntityActivationState.Deactivated) {
                     break;
                 }
                 if (sw.ElapsedMilliseconds > 60000) {
@@ -455,7 +455,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
             var sw = Stopwatch.StartNew();
             while (true) {
                 ep = await _registry.GetEndpointAsync(endpoint.Id);
-                if (ep.ActivationState == EndpointActivationState.ActivatedAndConnected &&
+                if (ep.ActivationState == EntityActivationState.ActivatedAndConnected &&
                     ep.EndpointState == EndpointConnectivityState.Ready) {
                     break;
                 }
@@ -480,7 +480,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
             sw.Restart();
             while (true) {
                 ep = await _registry.GetEndpointAsync(endpoint.Id);
-                if (ep.ActivationState == EndpointActivationState.Deactivated) {
+                if (ep.ActivationState == EntityActivationState.Deactivated) {
                     break;
                 }
                 if (sw.ElapsedMilliseconds > 60000) {

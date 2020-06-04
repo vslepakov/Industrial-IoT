@@ -27,10 +27,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         public override string DeviceId => base.DeviceId ?? Id;
 
         /// <summary>
+        /// Site of the registration
+        /// </summary>
+        [DataMember]
+        public string SiteId { get; set; }
+
+        /// <summary>
         /// Site or gateway id
         /// </summary>
         [DataMember]
-        public override string SiteOrGatewayId => this.GetSiteOrGatewayId();
+        public string SiteOrGatewayId => this.GetSiteOrGatewayId();
 
         /// <summary>
         /// Identity that owns the twin.
@@ -160,6 +166,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             if (!base.Equals(registration)) {
                 return false;
             }
+            if (SiteId != registration.SiteId) {
+                return false;
+            }
             if (DiscovererId != registration.DiscovererId) {
                 return false;
             }
@@ -207,6 +216,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         /// <inheritdoc/>
         public override int GetHashCode() {
             var hashCode = base.GetHashCode();
+            hashCode = (hashCode * -1521134295) +
+                EqualityComparer<string>.Default.GetHashCode(SiteId);
             hashCode = (hashCode * -1521134295) +
                 EqualityComparer<string>.Default.GetHashCode(EndpointUrlLC);
             hashCode = (hashCode * -1521134295) +

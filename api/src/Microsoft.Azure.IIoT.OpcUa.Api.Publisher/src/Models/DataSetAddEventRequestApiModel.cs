@@ -14,12 +14,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     public class DataSetAddEventRequestApiModel {
 
         /// <summary>
-        /// Identifier of data set writer to add to
-        /// </summary>
-        [DataMember(Name = "dataSetWriterId", Order = 0)]
-        public string DataSetWriterId { get; set; }
-
-        /// <summary>
         /// Event notifier to subscribe to (or start node)
         /// </summary>
         [DataMember(Name = "eventNotifier", Order = 1,

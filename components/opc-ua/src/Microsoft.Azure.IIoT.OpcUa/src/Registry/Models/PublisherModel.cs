@@ -16,11 +16,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         public string Id { get; set; }
 
         /// <summary>
-        /// Site of the publisher
-        /// </summary>
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Current log level
         /// </summary>
         public TraceLogLevel? LogLevel { get; set; }

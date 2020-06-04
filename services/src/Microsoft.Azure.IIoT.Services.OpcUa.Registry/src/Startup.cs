@@ -13,6 +13,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry {
     using Microsoft.Azure.IIoT.OpcUa.Registry.Deploy;
     using Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients;
     using Microsoft.Azure.IIoT.OpcUa.Api.Registry.Clients;
+    using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients;
     using Microsoft.Azure.IIoT.AspNetCore.Auth;
     using Microsoft.Azure.IIoT.AspNetCore.Auth.Clients;
     using Microsoft.Azure.IIoT.AspNetCore.Cors;
@@ -43,7 +44,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry {
     using System;
     using ILogger = Serilog.ILogger;
     using Prometheus;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients;
 
     /// <summary>
     /// Webservice startup
@@ -149,9 +149,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry {
 
             app.UseCorrelation();
             app.UseSwagger();
-
-            app.UseMetricServer();
-            app.UseHttpMetrics();
 
             app.UseEndpoints(endpoints => {
                 endpoints.MapMetrics();

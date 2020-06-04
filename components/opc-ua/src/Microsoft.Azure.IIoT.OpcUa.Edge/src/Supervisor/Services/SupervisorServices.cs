@@ -153,8 +153,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Supervisor.Services {
                 return new SupervisorStatusModel {
                     Entities = entities.ToList(),
                     DeviceId = _events.DeviceId,
-                    ModuleId = _events.ModuleId,
-                    SiteId = _events.SiteId
+                    ModuleId = _events.ModuleId
                 };
             }
             finally {
@@ -334,8 +333,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Supervisor.Services {
                     // Wait until the module unloads or is cancelled
                     try {
                         var version = GetType().Assembly.GetReleaseVersion().ToString();
-                        await host.StartAsync("twin", _outer._events.SiteId,
-                            "OpcTwin", version, this);
+                        await host.StartAsync("twin", "OpcTwin", version, this);
                         Status = EntityActivationState.ActivatedAndConnected;
                         _started.TrySetResult(true);
                         _logger.Debug("Twin host (re-)started.");

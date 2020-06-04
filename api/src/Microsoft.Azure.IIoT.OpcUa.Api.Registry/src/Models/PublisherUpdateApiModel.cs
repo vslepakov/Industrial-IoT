@@ -13,13 +13,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
     public class PublisherUpdateApiModel {
 
         /// <summary>
-        /// Site of the publisher
-        /// </summary>
-        [DataMember(Name = "siteId", Order = 0,
-            EmitDefaultValue = false)]
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Current log level
         /// </summary>
         [DataMember(Name = "logLevel", Order = 2,

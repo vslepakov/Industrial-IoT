@@ -13,13 +13,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
     public class SupervisorUpdateApiModel {
 
         /// <summary>
-        /// Site the supervisor is part of
-        /// </summary>
-        [DataMember(Name = "siteId", Order = 0,
-            EmitDefaultValue = false)]
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Current log level
         /// </summary>
         [DataMember(Name = "logLevel", Order = 1,

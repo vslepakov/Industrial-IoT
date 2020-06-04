@@ -104,51 +104,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             }
         }
 
-        [Fact]
-        public void QuerySupervisorsBySiteId() {
-            CreateSupervisorFixtures(out var site, out var supervisors, out var modules);
-
-            using (var mock = AutoMock.GetLoose(builder => {
-                var hub = IoTHubServices.Create(modules);
-                builder.RegisterType<NewtonSoftJsonConverters>().As<IJsonSerializerConverterProvider>();
-                builder.RegisterType<NewtonSoftJsonSerializer>().As<IJsonSerializer>();
-                builder.RegisterInstance(hub).As<IIoTHubTwinServices>();
-            })) {
-                ISupervisorRegistry service = mock.Create<SupervisorRegistry>();
-
-                // Run
-                var records = service.QuerySupervisorsAsync(new SupervisorQueryModel {
-                    SiteId = site
-                }, false, null).Result;
-
-                // Assert
-                Assert.True(supervisors.IsSameAs(records.Items));
-            }
-        }
-
-        [Fact]
-        public void QuerySupervisorsByNoneExistantSiteId() {
-            CreateSupervisorFixtures(out var site, out var supervisors, out var modules, true);
-
-            using (var mock = AutoMock.GetLoose(builder => {
-                var hub = IoTHubServices.Create(modules);
-                builder.RegisterType<NewtonSoftJsonConverters>().As<IJsonSerializerConverterProvider>();
-                builder.RegisterType<NewtonSoftJsonSerializer>().As<IJsonSerializer>();
-                builder.RegisterInstance(hub).As<IIoTHubTwinServices>();
-            })) {
-                ISupervisorRegistry service = mock.Create<SupervisorRegistry>();
-
-                // Run
-                var records = service.QuerySupervisorsAsync(new SupervisorQueryModel {
-                    SiteId = "test"
-                }, false, null).Result;
-
-                // Assert
-                Assert.True(records.Items.Count == 0);
-            }
-        }
-
-
         /// <summary>
         /// Helper to create app fixtures
         /// </summary>
@@ -166,7 +121,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             var sitex = site = noSite ? null : fix.Create<string>();
             supervisors = fix
                 .Build<SupervisorModel>()
-                .With(x => x.SiteId, sitex)
                 .Without(x => x.Id)
                 .Do(x => x.Id = SupervisorModelEx.CreateSupervisorId(
                     fix.Create<string>(), fix.Create<string>()))

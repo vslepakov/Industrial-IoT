@@ -17,8 +17,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
         /// <summary>
         /// Name of the published dataset
         /// </summary>
-        [DataMember(Name = "name", Order = 0)]
-        public string Name { get; set; }
+        [DataMember(Name = "dataSetName", Order = 0,
+            EmitDefaultValue = false)]
+        public string DataSetName { get; set; }
 
         /// <summary>
         /// Endpoint id to create dataset writer with

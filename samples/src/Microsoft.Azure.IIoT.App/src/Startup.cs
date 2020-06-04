@@ -219,6 +219,8 @@ namespace Microsoft.Azure.IIoT.App {
                 .AsImplementedInterfaces();
             builder.RegisterType<VaultServiceClient>()
                 .AsImplementedInterfaces();
+            builder.RegisterType<PublisherServiceClient>()
+                .AsImplementedInterfaces();
 
             // ... with client event callbacks
             builder.RegisterType<RegistryServiceEvents>()

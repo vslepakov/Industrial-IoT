@@ -404,8 +404,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Discovery.Services {
                 count++;
                 var endpoints = 0;
                 foreach (var ep in eps) {
-                    discovered.AddOrUpdate(ep.ToServiceModel(item.Key.ToString(),
-                        _events.SiteId, _events.DeviceId, _events.ModuleId, _serializer));
+                    discovered.AddOrUpdate(ep.ToServiceModel(item.Key.ToString(), _serializer));
                     endpoints++;
                 }
                 _progress.OnFindEndpointsFinished(request.Request, 1, count, discoveryUrls.Count,

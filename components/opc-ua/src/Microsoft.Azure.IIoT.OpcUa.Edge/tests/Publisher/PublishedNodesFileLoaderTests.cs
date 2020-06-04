@@ -30,9 +30,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
 [
 ]
 ";
-            var converter = new PublishedNodesFileLoader(new EngineMock(), _serializer,
-                new LegacyCliModel(), new StandaloneIdentity(), TraceLogger.Create());
-            var group = converter.Read(new StringReader(pn));
+            var converter = new PublishedNodesFile(_serializer,
+                new LegacyCliModel(), TraceLogger.Create());
+            var group = converter.Read("testid", new StringReader(pn));
 
             // No writers
             Assert.NotNull(group);
@@ -55,9 +55,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
     }
 ]
 ";
-            var converter = new PublishedNodesFileLoader(new EngineMock(), _serializer,
-                new LegacyCliModel(), new StandaloneIdentity(), TraceLogger.Create());
-            var group = converter.Read(new StringReader(pn));
+            var converter = new PublishedNodesFile(_serializer,
+                new LegacyCliModel(), TraceLogger.Create());
+            var group = converter.Read("testid", new StringReader(pn));
 
             Assert.NotEmpty(group.DataSetWriters);
             Assert.Single(group.DataSetWriters);
@@ -86,9 +86,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
     }
 ]
 ";
-            var converter = new PublishedNodesFileLoader(new EngineMock(), _serializer,
-                new LegacyCliModel(), new StandaloneIdentity(), TraceLogger.Create());
-            var group = converter.Read(new StringReader(pn));
+            var converter = new PublishedNodesFile(_serializer,
+                new LegacyCliModel(), TraceLogger.Create());
+            var group = converter.Read("testid", new StringReader(pn));
 
             Assert.NotNull(group);
             Assert.NotEmpty(group.DataSetWriters);
@@ -117,9 +117,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
     }
 ]
 ";
-            var converter = new PublishedNodesFileLoader(new EngineMock(), _serializer,
-                new LegacyCliModel(), new StandaloneIdentity(), TraceLogger.Create());
-            var group = converter.Read(new StringReader(pn));
+            var converter = new PublishedNodesFile(_serializer,
+                new LegacyCliModel(), TraceLogger.Create());
+            var group = converter.Read("testid", new StringReader(pn));
 
             Assert.NotNull(group);
             Assert.NotEmpty(group.DataSetWriters);
@@ -145,9 +145,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
     }
 ]
 ";
-            var converter = new PublishedNodesFileLoader(new EngineMock(), _serializer,
-                new LegacyCliModel(), new StandaloneIdentity(), TraceLogger.Create());
-            var group = converter.Read(new StringReader(pn));
+            var converter = new PublishedNodesFile(_serializer,
+                new LegacyCliModel(), TraceLogger.Create());
+            var group = converter.Read("testid", new StringReader(pn));
 
             Assert.NotNull(group);
             Assert.NotEmpty(group.DataSetWriters);
@@ -173,9 +173,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
     }
 ]
 ";
-            var converter = new PublishedNodesFileLoader(new EngineMock(), _serializer,
-                new LegacyCliModel(), new StandaloneIdentity(), TraceLogger.Create());
-            var group = converter.Read(new StringReader(pn));
+            var converter = new PublishedNodesFile(_serializer,
+                new LegacyCliModel(), TraceLogger.Create());
+            var group = converter.Read("testid", new StringReader(pn));
 
             Assert.NotNull(group);
             Assert.NotEmpty(group.DataSetWriters);
@@ -200,9 +200,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
     }
 ]
 ";
-            var converter = new PublishedNodesFileLoader(new EngineMock(), _serializer,
-                new LegacyCliModel(), new StandaloneIdentity(), TraceLogger.Create());
-            var group = converter.Read(new StringReader(pn));
+            var converter = new PublishedNodesFile(_serializer,
+                new LegacyCliModel(), TraceLogger.Create());
+            var group = converter.Read("testid", new StringReader(pn));
 
             Assert.NotNull(group);
             Assert.NotEmpty(group.DataSetWriters);
@@ -242,9 +242,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
     }
 ]
 ";
-            var converter = new PublishedNodesFileLoader(new EngineMock(), _serializer,
-                new LegacyCliModel(), new StandaloneIdentity(), TraceLogger.Create());
-            var group = converter.Read(new StringReader(pn));
+            var converter = new PublishedNodesFile(_serializer,
+                new LegacyCliModel(), TraceLogger.Create());
+            var group = converter.Read("testid", new StringReader(pn));
 
             Assert.NotNull(group);
             Assert.NotEmpty(group.DataSetWriters);
@@ -278,9 +278,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
     }
 ]
 ";
-            var converter = new PublishedNodesFileLoader(new EngineMock(), _serializer,
-                new LegacyCliModel(), new StandaloneIdentity(), TraceLogger.Create());
-            var group = converter.Read(new StringReader(pn));
+            var converter = new PublishedNodesFile(_serializer,
+                new LegacyCliModel(), TraceLogger.Create());
+            var group = converter.Read("testid", new StringReader(pn));
 
             Assert.NotNull(group);
             Assert.NotEmpty(group.DataSetWriters);
@@ -335,9 +335,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
     }
 ]
 ";
-            var converter = new PublishedNodesFileLoader(new EngineMock(), _serializer,
-                new LegacyCliModel(), new StandaloneIdentity(), TraceLogger.Create());
-            var group = converter.Read(new StringReader(pn));
+            var converter = new PublishedNodesFile(_serializer,
+                new LegacyCliModel(), TraceLogger.Create());
+            var group = converter.Read("testid", new StringReader(pn));
 
             Assert.NotNull(group);
             Assert.NotEmpty(group.DataSetWriters);
@@ -391,9 +391,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
     }
 ]
 ";
-            var converter = new PublishedNodesFileLoader(new EngineMock(), _serializer,
-                new LegacyCliModel(), new StandaloneIdentity(), TraceLogger.Create());
-            var group = converter.Read(new StringReader(pn));
+            var converter = new PublishedNodesFile(_serializer,
+                new LegacyCliModel(), TraceLogger.Create());
+            var group = converter.Read("testid", new StringReader(pn));
 
             // No group
             Assert.NotNull(group);
@@ -453,9 +453,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
                 "opc.tcp://localhost:50004"
             };
 
-            var converter = new PublishedNodesFileLoader(new EngineMock(), _serializer,
-                new LegacyCliModel(), new StandaloneIdentity(), TraceLogger.Create());
-            var group = converter.Read(new StringReader(pn));
+            var converter = new PublishedNodesFile(_serializer,
+                new LegacyCliModel(), TraceLogger.Create());
+            var group = converter.Read("testid", new StringReader(pn));
 
             // No group
             Assert.NotNull(group);
@@ -515,9 +515,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
                 "opc.tcp://localhost:50001",
             };
 
-            var converter = new PublishedNodesFileLoader(new EngineMock(), _serializer,
-                new LegacyCliModel(), new StandaloneIdentity(), TraceLogger.Create());
-            var group = converter.Read(new StringReader(pn));
+            var converter = new PublishedNodesFile(_serializer,
+                new LegacyCliModel(), TraceLogger.Create());
+            var group = converter.Read("testid", new StringReader(pn));
 
             // No group
             Assert.NotNull(group);
@@ -573,16 +573,17 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
             var endpointUrls = new string[] {
                 "opc.tcp://localhost:50000",
                 "opc.tcp://localhost:50001",
+                "opc.tcp://localhost:50001",
             };
 
-            var converter = new PublishedNodesFileLoader(new EngineMock(), _serializer,
-                new LegacyCliModel(), new StandaloneIdentity(), TraceLogger.Create());
-            var group = converter.Read(new StringReader(pn));
+            var converter = new PublishedNodesFile(_serializer,
+                new LegacyCliModel(), TraceLogger.Create());
+            var group = converter.Read("testid", new StringReader(pn));
 
             // No group
             Assert.NotNull(group);
             Assert.NotEmpty(group.DataSetWriters);
-            Assert.Equal(2, group.DataSetWriters.Count());
+            Assert.Equal(3, group.DataSetWriters.Count());
             Assert.Equal(endpointUrls,
                 group.DataSetWriters.Select(w => w.DataSet.DataSetSource.Connection.Endpoint.Url));
         }
@@ -609,9 +610,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
     }
 ]
 ");
-            var converter = new PublishedNodesFileLoader(new EngineMock(), _serializer,
-                new LegacyCliModel(), new StandaloneIdentity(), TraceLogger.Create());
-            var group = converter.Read(new StringReader(pn.ToString()));
+            var converter = new PublishedNodesFile(_serializer,
+                new LegacyCliModel(), TraceLogger.Create());
+            var group = converter.Read("testid", new StringReader(pn.ToString()));
 
             // No group
             Assert.NotNull(group);
@@ -653,9 +654,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
     }
 ]
 ");
-            var converter = new PublishedNodesFileLoader(new EngineMock(), _serializer,
-                new LegacyCliModel(), new StandaloneIdentity(), TraceLogger.Create());
-            var group = converter.Read(new StringReader(pn.ToString()));
+            var converter = new PublishedNodesFile(_serializer,
+                new LegacyCliModel(), TraceLogger.Create());
+            var group = converter.Read("testid", new StringReader(pn.ToString()));
 
             // No group
             Assert.NotNull(group);
@@ -679,38 +680,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
             Assert.All(group.DataSetWriters, dataSetWriter =>
                 Assert.Equal(1000,
                     dataSetWriter.DataSet.DataSetSource.PublishedVariables.PublishedData.Count));
-        }
-
-        private class StandaloneIdentity : IIdentity {
-            public string Gateway => Dns.GetHostName();
-            public string DeviceId => Gateway;
-            public string ModuleId => "standaloneModule";
-            public string SiteId => null;
-        }
-
-        private class EngineMock : IWriterGroupProcessingEngine {
-            public string MessageSchema { get; set; }
-            public string WriterGroupId { get; set; }
-            public uint? GroupVersion { get; set; }
-            public NetworkMessageContentMask? NetworkMessageContentMask { get; set; }
-            public uint? MaxNetworkMessageSize { get; set; }
-            public string HeaderLayoutUri { get; set; }
-            public int? BatchSize { get; set; }
-            public TimeSpan? PublishingInterval { get; set; }
-            public TimeSpan? KeepAliveTime { get; set; }
-            public DataSetOrderingType? DataSetOrdering { get; set; }
-            public double? SamplingOffset { get; set; }
-            public List<double> PublishingOffset { get; set; }
-            public byte? Priority { get; set; }
-            public void AddWriters(IEnumerable<DataSetWriterModel> dataSetWriters) {
-                Writers.AddRange(dataSetWriters);
-            }
-            public void RemoveWriters(IEnumerable<string> dataSetWriters) {
-                foreach (var id in dataSetWriters) {
-                    Writers.RemoveAll(w => w.DataSetWriterId == id);
-                }
-            }
-            public List<DataSetWriterModel> Writers { get; } = new List<DataSetWriterModel>();
         }
 
         private readonly IJsonSerializer _serializer = new NewtonSoftJsonSerializer();

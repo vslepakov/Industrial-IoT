@@ -94,8 +94,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 LogLevel = model.LogLevel,
                 Connected = model.Connected,
                 Id = model.Id,
-                OutOfSync = model.OutOfSync,
-                SiteId = model.SiteId
+                OutOfSync = model.OutOfSync
             };
         }
     }

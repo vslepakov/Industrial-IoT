@@ -13,13 +13,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
     public class DiscovererQueryApiModel {
 
         /// <summary>
-        /// Site of the discoverer
-        /// </summary>
-        [DataMember(Name = "siteId", Order = 0,
-            EmitDefaultValue = false)]
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Discovery mode of discoverer
         /// </summary>
         [DataMember(Name = "discovery", Order = 1,
