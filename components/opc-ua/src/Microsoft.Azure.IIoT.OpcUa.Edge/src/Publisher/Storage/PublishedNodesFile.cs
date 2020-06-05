@@ -33,6 +33,20 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
         /// Create published nodes file loader
         /// </summary>
         /// <param name="serializer"></param>
+        /// <param name="fileName"></param>
+        /// <param name="logger"></param>
+        /// <param name="cryptoProvider"></param>
+        public PublishedNodesFile(string fileName, IJsonSerializer serializer,
+            ILogger logger, ISecureElement cryptoProvider = null) :
+            this (serializer, new LegacyCliModel {
+                PublishedNodesFile = fileName
+            }, logger, cryptoProvider) {
+        }
+
+        /// <summary>
+        /// Create published nodes file loader
+        /// </summary>
+        /// <param name="serializer"></param>
         /// <param name="legacyCliModelProvider"></param>
         /// <param name="logger"></param>
         /// <param name="cryptoProvider"></param>
@@ -50,29 +64,36 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
         }
 
         /// <summary>
-        /// Read monitored item job from reader
+        /// Read writer group from file
         /// </summary>
-        /// <param name="writerGroupId"></param>
-        /// <param name="publishedNodesFile"></param>
         /// <returns></returns>
-        public WriterGroupModel Read(string writerGroupId, TextReader publishedNodesFile) {
+        public WriterGroupModel Read() {
+            using (var stream = File.OpenRead(FileName))
+            using (var reader = new StreamReader(stream)) {
+                return Read(reader);
+            }
+        }
+
+        /// <summary>
+        /// Read writer group from reader
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <returns></returns>
+        public WriterGroupModel Read(TextReader reader) {
             var sw = Stopwatch.StartNew();
             _logger.Debug("Reading published nodes file ({elapsed}", sw.Elapsed);
             var items = _serializer.Deserialize<List<PublishedNodesEntryModel>>(
-                publishedNodesFile);
+                reader);
             _logger.Information(
                 "Read {count} items from published nodes file in {elapsed}",
                 items.Count, sw.Elapsed);
             sw.Restart();
 
             var writerGroup = new WriterGroupModel {
-                // MessagingMode = legacyCliModel.MessagingMode,  TODO
-                // DiagnosticsInterval = _config.DiagnosticsInterval,  TODO
                 MessageType = _legacyCliModel.NetworkMessageType,
                 PublishingInterval = _legacyCliModel.BatchTriggerInterval,
                 BatchSize = _legacyCliModel.BatchSize,
                 MaxNetworkMessageSize = _legacyCliModel.MaxMessageSize,
-                WriterGroupId = writerGroupId,
                 DataSetWriters = ToDataSetWriters(items, _legacyCliModel).ToList(),
                 MessageSettings = new WriterGroupMessageSettingsModel {
                     NetworkMessageContentMask =
@@ -92,7 +113,86 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
         }
 
         /// <summary>
-        /// Read monitored item job from reader
+        /// Write items to file
+        /// </summary>
+        /// <param name="writerGroup"></param>
+        /// <returns></returns>
+        public void Write(WriterGroupModel writerGroup) {
+            using (var stream = File.OpenWrite(FileName))
+            using (var writer = new StreamWriter(stream)) {
+                Write(writerGroup, writer);
+            }
+        }
+
+        /// <summary>
+        /// Write items to writer
+        /// </summary>
+        /// <param name="writerGroup"></param>
+        /// <param name="writer"></param>
+        /// <returns></returns>
+        public void Write(WriterGroupModel writerGroup, TextWriter writer) {
+            var sw = Stopwatch.StartNew();
+            var nodes = FromDataSetWriters(writerGroup.DataSetWriters);
+            _logger.Information("Converted writer group to published nodes in {elapsed}",
+                sw.Elapsed);
+            sw.Restart();
+            _logger.Debug("Writing published nodes file ({elapsed}", sw.Elapsed);
+            var items = _serializer.SerializeToString(nodes);
+            writer.Write(items);
+            _logger.Information(
+                "Wrote {count} items to published nodes file in {elapsed}",
+                    nodes.Count(), sw.Elapsed);
+            sw.Restart();
+        }
+
+        /// <summary>
+        /// Convert data set writers to nodes
+        /// </summary>
+        /// <param name="dataSetWriters"></param>
+        /// <returns></returns>
+        private IEnumerable<PublishedNodesEntryModel> FromDataSetWriters(
+            List<DataSetWriterModel> dataSetWriters) {
+            if (dataSetWriters == null) {
+                return Enumerable.Empty<PublishedNodesEntryModel>();
+            }
+            try {
+                return dataSetWriters
+                    .Where(writer =>
+                        writer?.DataSet?.DataSetSource?.Connection?.Endpoint?.Url != null)
+                    .Where(writer =>
+                        writer.DataSet.DataSetSource.PublishedVariables?.PublishedData?.Any() ?? false)
+                    .Select(writer => new PublishedNodesEntryModel {
+                        EndpointUrl =
+                            new Uri(writer.DataSet.DataSetSource.Connection.Endpoint.Url),
+                        UseSecurity =
+                            writer.DataSet.DataSetSource.Connection.Endpoint.SecurityMode
+                                != SecurityMode.None,
+                        OpcAuthenticationMode = ToUserNamePasswordCredential(
+                            writer.DataSet.DataSetSource.Connection.User, out var user, out var password),
+                        OpcAuthenticationUsername = user,
+                        OpcAuthenticationPassword = password,
+                        OpcNodes = writer.DataSet.DataSetSource.PublishedVariables.PublishedData
+                            .Select(v => new OpcNodeModel {
+                                DisplayName = v.PublishedVariableDisplayName,
+                                ExpandedNodeId = v.PublishedVariableNodeId,
+                                HeartbeatIntervalTimespan = v.HeartbeatInterval,
+                                OpcSamplingIntervalTimespan = v.SamplingInterval,
+                                OpcPublishingIntervalTimespan =
+                                    writer.DataSet.DataSetSource.SubscriptionSettings?.PublishingInterval,
+                                SkipFirst = null, // TODO
+                                Id = v.Id
+                            })
+                            .ToList()
+                    });
+            }
+            catch (Exception ex) {
+                _logger.Error(ex, "failed to convert writers to published nodes.");
+                return Enumerable.Empty<PublishedNodesEntryModel>();
+            }
+        }
+
+        /// <summary>
+        /// Convert nodes to writers
         /// </summary>
         /// <param name="items"></param>
         /// <param name="legacyCliModel">The legacy command line arguments</param>
@@ -183,9 +283,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
                     .ToList();
             }
             catch (Exception ex) {
-                _logger.Error(ex, "failed to convert the published nodes.");
+                _logger.Error(ex, "failed to convert published nodes to dataset writers.");
+                return Enumerable.Empty<DataSetWriterModel>();
             }
-            return Enumerable.Empty<DataSetWriterModel>();
         }
 
         /// <summary>
@@ -274,6 +374,27 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
                 Type = CredentialType.UserName,
                 Value = _serializer.FromObject(new { user, password })
             };
+        }
+
+        /// <summary>
+        /// Convert to user name password
+        /// </summary>
+        /// <param name="credential"></param>
+        /// <param name="user"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
+        private OpcAuthenticationMode ToUserNamePasswordCredential(CredentialModel credential,
+            out string user, out string password) {
+
+            if (credential?.Type != CredentialType.UserName) {
+                user = null;
+                password = null;
+                return OpcAuthenticationMode.Anonymous;
+            }
+
+            user = (string)credential.Value[nameof(user)];
+            password = (string)credential.Value[nameof(password)];
+            return OpcAuthenticationMode.UsernamePassword;
         }
 
         /// <summary>

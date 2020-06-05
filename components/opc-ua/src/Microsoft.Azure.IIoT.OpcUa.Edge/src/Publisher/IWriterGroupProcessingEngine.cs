@@ -79,6 +79,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher {
         byte? Priority { get; set; }
 
         /// <summary>
+        /// Diagnostic interval
+        /// </summary>
+        TimeSpan? DiagnosticsInterval { get; set; }
+
+        /// <summary>
         /// Add writers to the group
         /// </summary>
         /// <param name="dataSetWriters"></param>
@@ -91,5 +96,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher {
         /// <param name="dataSetWriters"></param>
         /// <returns></returns>
         void RemoveWriters(IEnumerable<string> dataSetWriters);
+
+        /// <summary>
+        /// Remove all writers
+        /// </summary>
+        void RemoveAllWriters();
     }
 }

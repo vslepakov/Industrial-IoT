@@ -30,7 +30,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
         IDisposable {
 
         /// <inheritdoc/>
-        public string WriterGroupId { get; set; }
+        public string WriterGroupId {
+            get {
+                var writerGroupId = _writerGroupId;
+                if (string.IsNullOrEmpty(writerGroupId)) {
+                    writerGroupId = PublisherId;
+                }
+                return writerGroupId;
+            }
+            set => _writerGroupId = value;
+        }
 
         /// <inheritdoc/>
         public uint? MaxNetworkMessageSize {
@@ -79,8 +88,30 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
             }
         }
 
+        /// <summary>
+        /// Publisher id
+        /// </summary>
+        internal string PublisherId {
+            get {
+                var moduleId = _events.ModuleId;
+                var deviceId = _events.DeviceId;
+                if (string.IsNullOrEmpty(moduleId)) {
+                    if (string.IsNullOrEmpty(deviceId)) {
+                        return null;
+                    }
+                    return deviceId;
+                }
+                return deviceId + "_" + moduleId;
+            }
+        }
+
         /// <inheritdoc/>
-        public string MessageSchema { get; set; }
+        public string MessageSchema {
+            get => _messageSchema;
+            set {
+                _messageSchema = value;
+            }
+        }
 
         /// <inheritdoc/>
         public string HeaderLayoutUri { get; set; }
@@ -105,11 +136,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
 
         /// <inheritdoc/>
         public byte? Priority { get; set; }
-
-        /// <summary>
-        /// Publisher id
-        /// </summary>
-        internal string PublisherId => _events.DeviceId + "_" + _events.ModuleId;
 
         /// <summary>
         /// Create writer group processor
@@ -169,20 +195,32 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
         }
 
         /// <inheritdoc/>
-        public void Dispose() {
-            var subscriptions = _writers.Values.ToList();
+        public void RemoveAllWriters() {
+
+            // TODO capture tasks
+            var writers = _writers.Values.ToList();
             _writers.Clear();
+            try {
+                Task.WhenAll(writers.Select(sc => sc.DeactivateAsync())).Wait();
+            }
+            finally {
+                writers.ForEach(writer => writer.Dispose());
+            }
+        }
+
+        /// <inheritdoc/>
+        public void Dispose() {
             try {
                 // Stop
                 _engine.Dispose();
-                Task.WhenAll(subscriptions.Select(sc => sc.DeactivateAsync())).Wait();
+                RemoveAllWriters();
             }
             catch {
                 // Nothing...
             }
             finally {
-                subscriptions.ForEach(sc => sc.Dispose());
                 _diagnosticsOutputTimer.Dispose();
+                _writers.Clear();
             }
         }
 
@@ -585,79 +623,82 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
         /// </summary>
         /// <param name="state"></param>
         private void DiagnosticsOutputTimer_Elapsed(object state) {
+
+            var writerGroupId = WriterGroupId;
+            if (string.IsNullOrEmpty(writerGroupId)) {
+                return;
+            }
+
             var totalDuration = (DateTime.UtcNow - _diagnosticStart).TotalSeconds;
             var numberOfConnectionRetries = _writers.Values
                 .Where(sc => sc.Subscription != null)
                 .Select(sc => sc.Subscription)
                 .Sum(sc => sc.NumberOfConnectionRetries);
 
-            if (_dataChangesCount > 0 || _valueChangesCount > 0 || _engine.SentCompleteCount > 0) {
-                var diagInfo = new StringBuilder();
-                diagInfo.AppendLine();
-                diagInfo.AppendLine("   DIAGNOSTICS INFORMATION for         : {deviceId}; {moduleId}");
-                diagInfo.AppendLine("   # Ingestion duration                : {duration,14:dd\\:hh\\:mm\\:ss} (dd:hh:mm:ss)");
-                diagInfo.AppendLine("   # Ingress DataChanges (from OPC)    : {dataChangesCount,14:0}({dataChangesAverage:0.##}/s)");
-                diagInfo.AppendLine("   # Ingress ValueChanges (from OPC)   : {valueChangesCount,14:0}({valueChangesAverage:0.##}/s)");
+            var diagInfo = new StringBuilder();
+            diagInfo.AppendLine();
+            diagInfo.AppendLine("   DIAGNOSTICS INFORMATION for         : {publisherId}:{writerGroupId}");
+            diagInfo.AppendLine("   # Ingestion duration                : {duration,14:dd\\:hh\\:mm\\:ss} (dd:hh:mm:ss)");
+            diagInfo.AppendLine("   # Ingress DataChanges (from OPC)    : {dataChangesCount,14:0}({dataChangesAverage:0.##}/s)");
+            diagInfo.AppendLine("   # Ingress ValueChanges (from OPC)   : {valueChangesCount,14:0}({valueChangesAverage:0.##}/s)");
 
-                diagInfo.AppendLine("   # Ingress BatchBlock buffer size    : {batchDataSetMessageBlockOutputCount,14:0}");
-                diagInfo.AppendLine("   # Encoding Block input/output size  : {encodingBlockInputCount,14:0} | {encodingBlockOutputCount:0}");
-             // diagInfo.AppendLine("   # Encoder Notifications processed   : {notificationsProcessedCount,14:0}");
-             // diagInfo.AppendLine("   # Encoder Notifications dropped     : {notificationsDroppedCount,14:0}");
-             // diagInfo.AppendLine("   # Encoder IoT Messages processed    : {messagesProcessedCount,14:0}");
-             // diagInfo.AppendLine("   # Encoder avg Notifications/Message : {notificationsPerMessage,14:0}");
-             // diagInfo.AppendLine("   # Encoder avg IoT Message body size : {messageSizeAverage,14:0}");
-                diagInfo.AppendLine("   # Outgress Batch Block buffer size  : {batchNetworkMessageBlockOutputCount,14:0}");
-                diagInfo.AppendLine("   # Outgress input buffer count       : {sinkBlockInputCount,14:0}");
-                diagInfo.AppendLine("   # Outgress IoT message count        : {messageSinkSentMessagesCount,14:0}({sentMessagesAverage:0.##}/s)");
-                diagInfo.AppendLine("   # Connection retries                : {connectionRetries,14:0}");
+            diagInfo.AppendLine("   # Ingress BatchBlock buffer size    : {sourceMessageCount,14:0}");
+            diagInfo.AppendLine("   # Encoding Block input/output size  : {encodingBlockInputCount,14:0} | {encodingBlockOutputCount:0}");
+            // diagInfo.AppendLine("   # Encoder Notifications processed   : {notificationsProcessedCount,14:0}");
+            // diagInfo.AppendLine("   # Encoder Notifications dropped     : {notificationsDroppedCount,14:0}");
+            // diagInfo.AppendLine("   # Encoder IoT Messages processed    : {messagesProcessedCount,14:0}");
+            // diagInfo.AppendLine("   # Encoder avg Notifications/Message : {notificationsPerMessage,14:0}");
+            // diagInfo.AppendLine("   # Encoder avg IoT Message body size : {messageSizeAverage,14:0}");
+            diagInfo.AppendLine("   # Outgress input buffer count       : {sinkBlockInputCount,14:0}");
+            diagInfo.AppendLine("   # Outgress IoT message count        : {messageSinkSentMessagesCount,14:0}({sentMessagesAverage:0.##}/s)");
+            diagInfo.AppendLine("   # Connection retries                : {connectionRetries,14:0}");
 
-                var dataChangesAverage = _dataChangesCount > 0 && totalDuration > 0 ?
-                    _dataChangesCount / totalDuration : 0;
-                var valueChangesAverage = _valueChangesCount > 0 && totalDuration > 0 ?
-                    _valueChangesCount / totalDuration : 0;
-                var sentMessagesAverage = _engine.SentCompleteCount > 0 && totalDuration > 0 ?
-                    _engine.SentCompleteCount / totalDuration : 0;
+            var dataChangesAverage = _dataChangesCount > 0 && totalDuration > 0 ?
+                _dataChangesCount / totalDuration : 0;
+            var valueChangesAverage = _valueChangesCount > 0 && totalDuration > 0 ?
+                _valueChangesCount / totalDuration : 0;
+            var sentMessagesAverage = _engine.SentCompleteCount > 0 && totalDuration > 0 ?
+                _engine.SentCompleteCount / totalDuration : 0;
 
-                _logger.Information(diagInfo.ToString(),
-                    _events.DeviceId, _events.ModuleId,
-                    TimeSpan.FromSeconds(totalDuration),
-                    _dataChangesCount, dataChangesAverage,
-                    _valueChangesCount, valueChangesAverage,
-                    _engine?.SourceMessageCount,
-                    _engine?.EncodingInputCount, _engine?.EncodingOutputCount,
-                  // _messageEncoder.NotificationsProcessedCount,
-                  // _messageEncoder.NotificationsDroppedCount,
-                  // _messageEncoder.MessagesProcessedCount,
-                  // _messageEncoder.AvgNotificationsPerMessage,
-                  // _messageEncoder.AvgMessageSize,
-                    _engine?.SentPendingCount,
-                    _engine.SentCompleteCount, sentMessagesAverage,
-                    numberOfConnectionRetries);
-            }
+            _logger.Information(diagInfo.ToString(),
+                PublisherId, writerGroupId,
+                TimeSpan.FromSeconds(totalDuration),
+                _dataChangesCount, dataChangesAverage,
+                _valueChangesCount, valueChangesAverage,
+                _engine?.SourceMessageCount,
+                _engine?.EncodingInputCount, _engine?.EncodingOutputCount,
+                // _messageEncoder.NotificationsProcessedCount,
+                // _messageEncoder.NotificationsDroppedCount,
+                // _messageEncoder.MessagesProcessedCount,
+                // _messageEncoder.AvgNotificationsPerMessage,
+                // _messageEncoder.AvgMessageSize,
+                _engine?.SentPendingCount,
+                _engine.SentCompleteCount, sentMessagesAverage,
+                numberOfConnectionRetries);
 
-            kDataChangesCount.WithLabels(PublisherId, WriterGroupId)
+            kDataChangesCount.WithLabels(PublisherId, writerGroupId)
                 .Set(_dataChangesCount);
-            kDataChangesPerSecond.WithLabels(PublisherId, WriterGroupId)
+            kDataChangesPerSecond.WithLabels(PublisherId, writerGroupId)
                 .Set(_valueChangesCount / totalDuration);
-            kValueChangesCount.WithLabels(PublisherId, WriterGroupId)
+            kValueChangesCount.WithLabels(PublisherId, writerGroupId)
                 .Set(_valueChangesCount);
-            kValueChangesPerSecond.WithLabels(PublisherId, WriterGroupId)
+            kValueChangesPerSecond.WithLabels(PublisherId, writerGroupId)
                 .Set(_valueChangesCount / totalDuration);
-        //    kNotificationsProcessedCount.WithLabels(PublisherId, WriterGroupId)
-        //        .Set(_messageEncoder.NotificationsProcessedCount);
-        //    kNotificationsDroppedCount.WithLabels(PublisherId, WriterGroupId)
-        //        .Set(_messageEncoder.NotificationsDroppedCount);
-        //    kMessagesProcessedCount.WithLabels(PublisherId, WriterGroupId)
-        //        .Set(_messageEncoder.MessagesProcessedCount);
-        //    kNotificationsPerMessageAvg.WithLabels(PublisherId, WriterGroupId)
-        //        .Set(_messageEncoder.AvgNotificationsPerMessage);
-        //    kMesageSizeAvg.WithLabels(PublisherId, WriterGroupId)
-        //        .Set(_messageEncoder.AvgMessageSize);
-            kIoTHubQueueBuffer.WithLabels(PublisherId, WriterGroupId)
+            //    kNotificationsProcessedCount.WithLabels(PublisherId, writerGroupId)
+            //        .Set(_messageEncoder.NotificationsProcessedCount);
+            //    kNotificationsDroppedCount.WithLabels(PublisherId, writerGroupId)
+            //        .Set(_messageEncoder.NotificationsDroppedCount);
+            //    kMessagesProcessedCount.WithLabels(PublisherId, writerGroupId)
+            //        .Set(_messageEncoder.MessagesProcessedCount);
+            //    kNotificationsPerMessageAvg.WithLabels(PublisherId, writerGroupId)
+            //        .Set(_messageEncoder.AvgNotificationsPerMessage);
+            //    kMesageSizeAvg.WithLabels(PublisherId, writerGroupId)
+            //        .Set(_messageEncoder.AvgMessageSize);
+            kIoTHubQueueBuffer.WithLabels(PublisherId, writerGroupId)
                 .Set((long)_engine?.SentPendingCount);
-            kSentMessagesCount.WithLabels(PublisherId, WriterGroupId)
+            kSentMessagesCount.WithLabels(PublisherId, writerGroupId)
                 .Set(_engine.SentCompleteCount);
-            kNumberOfConnectionRetries.WithLabels(PublisherId, WriterGroupId)
+            kNumberOfConnectionRetries.WithLabels(PublisherId, writerGroupId)
                 .Set(numberOfConnectionRetries);
         }
 
@@ -680,7 +721,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
         private readonly Timer _diagnosticsOutputTimer;
         private long _valueChangesCount;
         private long _dataChangesCount;
-
+        private string _writerGroupId;
+        private string _messageSchema;
         private static readonly GaugeConfiguration kGaugeConfig = new GaugeConfiguration {
             LabelNames = new[] { "publisherid", "triggerid" }
         };

@@ -149,7 +149,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
             builder.RegisterModule<NewtonSoftJsonModule>();
 
             if (legacyCliOptions.RunInLegacyMode) {
-
                 // Standalone mode with legacy configuration options.
 
                 builder.AddDiagnostics(config,
@@ -158,8 +157,12 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                     .AsImplementedInterfaces();
 
                 // Configure the processing engine from nodes file
-                builder.RegisterType<PublishedNodesLoader>()
-                    .SingleInstance();
+                builder.RegisterType<PublishedNodesFileLoader>()
+                    .AsImplementedInterfaces().SingleInstance();
+                // ... and start it
+                builder.RegisterType<HostAutoStart>()
+                    .AutoActivate()
+                    .AsImplementedInterfaces().SingleInstance();
 
                 // Configure root scope as supervisor
                 WriterGroupContainerFactory.ConfigureServices(builder);

@@ -19,6 +19,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
     using System;
     using System.Collections.Generic;
     using System.ComponentModel;
+    using Microsoft.Azure.IIoT.OpcUa.Core;
 
     /// <summary>
     /// Class that represents a dictionary with all command line arguments from the legacy version of the OPC Publisher
@@ -49,8 +50,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
                     // Publisher configuration options
                     { "pf|publishfile=", "The filename to configure the nodes to publish.",
                         s => this[LegacyCliConfigKeys.PublisherNodeConfigurationFilename] = s },
-                    { "s|site=", "The site OPC Publisher is working in.",
-                        s => this[LegacyCliConfigKeys.PublisherSite] = s },
 
                     { "di|diagnosticsinterval=", "Shows publisher diagnostic info at the specified interval " +
                         "in seconds (need log level info).\n-1 disables remote diagnostic log and diagnostic output",
@@ -79,8 +78,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
                     // Client settings
                     { "ot|operationtimeout=", "The operation timeout of the publisher OPC UA client in ms.",
                         (uint i) => this[LegacyCliConfigKeys.OpcOperationTimeout] = TimeSpan.FromMilliseconds(i).ToString() },
-                    { "ol|opcmaxstringlen=", "The max length of a string opc can transmit/receive.",
-                        (uint i) => this[LegacyCliConfigKeys.OpcMaxStringLength] = i.ToString() },
                     { "oi|opcsamplinginterval=", "Default value in milliseconds to request the servers to " +
                         "sample values.",
                         (int i) => this[LegacyCliConfigKeys.OpcSamplingInterval] = TimeSpan.FromMilliseconds(i).ToString() },
@@ -143,11 +140,15 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
                     { "me|messageencoding=", "The message encoding for messages " +
                         $"(allowed values: {string.Join(", ", Enum.GetNames(typeof(NetworkMessageType)))}).",
                         (NetworkMessageType m) => this[LegacyCliConfigKeys.NetworkMessageType] = m.ToString() },
+                    { "mt|messagetype=", "The message schema type to produce.",
+                        (string m) => this[LegacyCliConfigKeys.MessageSchemaType] = m },
                     { "fm|fullfeaturedmessage=", "The full featured mode for messages (all fields filled in)." +
                         "Default is 'true', for legacy compatibility use 'false'",
                         (bool b) => this[LegacyCliConfigKeys.FullFeaturedMessage] = b.ToString() },
 
                     // Legacy unsupported
+                    { "s|site=", "Legacy - do not use.", _ => {} },
+                    { "ol|opcmaxstringlen=", "Legacy - do not use.", _ => {} },
                     { "tc|telemetryconfigfile=", "Legacy - do not use.", _ => {} },
                     { "ic|iotcentral=", "Legacy - do not use.", _ => {} },
                     { "ns|noshutdown=", "Legacy - do not use.", _ => {} },
@@ -190,26 +191,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
                 LegacyCliConfigKeys.DefaultPublishedNodesFilename));
 
         /// <summary>
-        /// The batch size
-        /// </summary>
-        public int? BatchSize => LegacyCliModel.BatchSize;
-
-        /// <summary>
-        /// The interval to show diagnostic information in the log.
-        /// </summary>
-        public TimeSpan? BatchTriggerInterval => LegacyCliModel.BatchTriggerInterval;
-
-        /// <summary>
-        /// The interval to show diagnostic information in the log.
-        /// </summary>
-        public TimeSpan? DiagnosticsInterval => LegacyCliModel.DiagnosticsInterval;
-
-        /// <summary>
-        /// the Maximum (IoT D2C) message size
-        /// </summary>
-        public uint? MaxMessageSize => LegacyCliModel.MaxMessageSize;
-
-        /// <summary>
         /// The model of the CLI arguments.
         /// </summary>
         public LegacyCliModel LegacyCliModel { get; }
@@ -242,12 +223,11 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
                 DiagnosticsInterval = GetValueOrDefault(LegacyCliConfigKeys.DiagnosticsInterval, TimeSpan.FromSeconds(60)),
                 LogFileFlushTimeSpan = GetValueOrDefault(LegacyCliConfigKeys.LogFileFlushTimeSpanSec, TimeSpan.FromSeconds(30)),
                 LogFilename = GetValueOrDefault<string>(LegacyCliConfigKeys.LogFileName, null),
-                Transport = GetValueOrDefault(LegacyCliConfigKeys.HubTransport, TransportType.Mqtt.ToString()), // todo this seem not to be used ...
                 NetworkMessageType = GetValueOrDefault<NetworkMessageType?>(LegacyCliConfigKeys.NetworkMessageType, null),
+                MessageSchema = GetValueOrDefault(LegacyCliConfigKeys.MessageSchemaType, MessageSchemaTypes.MonitoredItemMessageJson),
                 FullFeaturedMessage = GetValueOrDefault(LegacyCliConfigKeys.FullFeaturedMessage, false),
                 EdgeHubConnectionString = GetValueOrDefault<string>(LegacyCliConfigKeys.EdgeHubConnectionString, null),
                 OperationTimeout = GetValueOrDefault(LegacyCliConfigKeys.OpcOperationTimeout, TimeSpan.FromSeconds(15)),
-                MaxStringLength = GetValueOrDefault(LegacyCliConfigKeys.OpcMaxStringLength, TransportQuotaConfigEx.DefaultMaxStringLength), // todo this is not used
                 SessionCreationTimeout = GetValueOrDefault(LegacyCliConfigKeys.OpcSessionCreationTimeout, TimeSpan.FromSeconds(1)),
                 KeepAliveInterval = GetValueOrDefault(LegacyCliConfigKeys.OpcKeepAliveIntervalInSec, TimeSpan.FromSeconds(10)),
                 MaxKeepAliveCount = GetValueOrDefault(LegacyCliConfigKeys.OpcKeepAliveDisconnectThreshold, 50),

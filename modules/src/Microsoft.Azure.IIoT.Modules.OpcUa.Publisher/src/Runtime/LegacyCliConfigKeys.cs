@@ -19,11 +19,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
         public const string DefaultPublishedNodesFilename = "publishednodes.json";
 
         /// <summary>
-        /// Key for the publisher site.
-        /// </summary>
-        public const string PublisherSite = "Site";
-
-        /// <summary>
         /// Key for the specified published nodes filename.
         /// </summary>
         public const string PublisherNodeConfigurationFilename = "PublishedNodesFile";
@@ -49,9 +44,9 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
         public const string NetworkMessageType = "NetworkMessageType";
 
         /// <summary>
-        /// Key for the messaging mode
+        /// Key for the messaging schema type
         /// </summary>
-        public const string MessageEncoding = "MessageEncoding";
+        public const string MessageSchemaType = "MessageSchemaType";
 
         /// <summary>
         /// Flag to demand full featured message creation from publisher

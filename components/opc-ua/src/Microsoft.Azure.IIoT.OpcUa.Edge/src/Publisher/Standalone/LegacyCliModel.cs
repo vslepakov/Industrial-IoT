@@ -15,11 +15,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Models {
     public class LegacyCliModel : ILegacyCliModelProvider {
 
         /// <summary>
-        /// The site of the publisher.
-        /// </summary>
-        public string Site { get; set; }
-
-        /// <summary>
         /// The published nodes file.
         /// </summary>
         public string PublishedNodesFile { get; set; }
@@ -55,6 +50,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Models {
         /// Message type for pub/sub messages
         /// </summary>
         public NetworkMessageType? NetworkMessageType { get; set; }
+
+        /// <summary>
+        /// The message schema to use
+        /// </summary>
+        public string MessageSchema { get; set; }
 
         /// <summary>
         /// Flag wether to grab the display name of nodes form
@@ -98,11 +98,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Models {
         public string LogFilename { get; set; }
 
         /// <summary>
-        /// The transport mode.
-        /// </summary>
-        public string Transport { get; set; }
-
-        /// <summary>
         /// The EdgeHub connection string.
         /// </summary>
         public string EdgeHubConnectionString { get; set; }
@@ -116,11 +111,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Models {
         /// Flag to demand full featured message creation from publisher
         /// </summary>
         public bool FullFeaturedMessage { get; set; }
-
-        /// <summary>
-        /// The maximum string length.
-        /// </summary>
-        public int? MaxStringLength { get; set; }
 
         /// <summary>
         /// The session creation timeout.

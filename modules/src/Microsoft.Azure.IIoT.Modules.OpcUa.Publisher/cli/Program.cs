@@ -26,6 +26,10 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Cli {
     using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
+    using System.IO;
+    using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
+    using Microsoft.Azure.IIoT.OpcUa.Core.Models;
 
     /// <summary>
     /// Publisher module host process
@@ -37,6 +41,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Cli {
         /// </summary>
         public static void Main(string[] args) {
             var checkTrust = false;
+            var legacyTest = false;
             var withServer = false;
             var verbose = false;
             string deviceId = null, moduleId = null;
@@ -78,6 +83,11 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Cli {
                             break;
                         case "-s":
                         case "--with-server":
+                            withServer = true;
+                            break;
+                        case "-l":
+                        case "--legacy-test":
+                            legacyTest = true;
                             withServer = true;
                             break;
                         case "-v":
@@ -141,7 +151,7 @@ Options:
                 }
                 else {
                     WithServerAsync(config, diagnostics, logger, deviceId,
-                        moduleId, args, verbose).Wait();
+                        moduleId, args, legacyTest, verbose).Wait();
                 }
             }
             catch (Exception e) {
@@ -153,8 +163,7 @@ Options:
         /// Host the module giving it its connection string.
         /// </summary>
         private static async Task HostAsync(IIoTHubConfig config, ILogAnalyticsConfig diagnostics,
-            ILogger logger, string deviceId, string moduleId, string[] args, bool verbose = false,
-            bool acceptAll = false) {
+            ILogger logger, string deviceId, string moduleId, string[] args, bool verbose, bool acceptAll) {
             Console.WriteLine("Create or retrieve connection string...");
 
             var cs = await Retry.WithExponentialBackoff(logger,
@@ -169,6 +178,7 @@ Options:
                 broker.Subscribe(IoTSdkLogger.EventSource, new IoTSdkLogger(logger));
                 var arguments = args.ToList();
                 arguments.Add($"--ec={cs}");
+                arguments.Add($"--di=10");
                 if (acceptAll) {
                     arguments.Add("--aa");
                 }
@@ -181,13 +191,44 @@ Options:
         /// setup publishing from sample server
         /// </summary>
         private static async Task WithServerAsync(IIoTHubConfig config, ILogAnalyticsConfig diagnostics,
-            ILogger logger, string deviceId, string moduleId, string[] args, bool verbose = false) {
+            ILogger logger, string deviceId, string moduleId, string[] args, bool startLegacy, bool verbose) {
+            var fileName = Path.GetRandomFileName() + ".json";
             try {
                 using (var cts = new CancellationTokenSource())
                 using (var server = new ServerWrapper(logger)) { // Start test server
+
+                    var arguments = args.ToList();
+                    if (startLegacy) {
+                        // Write publishing
+                        var pf = new PublishedNodesFile(fileName, new NewtonSoftJsonSerializer(), logger);
+                        pf.Write(new WriterGroupModel {
+                            DataSetWriters = new List<DataSetWriterModel> {
+                                new DataSetWriterModel {
+                                    DataSet = new PublishedDataSetModel {
+                                        DataSetSource = new PublishedDataSetSourceModel {
+                                            Connection = new ConnectionModel {
+                                                Endpoint = new EndpointModel {
+                                                    Url = server.EndpointUrl
+                                                }
+                                            },
+                                            PublishedVariables = new PublishedDataItemsModel {
+                                                PublishedData = new List<PublishedDataSetVariableModel> {
+                                                    new PublishedDataSetVariableModel {
+                                                        PublishedVariableNodeId = "i=2258"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        arguments.Add($"--pf={fileName}");
+                    }
+
                     // Start publisher module
                     var host = Task.Run(() => HostAsync(config, diagnostics, logger, deviceId,
-                        moduleId, args, verbose, true), cts.Token);
+                        moduleId, arguments.ToArray(), verbose, true), cts.Token);
 
                     Console.WriteLine("Press key to cancel...");
                     Console.ReadKey();
@@ -199,6 +240,9 @@ Options:
                 }
             }
             catch (OperationCanceledException) { }
+            finally {
+                Try.Op(() => File.Delete(fileName));
+            }
         }
 
         /// <summary>
