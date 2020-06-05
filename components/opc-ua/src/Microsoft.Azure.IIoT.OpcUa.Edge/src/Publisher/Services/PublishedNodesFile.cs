@@ -36,18 +36,17 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
         /// <param name="legacyCliModelProvider"></param>
         /// <param name="logger"></param>
         /// <param name="cryptoProvider"></param>
-        public PublishedNodesFile(
-            IJsonSerializer serializer, ILegacyCliModelProvider legacyCliModelProvider,
-            ILogger logger, ISecureElement cryptoProvider = null) {
+        public PublishedNodesFile(IJsonSerializer serializer,
+            ILegacyCliModelProvider legacyCliModelProvider, ILogger logger,
+            ISecureElement cryptoProvider = null) {
 
-            _legacyCliModel = legacyCliModelProvider.LegacyCliModel
-                ?? throw new ArgumentNullException(nameof(legacyCliModelProvider));
-
-            FileName = _legacyCliModel.PublishedNodesFile;
-
-            _serializer = serializer ?? throw new ArgumentNullException(nameof(logger));
+            _legacyCliModel = legacyCliModelProvider?.LegacyCliModel ??
+                throw new ArgumentNullException(nameof(legacyCliModelProvider));
+            _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _cryptoProvider = cryptoProvider;
+
+            FileName = _legacyCliModel.PublishedNodesFile;
         }
 
         /// <summary>
@@ -150,7 +149,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
                                             TimeSpan.FromSeconds(node.HeartbeatInterval.Value) :
                                             legacyCliModel.DefaultHeartbeatInterval,
                                         QueueSize = legacyCliModel.DefaultQueueSize,
-                                        // TODO: skip first? 
+                                        // TODO: skip first?
                                         // SkipFirst = opcNode.SkipFirst,
                                     }).ToList()
                             }

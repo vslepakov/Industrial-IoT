@@ -21,5 +21,4 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
         Task SynchronizeWriterGroupPlacementsAsync(
             CancellationToken ct = default);
     }
-
 }

@@ -21,6 +21,5 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controllers {
         /// </summary>
         public WriterGroupMethodsController() {
         }
-
     }
 }

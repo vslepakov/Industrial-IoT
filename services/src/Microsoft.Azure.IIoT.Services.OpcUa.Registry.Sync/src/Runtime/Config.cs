@@ -29,11 +29,17 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry.Sync.Runtime {
         /// <inheritdoc/>
         public TimeSpan? ActivationSyncInterval => _sync.ActivationSyncInterval;
         /// <inheritdoc/>
+        public TimeSpan? UpdatePlacementInterval => _or.UpdatePlacementInterval;
+
+        /// <inheritdoc/>
         public TimeSpan? SettingSyncInterval => _ep.SettingSyncInterval;
         /// <inheritdoc/>
-        public string ServiceEndpointUrl => _ep.ServiceEndpointUrl;
+        public string ServiceEndpoint => _ep.ServiceEndpoint;
         /// <inheritdoc/>
-        public TimeSpan? UpdatePlacementInterval => _or.UpdatePlacementInterval;
+        public event EventHandler OnServiceEndpointUpdated {
+            add => _ep.OnServiceEndpointUpdated += value;
+            remove => _ep.OnServiceEndpointUpdated -= value;
+        }
 
 
         /// <summary>

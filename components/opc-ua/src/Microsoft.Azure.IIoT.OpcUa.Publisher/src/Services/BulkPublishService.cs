@@ -32,7 +32,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                 throw new ArgumentNullException(nameof(endpoint));
             }
             await _transfer.ModelUploadStartAsync(endpoint, new ModelUploadStartRequestModel {
-                UploadEndpointUrl = _service.ServiceEndpointUrl + "/endpoints", // TODO
+                UploadEndpointUrl = _service.ServiceEndpoint + "/endpoints", // TODO
                 AuthorizationHeader = null
             });
         }

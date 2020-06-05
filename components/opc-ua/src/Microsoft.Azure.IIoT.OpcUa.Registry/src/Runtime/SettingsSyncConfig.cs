@@ -26,9 +26,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Runtime {
         public TimeSpan? SettingSyncInterval => GetDurationOrNull(kSettingSyncIntervalKey);
 
         /// <inheritdoc/>
-        public string ServiceEndpointUrl => GetStringOrDefault(kServiceEndpointUrlKey,
+        public string ServiceEndpoint => GetStringOrDefault(kServiceEndpointUrlKey,
             () => GetStringOrDefault(PcsVariable.PCS_EDGE_SERVICE_URL,
                 () => GetDefaultUrl("9051", "edge")));
+        /// <inheritdoc/>
+        public event EventHandler OnServiceEndpointUpdated;
 
         /// <summary>
         /// Create endpoint config
@@ -36,6 +38,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Runtime {
         /// <param name="configuration"></param>
         public SettingsSyncConfig(IConfiguration configuration) :
             base(configuration) {
+            OnServiceEndpointUpdated?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>

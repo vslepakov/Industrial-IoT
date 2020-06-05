@@ -12,7 +12,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
     using Microsoft.Azure.IIoT.Exceptions;
     using Microsoft.Azure.IIoT.Hub.Models;
     using Microsoft.Azure.IIoT.Hub;
-    using Microsoft.Azure.IIoT.Utils;
     using Microsoft.Azure.IIoT.Serializers;
     using Serilog;
     using System;
@@ -225,7 +224,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             while (true) {
                 try {
                     var twin = await _iothub.FindAsync(
-                        WriterGroupRegistrationEx.ToDeviceId(writerGroup.WriterGroupId));
+                        WriterGroupRegistryEx.ToDeviceId(writerGroup.WriterGroupId));
                     if (twin == null) {
                         _logger.Warning("Missed add group event - try recreating twin...");
                         twin = await _iothub.CreateOrUpdateAsync(
@@ -259,7 +258,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                 throw new ArgumentNullException(nameof(dataSetWriter.WriterGroupId));
             }
             await AddRemoveWriterFromWriterGroupTwinAsync(
-                WriterGroupRegistrationEx.ToDeviceId(writerGroupId), dataSetWriter.DataSetWriterId);
+                WriterGroupRegistryEx.ToDeviceId(writerGroupId), dataSetWriter.DataSetWriterId);
         }
 
         /// <inheritdoc/>
@@ -283,7 +282,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                 return;
             }
             await AddRemoveWriterFromWriterGroupTwinAsync(
-                WriterGroupRegistrationEx.ToDeviceId(writerGroupId), dataSetWriterId);
+                WriterGroupRegistryEx.ToDeviceId(writerGroupId), dataSetWriterId);
         }
 
         /// <inheritdoc/>
@@ -294,7 +293,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                 throw new ArgumentNullException(nameof(dataSetWriter.WriterGroupId));
             }
             await AddRemoveWriterFromWriterGroupTwinAsync(
-                WriterGroupRegistrationEx.ToDeviceId(dataSetWriter.WriterGroupId),
+                WriterGroupRegistryEx.ToDeviceId(dataSetWriter.WriterGroupId),
                 dataSetWriter.DataSetWriterId, true);
         }
 
@@ -303,7 +302,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             string writerGroupId) {
             try {
                 // Force delete
-                await _iothub.DeleteAsync(WriterGroupRegistrationEx.ToDeviceId(writerGroupId));
+                await _iothub.DeleteAsync(WriterGroupRegistryEx.ToDeviceId(writerGroupId));
             }
             catch (Exception ex) {
                 // Retry create/update
@@ -325,7 +324,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                     Id = deviceId,
                     Properties = new TwinPropertiesModel {
                         Desired = new Dictionary<string, VariantValue> {
-                            [IdentityType.DataSet + "_" + dataSetWriterId] =
+                            [WriterGroupRegistryEx.ToPropertyName(dataSetWriterId)] =
                                 remove ? null : DateTime.UtcNow.ToString()
                         }
                     }
@@ -355,7 +354,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
 
                 // Get registration
                 var writerGroupDevice = await _iothub.GetRegistrationAsync(
-                    WriterGroupRegistrationEx.ToDeviceId(writerGroup.WriterGroupId), null, ct);
+                    WriterGroupRegistryEx.ToDeviceId(writerGroup.WriterGroupId), null, ct);
                 if (string.IsNullOrEmpty(writerGroupDevice?.Authentication?.PrimaryKey)) {
                     // No writer group registration
                     return false;
@@ -390,6 +389,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                     }
                     try {
                         await _activation.ActivateAsync(new WriterGroupPlacementModel {
+                            // Writer group device id
                             WriterGroupId = writerGroup.WriterGroupId,
                             PublisherId = publisherId,
                         }, writerGroupDevice.Authentication.PrimaryKey, ct);

@@ -11,6 +11,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controllers {
     using Microsoft.Azure.IIoT.OpcUa.Edge;
     using System;
     using System.Threading.Tasks;
+    using Microsoft.Azure.IIoT.OpcUa.Registry.Models;
 
     /// <summary>
     /// Supervisor controller
@@ -46,7 +47,13 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controllers {
         /// <returns></returns>
         public async Task<SupervisorStatusApiModel> GetStatusAsync() {
             var result = await _supervisor.GetStatusAsync();
-            return result.ToApiModel();
+            var response = result.ToApiModel();
+
+            // Fix up raw device identities back to writer group identities
+            foreach (var entity in response.Entities) {
+                entity.Id = WriterGroupRegistryEx.ToWriterGroupId(entity.Id);
+            }
+            return response;
         }
 
         /// <summary>
@@ -65,7 +72,9 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controllers {
             if (!secret.IsBase64()) {
                 throw new ArgumentException("not base64", nameof(secret));
             }
-            await _activator.ActivateAsync(writerGroupId, secret);
+            // Convert to device id
+            var deviceId = WriterGroupRegistryEx.ToDeviceId(writerGroupId);
+            await _activator.ActivateAsync(deviceId, secret);
             return true;
         }
 
@@ -78,7 +87,9 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controllers {
             if (string.IsNullOrEmpty(writerGroupId)) {
                 throw new ArgumentNullException(nameof(writerGroupId));
             }
-            await _activator.DeactivateAsync(writerGroupId);
+            // Convert to device id
+            var deviceId = WriterGroupRegistryEx.ToDeviceId(writerGroupId);
+            await _activator.DeactivateAsync(deviceId);
             return true;
         }
 

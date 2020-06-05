@@ -109,28 +109,22 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
         /// <summary>
         /// Publisher id
         /// </summary>
-        internal string PublisherId => _identity.DeviceId + "_" + _identity.ModuleId;
+        internal string PublisherId => _events.DeviceId + "_" + _events.ModuleId;
 
         /// <summary>
         /// Create writer group processor
         /// </summary>
         /// <param name="encoders"></param>
         /// <param name="events"></param>
-        /// <param name="subscriptionManager"></param>
+        /// <param name="subscriptions"></param>
         /// <param name="logger"></param>
-        /// <param name="identity"></param>
-        public WriterGroupProcessingEngine(IEventEmitter events, ISubscriptionManager subscriptionManager,
-            IEnumerable<INetworkMessageEncoder> encoders, IIdentity identity, ILogger logger) {
-            _events = events ??
-                throw new ArgumentNullException(nameof(events));
+        public WriterGroupProcessingEngine(IEventEmitter events, ISubscriptionManager subscriptions,
+            IEnumerable<INetworkMessageEncoder> encoders, ILogger logger) {
+            _events = events ?? throw new ArgumentNullException(nameof(events));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _subscriptions = subscriptions ?? throw new ArgumentNullException(nameof(subscriptions));
             _encoders = encoders?.ToDictionary(e => e.MessageScheme, e => e) ??
                 throw new ArgumentNullException(nameof(encoders));
-            _logger = logger ??
-                throw new ArgumentNullException(nameof(logger));
-            _identity = identity ??
-                throw new ArgumentNullException(nameof(identity));
-            _subscriptionManager = subscriptionManager ??
-                throw new ArgumentNullException(nameof(subscriptionManager));
 
             if (_encoders.Count == 0) {
                 // Add at least one encoder
@@ -138,7 +132,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
             }
 
             _engine = new DataFlowEngine(this);
-            _subscriptions = new ConcurrentDictionary<string, DataSetWriterSubscription>();
+            _writers = new ConcurrentDictionary<string, DataSetWriterSubscription>();
             _diagnosticsOutputTimer = new Timer(DiagnosticsOutputTimer_Elapsed);
         }
 
@@ -148,7 +142,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
             // TODO capture tasks
 
             foreach (var writer in dataSetWriters) {
-                _subscriptions.AddOrUpdate(writer.DataSetWriterId, writerId => {
+                _writers.AddOrUpdate(writer.DataSetWriterId, writerId => {
                     var subscription = new DataSetWriterSubscription(this, writer);
                     subscription.OpenAsync().ContinueWith(_ => subscription.ActivateAsync());
                     return subscription;
@@ -167,7 +161,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
             // TODO capture tasks
 
             foreach (var writer in dataSetWriters) {
-                if (_subscriptions.TryRemove(writer, out var subscription)) {
+                if (_writers.TryRemove(writer, out var subscription)) {
                     // TODO: Add cleanup
                     subscription.DeactivateAsync().ContinueWith(_ => subscription.Dispose());
                 }
@@ -176,8 +170,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
 
         /// <inheritdoc/>
         public void Dispose() {
-            var subscriptions = _subscriptions.Values.ToList();
-            _subscriptions.Clear();
+            var subscriptions = _writers.Values.ToList();
+            _writers.Clear();
             try {
                 // Stop
                 _engine.Dispose();
@@ -410,7 +404,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
                     return;
                 }
 
-                var sc = await _outer._subscriptionManager.GetOrCreateSubscriptionAsync(
+                var sc = await _outer._subscriptions.GetOrCreateSubscriptionAsync(
                     _subscriptionInfo);
                 sc.OnSubscriptionChange += OnSubscriptionChangedAsync;
                 await sc.ApplyAsync(_subscriptionInfo.MonitoredItems,
@@ -592,7 +586,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
         /// <param name="state"></param>
         private void DiagnosticsOutputTimer_Elapsed(object state) {
             var totalDuration = (DateTime.UtcNow - _diagnosticStart).TotalSeconds;
-            var numberOfConnectionRetries = _subscriptions.Values
+            var numberOfConnectionRetries = _writers.Values
                 .Where(sc => sc.Subscription != null)
                 .Select(sc => sc.Subscription)
                 .Sum(sc => sc.NumberOfConnectionRetries);
@@ -625,7 +619,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
                     _engine.SentCompleteCount / totalDuration : 0;
 
                 _logger.Information(diagInfo.ToString(),
-                    _identity.DeviceId, _identity.ModuleId,
+                    _events.DeviceId, _events.ModuleId,
                     TimeSpan.FromSeconds(totalDuration),
                     _dataChangesCount, dataChangesAverage,
                     _valueChangesCount, valueChangesAverage,
@@ -668,14 +662,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
         }
 
         // Services
-        private readonly ISubscriptionManager _subscriptionManager;
+        private readonly Dictionary<string, INetworkMessageEncoder> _encoders;
+        private readonly ISubscriptionManager _subscriptions;
         private readonly IEventEmitter _events;
         private readonly ILogger _logger;
-        private readonly IIdentity _identity;
-        private readonly Dictionary<string, INetworkMessageEncoder> _encoders;
 
         // State
-        private readonly ConcurrentDictionary<string, DataSetWriterSubscription> _subscriptions;
+        private readonly ConcurrentDictionary<string, DataSetWriterSubscription> _writers;
         private uint? _maxEncodedMessageSize;
         private int? _batchSize;
         private TimeSpan? _publishingInterval;

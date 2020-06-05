@@ -122,25 +122,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
         }
 
         [Fact]
-        public void ProcessDiscoveryThrowsWithMultipleSites() {
-            CreateFixtures(out var site, out var discoverer, out var supervisor,
-                out var publisher, out var gateway, out var existing,
-                out var found, out var registry);
-            found[found.Count / 2].Application.SiteId = "aaaaaaaaaaaa";
-
-            using (var mock = Setup(registry, out var service)) {
-
-                // Run
-                var t = service.ProcessDiscoveryResultsAsync(discoverer, new DiscoveryResultModel(), found);
-
-                // Assert
-                Assert.NotNull(t.Exception);
-                Assert.IsType<AggregateException>(t.Exception);
-                Assert.IsType<ArgumentException>(t.Exception.InnerException);
-            }
-        }
-
-        [Fact]
         public void ProcessDiscoveryWithOneExistingApplication() {
             CreateFixtures(out var site, out var discoverer, out var supervisor,
                 out var publisher, out var gateway, out var created,

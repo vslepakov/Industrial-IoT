@@ -3,7 +3,7 @@
 //  Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.v2.Twin.Endpoint {
+namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Twin.Endpoint {
     using Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Tests;
     using Microsoft.Azure.IIoT.OpcUa.Registry.Models;
     using Microsoft.Azure.IIoT.OpcUa.Core.Models;

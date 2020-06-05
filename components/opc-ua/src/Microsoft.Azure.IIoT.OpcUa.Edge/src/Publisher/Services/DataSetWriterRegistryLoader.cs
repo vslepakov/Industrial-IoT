@@ -23,19 +23,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
         IDisposable {
 
         /// <inheritdoc/>
-        public string ServiceEndpoint {
-            get {
-                return _serviceEndpoint;
-            }
-            set {
-                _serviceEndpoint = value;
-                if (!string.IsNullOrEmpty(value)) {
-                    _trigger.Pull();
-                }
-            }
-        }
-
-        /// <inheritdoc/>
         public IDictionary<string, string> LoadState => _state;
 
         /// <summary>
@@ -43,15 +30,19 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
         /// </summary>
         /// <param name="client"></param>
         /// <param name="engine"></param>
+        /// <param name="endpoint"></param>
         /// <param name="logger"></param>
         public DataSetWriterRegistryLoader(IDataSetWriterRegistryEdgeClient client,
-            IWriterGroupProcessingEngine engine, ILogger logger) {
+            IWriterGroupProcessingEngine engine, IServiceEndpoint endpoint,
+            ILogger logger) {
             _engine = engine ?? throw new ArgumentNullException(nameof(engine));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _client = client ?? throw new ArgumentNullException(nameof(client));
+            _endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
             _trigger = new TaskTrigger(LoadAnyAsync);
             _state = new ConcurrentDictionary<string, string>();
             _writerIds = new ConcurrentDictionary<string, bool>();
+            endpoint.OnServiceEndpointUpdated += OnServiceEndpointUpdated;
         }
 
         /// <inheritdoc/>
@@ -68,6 +59,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
 
         /// <inheritdoc/>
         public void Dispose() {
+            _endpoint.OnServiceEndpointUpdated -= OnServiceEndpointUpdated;
             _writerIds.Clear();
             // Schedule cancellation
             _trigger.DisposeAsync().AsTask().Wait();
@@ -142,9 +134,22 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
             }
         }
 
+        /// <summary>
+        /// Handle service endpoint updates
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnServiceEndpointUpdated(object sender, EventArgs e) {
+            _serviceEndpoint = _endpoint.ServiceEndpoint;
+            if (!string.IsNullOrEmpty(_serviceEndpoint)) {
+                _trigger.Pull();
+            }
+        }
+
         private readonly IWriterGroupProcessingEngine _engine;
-        private readonly ILogger _logger;
         private readonly IDataSetWriterRegistryEdgeClient _client;
+        private readonly ILogger _logger;
+        private readonly IServiceEndpoint _endpoint;
         private readonly TaskTrigger _trigger;
         private readonly ConcurrentDictionary<string, bool> _writerIds;
         private readonly ConcurrentDictionary<string, string> _state;

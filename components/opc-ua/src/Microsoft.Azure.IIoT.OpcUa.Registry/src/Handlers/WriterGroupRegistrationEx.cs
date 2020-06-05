@@ -60,7 +60,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             if (update?.WriterGroupId != null &&
                 update.WriterGroupId != existing?.WriterGroupId) {
                 twin.Tags.Add(nameof(WriterGroupRegistration.WriterGroupId), update.WriterGroupId);
-                twin.Id = ToDeviceId(update.WriterGroupId);
+                twin.Id = WriterGroupRegistryEx.ToDeviceId(update.WriterGroupId);
             }
 
             if (update?.SiteId != existing?.SiteId) {
@@ -263,7 +263,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             return new WriterGroupRegistration {
                 IsDisabled = disabled,
                 WriterGroupId = model.WriterGroupId,
-                DeviceId = ToDeviceId(model.WriterGroupId),
+                DeviceId = WriterGroupRegistryEx.ToDeviceId(model.WriterGroupId),
                 SiteId = model.SiteId,
                 BatchSize = model.BatchSize,
                 PublishingInterval = model.PublishingInterval,
@@ -295,15 +295,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 ActivationState = registration.Connected ?
                     EntityActivationState.ActivatedAndConnected : EntityActivationState.Activated
             };
-        }
-
-        /// <summary>
-        /// Create device id from writer groupid
-        /// </summary>
-        /// <param name="writerGroupId"></param>
-        /// <returns></returns>
-        public static string ToDeviceId(string writerGroupId) {
-            return "job_" + writerGroupId;
         }
 
         /// <summary>

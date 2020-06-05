@@ -12,11 +12,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher {
     public interface IDataSetWriterRegistryLoader {
 
         /// <summary>
-        /// Registry service endpoint
-        /// </summary>
-        string ServiceEndpoint { get; set; }
-
-        /// <summary>
         /// Dataset writer identifiers
         /// </summary>
         IDictionary<string, string> LoadState { get; }

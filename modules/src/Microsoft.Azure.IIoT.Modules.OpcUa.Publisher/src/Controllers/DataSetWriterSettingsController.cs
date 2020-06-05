@@ -4,9 +4,9 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controllers {
-    using Microsoft.Azure.IIoT.Hub;
     using Microsoft.Azure.IIoT.Module.Framework;
     using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher;
+    using Microsoft.Azure.IIoT.OpcUa.Registry.Models;
     using Microsoft.Azure.IIoT.Serializers;
     using Serilog;
     using System;
@@ -21,19 +21,11 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controllers {
     public class DataSetWriterSettingsController : ISettingsController {
 
         /// <summary>
-        /// Set endpoint url
-        /// </summary>
-        public string ServiceEndpoint {
-            get => _writers.ServiceEndpoint;
-            set => _writers.ServiceEndpoint = value;
-        }
-
-        /// <summary>
         /// Called to add, update or remove writers
         /// </summary>
-        /// <param name="dataSetWriterId"></param>
+        /// <param name="propertyName"></param>
         /// <returns></returns>
-        public VariantValue this[string dataSetWriterId] {
+        public VariantValue this[string propertyName] {
             //
             // See publisher registry - every writer is prefixed to allow query of all
             // writers in the twin using the prefix and underscore - strip of the prefix
@@ -41,7 +33,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controllers {
             // string which allows us to log the change here also.
             //
             set {
-                var writerId = dataSetWriterId.Replace(IdentityType.DataSet + "_", "");
+                var writerId = WriterGroupRegistryEx.ToDataSetWriterId(propertyName);
                 try {
                     if (value.IsNull()) {
                         _writers.OnDataSetWriterRemoved(writerId);
@@ -60,7 +52,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controllers {
                 }
             }
             get {
-                var writerId = dataSetWriterId.Replace(IdentityType.DataSet + "_", "");
+                var writerId = WriterGroupRegistryEx.ToDataSetWriterId(propertyName);
                 if (!_writers.LoadState.TryGetValue(writerId, out var result)) {
                     result = null;
                 }
@@ -82,7 +74,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controllers {
         /// <inheritdoc/>
         public IEnumerable<string> GetPropertyNames() {
             return _writers.LoadState.Keys.Select(
-                dataSetWriterId => IdentityType.DataSet + "_" + dataSetWriterId);
+                dataSetWriterId => WriterGroupRegistryEx.ToPropertyName(dataSetWriterId));
         }
 
         private readonly IDataSetWriterRegistryLoader _writers;

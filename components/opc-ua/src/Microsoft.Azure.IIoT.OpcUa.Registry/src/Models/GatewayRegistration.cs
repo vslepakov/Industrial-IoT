@@ -41,11 +41,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
 
         /// <inheritdoc/>
         public override bool Equals(object obj) {
-            var registration = obj as GatewayRegistration;
+            if (!(obj is GatewayRegistration registration)) {
+                return false;
+            }
+            if (!base.Equals(registration)) {
+                return false;
+            }
             if (SiteId != registration.SiteId) {
                 return false;
             }
-            return base.Equals(registration);
+            return true;
         }
 
         /// <inheritdoc/>

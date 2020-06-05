@@ -35,11 +35,15 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
             _engine = engine ?? throw new ArgumentNullException(nameof(engine));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _identity = identity ?? throw new ArgumentNullException(nameof(identity));
-            _file = new PublishedNodesFile(serializer, legacyCliModelProvider, logger, cryptoProvider);
             _lastSetOfWriterIds = new HashSet<string>();
 
-            var directory = Path.GetDirectoryName(_file.FileName);
+            _file = new PublishedNodesFile(serializer, legacyCliModelProvider,
+                logger, cryptoProvider);
+            if (string.IsNullOrWhiteSpace(_file.FileName)) {
+                throw new ArgumentNullException(nameof(_file.FileName));
+            }
 
+            var directory = Path.GetDirectoryName(_file.FileName);
             if (string.IsNullOrWhiteSpace(directory)) {
                 directory = Environment.CurrentDirectory;
             }

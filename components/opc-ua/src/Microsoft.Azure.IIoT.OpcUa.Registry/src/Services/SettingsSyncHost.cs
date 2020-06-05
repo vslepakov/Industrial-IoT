@@ -35,10 +35,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _config = config;
             _updateTimer = new Timer(OnUpdateTimerFiredAsync);
+            _endpoint.OnServiceEndpointUpdated += OnServiceEndpointUpdated;
         }
 
         /// <inheritdoc/>
         public void Dispose() {
+            _endpoint.OnServiceEndpointUpdated -= OnServiceEndpointUpdated;
             Try.Async(StopAsync).Wait();
             _updateTimer.Dispose();
         }
@@ -59,6 +61,17 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                 _updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
             }
             return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Service endpoint was updated - sync now
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnServiceEndpointUpdated(object sender, EventArgs e) {
+            if (_cts != null) {
+                _updateTimer.Change(0, Timeout.Infinite);
+            }
         }
 
         /// <summary>
@@ -90,7 +103,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
         /// </summary>
         /// <returns></returns>
         public async Task UpdateServiceEndpointsAsync(CancellationToken ct) {
-            var url = _endpoint.ServiceEndpointUrl?.TrimEnd('/');
+            var url = _endpoint.ServiceEndpoint?.TrimEnd('/');
             if (string.IsNullOrEmpty(url)) {
                 return;
             }

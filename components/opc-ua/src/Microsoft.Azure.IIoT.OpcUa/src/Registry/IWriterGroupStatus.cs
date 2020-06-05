@@ -26,5 +26,4 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry {
             string continuation = null, bool onlyConnected = true,
             int? pageSize = null, CancellationToken ct = default);
     }
-
 }

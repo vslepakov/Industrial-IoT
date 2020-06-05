@@ -6,14 +6,12 @@
 namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
     using Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime;
     using Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Controllers;
-    using Microsoft.Azure.IIoT.Module;
     using Microsoft.Azure.IIoT.Module.Framework;
     using Microsoft.Azure.IIoT.Module.Framework.Client;
-    using Microsoft.Azure.IIoT.Module.Framework.Hosting;
     using Microsoft.Azure.IIoT.Module.Framework.Services;
+    using Microsoft.Azure.IIoT.Module;
     using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients;
     using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services;
-    using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Models;
     using Microsoft.Azure.IIoT.OpcUa.Edge.Supervisor.Services;
     using Microsoft.Azure.IIoT.OpcUa.Edge;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Services;
@@ -175,15 +173,11 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                 builder.RegisterType<WriterGroupContainerFactory>()
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
 
-                // Resolve writers from cloud endpoint
-                builder.RegisterType<DataSetWriterRegistryLoader>()
-                    .AsImplementedInterfaces().SingleInstance();
-                builder.RegisterType<PublisherEdgeApiClient>()
-                    .AsImplementedInterfaces().SingleInstance();
-
                 // Add controllers
                 builder.RegisterType<SupervisorMethodsController>()
-                    .AsImplementedInterfaces().InstancePerLifetimeScope();
+                    .AsImplementedInterfaces().SingleInstance();
+                builder.RegisterType<SupervisorSettingsController>()
+                    .AsImplementedInterfaces().SingleInstance();
             }
 
             builder.RegisterType<PublisherSettingsController>()
@@ -212,11 +206,13 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
             /// Create twin container factory
             /// </summary>
             /// <param name="sessions"></param>
+            /// <param name="service"></param>
             /// <param name="logger"></param>
             /// <param name="injector"></param>
             public WriterGroupContainerFactory(ISessionManager sessions,
-                ILogger logger, IInjector injector = null) {
+                IServiceEndpoint service, ILogger logger, IInjector injector = null) {
                 _sessions = sessions ?? throw new ArgumentNullException(nameof(sessions));
+                _service = service ?? throw new ArgumentNullException(nameof(service));
                 _logger = logger ?? throw new ArgumentNullException(nameof(logger));
                 _injector = injector;
             }
@@ -227,13 +223,16 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                 // Create container for all twin level scopes...
                 var builder = new ContainerBuilder();
 
-                // Register outer instances
+                // Register supervisor services
                 builder.RegisterInstance(_logger)
                     .ExternallyOwned()
                     .AsImplementedInterfaces();
                 builder.RegisterInstance(_sessions)
                     .ExternallyOwned()
                     .AsImplementedInterfaces();
+                builder.RegisterInstance(_service)
+                    .ExternallyOwned()
+                    .As<IServiceEndpoint>();
 
                 // Register module framework
                 builder.RegisterModule<ModuleFramework>();
@@ -248,6 +247,13 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
 
                 ConfigureServices(builder);
+
+                // Load writers from service endpoint and configure the engine
+                builder.RegisterType<DataSetWriterRegistryLoader>()
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
+                builder.RegisterType<PublisherEdgeApiClient>()
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
+
                 configure?.Invoke(builder);
                 _injector?.Inject(builder);
 
@@ -256,7 +262,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
             }
 
             /// <summary>
-            /// Configure container services
+            /// Configure common publisher container services
             /// </summary>
             /// <param name="builder"></param>
             public static void ConfigureServices(ContainerBuilder builder) {
@@ -264,6 +270,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                 // Publisher engine and encoders
                 builder.RegisterType<WriterGroupProcessingEngine>()
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
+
                 builder.RegisterType<UadpNetworkMessageEncoder>()
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
                 builder.RegisterType<JsonNetworkMessageEncoder>()
@@ -278,10 +285,10 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                     .AsImplementedInterfaces();
                 builder.RegisterType<SubscriptionServices>()
                     .AsImplementedInterfaces().SingleInstance();
-
             }
 
             private readonly ISessionManager _sessions;
+            private readonly IServiceEndpoint _service;
             private readonly IInjector _injector;
             private readonly ILogger _logger;
         }

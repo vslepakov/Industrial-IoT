@@ -8,10 +8,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Tests {
     using Microsoft.Azure.IIoT.Module.Framework.Client;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Services;
     using Microsoft.Azure.IIoT.OpcUa.Registry;
-    using Microsoft.Azure.IIoT.OpcUa.Registry.Models;
     using Microsoft.Azure.IIoT.OpcUa.Registry.Services;
     using Microsoft.Azure.IIoT.OpcUa.Testing.Runtime;
-    using Microsoft.Azure.IIoT.OpcUa.Core.Models;
     using Microsoft.Azure.IIoT.OpcUa.Api.Twin;
     using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients;
     using Microsoft.Azure.IIoT.OpcUa.Api.History;
@@ -22,15 +20,13 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Tests {
     using Microsoft.Azure.IIoT.Hub.Models;
     using Microsoft.Azure.IIoT.Utils;
     using Microsoft.Azure.IIoT.Serializers;
-    using Microsoft.Azure.IIoT.Serializers.NewtonSoft;
     using Microsoft.Extensions.Configuration;
     using Autofac;
+    using Xunit;
     using System;
     using System.IO;
-    using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
-    using Xunit;
     using System.Collections.Generic;
 
     /// <summary>
@@ -73,9 +69,9 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Tests {
             ModuleId = Guid.NewGuid().ToString();
 
             ServerPkiRootPath = Path.Combine(Directory.GetCurrentDirectory(), "pki",
-               Guid.NewGuid().ToByteArray().ToBase16String());
+                Guid.NewGuid().ToByteArray().ToBase16String());
             ClientPkiRootPath = Path.Combine(Directory.GetCurrentDirectory(), "pki",
-               Guid.NewGuid().ToByteArray().ToBase16String());
+                Guid.NewGuid().ToByteArray().ToBase16String());
 
             _config = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string> {
@@ -84,6 +80,15 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Tests {
                 .Build();
             HubContainer = CreateHubContainer();
             _hub = HubContainer.Resolve<IIoTHubTwinServices>();
+
+            // Create gateway identitity
+            var gw = _hub.CreateOrUpdateAsync(new DeviceTwinModel {
+                Id = DeviceId,
+                ConnectionState = "Connected",
+                Tags = new Dictionary<string, VariantValue> {
+                    { TwinProperty.Type, IdentityType.Gateway }
+                }
+            }).Result;
 
             // Create module identitity
             var twin = _hub.CreateOrUpdateAsync(new DeviceTwinModel {
@@ -256,6 +261,5 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Tests {
         private readonly ModuleProcess _module;
         private readonly IConfiguration _config;
         private readonly Task<int> _process;
-        private readonly IJsonSerializer _serializer = new NewtonSoftJsonSerializer();
     }
 }

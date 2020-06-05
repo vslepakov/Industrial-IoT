@@ -7,7 +7,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry {
     using Microsoft.Azure.IIoT.Exceptions;
     using Microsoft.Azure.IIoT.OpcUa.Registry.Models;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -43,15 +42,15 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry {
         /// <returns></returns>
         public static async Task<List<GatewayModel>> ListAllGatewaysAsync(
             this IGatewayRegistry service, CancellationToken ct = default) {
-            var publishers = new List<GatewayModel>();
+            var gateways = new List<GatewayModel>();
             var result = await service.ListGatewaysAsync(null, null, ct);
-            publishers.AddRange(result.Items);
+            gateways.AddRange(result.Items);
             while (result.ContinuationToken != null) {
                 result = await service.ListGatewaysAsync(result.ContinuationToken,
                     null, ct);
-                publishers.AddRange(result.Items);
+                gateways.AddRange(result.Items);
             }
-            return publishers;
+            return gateways;
         }
 
         /// <summary>
@@ -64,15 +63,15 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry {
         public static async Task<List<GatewayModel>> QueryAllGatewaysAsync(
             this IGatewayRegistry service, GatewayQueryModel query,
             CancellationToken ct = default) {
-            var supervisors = new List<GatewayModel>();
+            var gateways = new List<GatewayModel>();
             var result = await service.QueryGatewaysAsync(query, null, ct);
-            supervisors.AddRange(result.Items);
+            gateways.AddRange(result.Items);
             while (result.ContinuationToken != null) {
                 result = await service.ListGatewaysAsync(result.ContinuationToken,
                     null, ct);
-                supervisors.AddRange(result.Items);
+                gateways.AddRange(result.Items);
             }
-            return supervisors;
+            return gateways;
         }
     }
 }

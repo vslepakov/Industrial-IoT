@@ -4,15 +4,21 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.OpcUa.Edge {
+    using System;
 
     /// <summary>
-    /// Configuration of edge service endpoint url
+    /// Service endpoint provider
     /// </summary>
     public interface IServiceEndpoint {
 
         /// <summary>
-        /// Returns service endpoint url
+        /// Service endpoint
         /// </summary>
-        string ServiceEndpointUrl { get; }
+        string ServiceEndpoint { get; }
+
+        /// <summary>
+        /// Configuration change events
+        /// </summary>
+        event EventHandler OnServiceEndpointUpdated;
     }
 }

@@ -89,6 +89,14 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Tests {
             HubContainer = CreateHubContainer();
             _hub = HubContainer.Resolve<IIoTHubTwinServices>();
 
+            // Create gateway identitity
+            var gw = _hub.CreateOrUpdateAsync(new DeviceTwinModel {
+                Id = DeviceId,
+                Tags = new Dictionary<string, VariantValue> {
+                    { TwinProperty.Type, IdentityType.Gateway }
+                }
+            }).Result;
+
             // Create module identitity
             var twin = _hub.CreateOrUpdateAsync(new DeviceTwinModel {
                 Id = DeviceId,
