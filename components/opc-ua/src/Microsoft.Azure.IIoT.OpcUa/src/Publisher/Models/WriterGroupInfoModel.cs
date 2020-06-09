@@ -94,6 +94,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
         public TimeSpan? KeepAliveTime { get; set; }
 
         /// <summary>
+        /// State of the writer group
+        /// </summary>
+        public WriterGroupStateModel State { get; set; }
+
+        /// <summary>
         /// Last updated
         /// </summary>
         public PublisherOperationContextModel Updated { get; set; }

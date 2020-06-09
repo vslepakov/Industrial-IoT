@@ -38,5 +38,21 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 DataSetWriter = model.DataSetWriter.ToApiModel()
             };
         }
+
+        /// <summary>
+        /// Convert to api model
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        public static PublishedDataSetItemEventApiModel ToApiModel(
+            this PublishedDataSetItemEventModel model) {
+            return new PublishedDataSetItemEventApiModel {
+                EventType = (PublishedDataSetItemEventType)model.EventType,
+                DataSetWriterId = model.DataSetWriterId,
+                VariableId = model.VariableId,
+                DataSetVariable = model.DataSetVariable.ToApiModel(),
+                EventDataSet = model.EventDataSet.ToApiModel()
+            };
+        }
     }
 }

@@ -72,7 +72,7 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
             builder.RegisterModule<HttpClientModule>();
             // ... as well as signalR client (needed for api)
             builder.RegisterType<SignalRHubClient>()
-                .AsImplementedInterfaces().SingleInstance();
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
 
             // Use bearer authentication
             builder.RegisterModule<NativeClientAuthentication>();
@@ -973,7 +973,7 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
             var result = await _twin.NodePublishStartAsync(
                 GetEndpointId(options),
                 new PublishStartRequestApiModel {
-                    Item = new PublishListItemApiModel {
+                    Item = new PublishedItemApiModel {
                         NodeId = GetNodeId(options),
                         SamplingInterval = TimeSpan.FromMilliseconds(1000),
                         PublishingInterval = TimeSpan.FromMilliseconds(1000)

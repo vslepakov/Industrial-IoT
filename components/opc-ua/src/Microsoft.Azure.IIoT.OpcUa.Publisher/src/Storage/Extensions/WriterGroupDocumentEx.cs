@@ -44,6 +44,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default {
                 UpdatedAuditId = model.Updated?.AuthorityId,
                 Created = model.Created?.Time ?? DateTime.UtcNow,
                 CreatedAuditId = model.Created?.AuthorityId,
+                LastState = model.State?.State,
+                LastStateChange = model.State?.LastStateChange,
                 ClassType = WriterGroupDocument.ClassTypeName
             };
         }
@@ -51,39 +53,43 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default {
         /// <summary>
         /// Convert to Service model
         /// </summary>
-        /// <param name="model"></param>
+        /// <param name="document"></param>
         /// <returns></returns>
-        public static WriterGroupInfoModel ToFrameworkModel(this WriterGroupDocument model) {
-            if (model == null) {
+        public static WriterGroupInfoModel ToFrameworkModel(this WriterGroupDocument document) {
+            if (document == null) {
                 return null;
             }
             return new WriterGroupInfoModel {
-                BatchSize = model.BatchSize,
-                PublishingInterval = model.PublishingInterval,
-                GenerationId = model.ETag,
-                HeaderLayoutUri = model.HeaderLayoutUri,
-                WriterGroupId = model.Id,
-                KeepAliveTime = model.KeepAliveTime,
-                LocaleIds = model.LocaleIds?.ToList(),
-                MaxNetworkMessageSize = model.MaxNetworkMessageSize,
-                MessageType = model.MessageType,
-                Name = model.Name,
-                Priority = model.Priority,
-                SiteId = model.SiteId,
+                BatchSize = document.BatchSize,
+                PublishingInterval = document.PublishingInterval,
+                GenerationId = document.ETag,
+                HeaderLayoutUri = document.HeaderLayoutUri,
+                WriterGroupId = document.Id,
+                KeepAliveTime = document.KeepAliveTime,
+                LocaleIds = document.LocaleIds?.ToList(),
+                MaxNetworkMessageSize = document.MaxNetworkMessageSize,
+                MessageType = document.MessageType,
+                Name = document.Name,
+                Priority = document.Priority,
+                SiteId = document.SiteId,
                 MessageSettings = new WriterGroupMessageSettingsModel {
-                    DataSetOrdering = model.DataSetOrdering,
-                    GroupVersion = model.GroupVersion,
-                    NetworkMessageContentMask = model.NetworkMessageContentMask,
-                    PublishingOffset = model.PublishingOffset,
-                    SamplingOffset = model.SamplingOffset
+                    DataSetOrdering = document.DataSetOrdering,
+                    GroupVersion = document.GroupVersion,
+                    NetworkMessageContentMask = document.NetworkMessageContentMask,
+                    PublishingOffset = document.PublishingOffset,
+                    SamplingOffset = document.SamplingOffset
                 },
-                Updated = model.Updated == null ? null : new PublisherOperationContextModel {
-                    Time = model.Updated.Value,
-                    AuthorityId = model.UpdatedAuditId
+                State = document.LastState == null ? null : new WriterGroupStateModel {
+                    State = document.LastState,
+                    LastStateChange = document.LastStateChange
                 },
-                Created = model.Created == null ? null : new PublisherOperationContextModel {
-                    Time = model.Created.Value,
-                    AuthorityId = model.CreatedAuditId
+                Updated = document.Updated == null ? null : new PublisherOperationContextModel {
+                    Time = document.Updated.Value,
+                    AuthorityId = document.UpdatedAuditId
+                },
+                Created = document.Created == null ? null : new PublisherOperationContextModel {
+                    Time = document.Created.Value,
+                    AuthorityId = document.CreatedAuditId
                 },
                 SecurityGroupId = null,
                 SecurityKeyServices = null,

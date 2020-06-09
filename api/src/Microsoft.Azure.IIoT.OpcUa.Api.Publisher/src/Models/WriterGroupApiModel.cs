@@ -12,6 +12,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// <summary>
     /// Network message writer group model fully materialized
     /// </summary>
+    [DataContract]
     public class WriterGroupApiModel {
 
         /// <summary>

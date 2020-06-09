@@ -14,6 +14,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// dataset in bulk and also allows modification of the dataset in
     /// a single operation.
     /// </summary>
+    [DataContract]
     public class DataSetAddVariableBatchRequestApiModel {
 
         /// <summary>

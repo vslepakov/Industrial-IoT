@@ -32,7 +32,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
 ";
             var converter = new PublishedNodesFile(_serializer,
                 new LegacyCliModel(), TraceLogger.Create());
-            var group = converter.Read("testid", new StringReader(pn));
+            var group = converter.Read(new StringReader(pn));
 
             // No writers
             Assert.NotNull(group);
@@ -57,7 +57,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
 ";
             var converter = new PublishedNodesFile(_serializer,
                 new LegacyCliModel(), TraceLogger.Create());
-            var group = converter.Read("testid", new StringReader(pn));
+            var group = converter.Read(new StringReader(pn));
 
             Assert.NotEmpty(group.DataSetWriters);
             Assert.Single(group.DataSetWriters);
@@ -88,7 +88,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
 ";
             var converter = new PublishedNodesFile(_serializer,
                 new LegacyCliModel(), TraceLogger.Create());
-            var group = converter.Read("testid", new StringReader(pn));
+            var group = converter.Read(new StringReader(pn));
 
             Assert.NotNull(group);
             Assert.NotEmpty(group.DataSetWriters);
@@ -119,7 +119,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
 ";
             var converter = new PublishedNodesFile(_serializer,
                 new LegacyCliModel(), TraceLogger.Create());
-            var group = converter.Read("testid", new StringReader(pn));
+            var group = converter.Read(new StringReader(pn));
 
             Assert.NotNull(group);
             Assert.NotEmpty(group.DataSetWriters);
@@ -147,7 +147,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
 ";
             var converter = new PublishedNodesFile(_serializer,
                 new LegacyCliModel(), TraceLogger.Create());
-            var group = converter.Read("testid", new StringReader(pn));
+            var group = converter.Read(new StringReader(pn));
 
             Assert.NotNull(group);
             Assert.NotEmpty(group.DataSetWriters);
@@ -175,7 +175,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
 ";
             var converter = new PublishedNodesFile(_serializer,
                 new LegacyCliModel(), TraceLogger.Create());
-            var group = converter.Read("testid", new StringReader(pn));
+            var group = converter.Read(new StringReader(pn));
 
             Assert.NotNull(group);
             Assert.NotEmpty(group.DataSetWriters);
@@ -202,7 +202,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
 ";
             var converter = new PublishedNodesFile(_serializer,
                 new LegacyCliModel(), TraceLogger.Create());
-            var group = converter.Read("testid", new StringReader(pn));
+            var group = converter.Read(new StringReader(pn));
 
             Assert.NotNull(group);
             Assert.NotEmpty(group.DataSetWriters);
@@ -244,7 +244,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
 ";
             var converter = new PublishedNodesFile(_serializer,
                 new LegacyCliModel(), TraceLogger.Create());
-            var group = converter.Read("testid", new StringReader(pn));
+            var group = converter.Read(new StringReader(pn));
 
             Assert.NotNull(group);
             Assert.NotEmpty(group.DataSetWriters);
@@ -280,7 +280,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
 ";
             var converter = new PublishedNodesFile(_serializer,
                 new LegacyCliModel(), TraceLogger.Create());
-            var group = converter.Read("testid", new StringReader(pn));
+            var group = converter.Read(new StringReader(pn));
 
             Assert.NotNull(group);
             Assert.NotEmpty(group.DataSetWriters);
@@ -337,7 +337,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
 ";
             var converter = new PublishedNodesFile(_serializer,
                 new LegacyCliModel(), TraceLogger.Create());
-            var group = converter.Read("testid", new StringReader(pn));
+            var group = converter.Read(new StringReader(pn));
 
             Assert.NotNull(group);
             Assert.NotEmpty(group.DataSetWriters);
@@ -393,7 +393,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
 ";
             var converter = new PublishedNodesFile(_serializer,
                 new LegacyCliModel(), TraceLogger.Create());
-            var group = converter.Read("testid", new StringReader(pn));
+            var group = converter.Read(new StringReader(pn));
 
             // No group
             Assert.NotNull(group);
@@ -455,7 +455,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
 
             var converter = new PublishedNodesFile(_serializer,
                 new LegacyCliModel(), TraceLogger.Create());
-            var group = converter.Read("testid", new StringReader(pn));
+            var group = converter.Read(new StringReader(pn));
 
             // No group
             Assert.NotNull(group);
@@ -517,7 +517,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
 
             var converter = new PublishedNodesFile(_serializer,
                 new LegacyCliModel(), TraceLogger.Create());
-            var group = converter.Read("testid", new StringReader(pn));
+            var group = converter.Read(new StringReader(pn));
 
             // No group
             Assert.NotNull(group);
@@ -578,7 +578,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
 
             var converter = new PublishedNodesFile(_serializer,
                 new LegacyCliModel(), TraceLogger.Create());
-            var group = converter.Read("testid", new StringReader(pn));
+            var group = converter.Read(new StringReader(pn));
 
             // No group
             Assert.NotNull(group);
@@ -612,7 +612,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
 ");
             var converter = new PublishedNodesFile(_serializer,
                 new LegacyCliModel(), TraceLogger.Create());
-            var group = converter.Read("testid", new StringReader(pn.ToString()));
+            var group = converter.Read(new StringReader(pn.ToString()));
 
             // No group
             Assert.NotNull(group);
@@ -656,7 +656,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services.Tests {
 ");
             var converter = new PublishedNodesFile(_serializer,
                 new LegacyCliModel(), TraceLogger.Create());
-            var group = converter.Read("testid", new StringReader(pn.ToString()));
+            var group = converter.Read(new StringReader(pn.ToString()));
 
             // No group
             Assert.NotNull(group);

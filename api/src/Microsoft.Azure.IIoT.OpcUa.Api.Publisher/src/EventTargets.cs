@@ -36,6 +36,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher {
         public const string PublisherSampleTarget = "PublisherMessage";
 
         /// <summary>
+        /// Dataset message target
+        /// </summary>
+        public const string DataSetMessageTarget = "DataSetMessage";
+
+        /// <summary>
+        /// Dataset event targets
+        /// </summary>
+        public const string DataSetEventTarget = "DataSetEvent";
+
+        /// <summary>
         /// Writer event targets
         /// </summary>
         public const string WriterEventTarget = "WriterEvent";

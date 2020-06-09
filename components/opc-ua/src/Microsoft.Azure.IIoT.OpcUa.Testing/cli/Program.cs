@@ -289,7 +289,7 @@ Operations (Mutually exclusive):
 
             /// <inheritdoc/>
             public async Task SendEventAsync(byte[] data, string contentType,
-                string eventSchema, string contentEncoding) {
+                string eventSchema, string contentEncoding, CancellationToken ct) {
                 var ev = JsonConvert.DeserializeObject<DiscoveryEventModel>(
                     Encoding.UTF8.GetString(data));
                 var endpoint = ev.Registration?.Endpoint;
@@ -322,19 +322,20 @@ Operations (Mutually exclusive):
 
             /// <inheritdoc/>
             public async Task SendEventAsync(IEnumerable<byte[]> batch, string contentType,
-                string eventSchema, string contentEncoding) {
+                string eventSchema, string contentEncoding, CancellationToken ct) {
                 foreach (var item in batch) {
-                    await SendEventAsync(item, contentType, eventSchema, contentEncoding);
+                    await SendEventAsync(item, contentType, eventSchema, contentEncoding, ct);
                 }
             }
 
             /// <inheritdoc/>
-            public Task ReportAsync(string propertyId, VariantValue value) {
+            public Task ReportAsync(string propertyId, VariantValue value, CancellationToken ct) {
                 return Task.CompletedTask;
             }
 
             /// <inheritdoc/>
-            public Task ReportAsync(IEnumerable<KeyValuePair<string, VariantValue>> properties) {
+            public Task ReportAsync(IEnumerable<KeyValuePair<string, VariantValue>> properties,
+                CancellationToken ct) {
                 return Task.CompletedTask;
             }
 

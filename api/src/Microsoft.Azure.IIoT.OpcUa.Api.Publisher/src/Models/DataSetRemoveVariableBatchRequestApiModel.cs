@@ -11,6 +11,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// A data set management operation that removes variables from a
     /// dataset in bulk.
     /// </summary>
+    [DataContract]
     public class DataSetRemoveVariableBatchRequestApiModel {
 
         /// <summary>

@@ -10,6 +10,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// <summary>
     /// List of data set variables
     /// </summary>
+    [DataContract]
     public class PublishedDataSetVariableListApiModel {
 
         /// <summary>

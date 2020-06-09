@@ -10,6 +10,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// <summary>
     /// List of data set writers
     /// </summary>
+    [DataContract]
     public class DataSetWriterInfoListApiModel {
 
         /// <summary>

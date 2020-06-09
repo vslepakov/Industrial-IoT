@@ -97,7 +97,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Protocol.Services {
                 while (true) {
                     switch (wrapper.State) {
                         case SessionState.Reconnecting:
-                            // attempt to reactivate 
+                            // attempt to reactivate
                             try {
                                 wrapper.MissedKeepAlives++;
                                 _logger.Information("Session '{name}' missed {keepAlives} keep alive(s) due to {status}." +
@@ -130,12 +130,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Protocol.Services {
                                 // cleanup the session
                                 _logger.Warning("Failed to reconnect session {sessionName} due to {exception}." +
                                     " Disposing and trying create new.", wrapper.Session.SessionName, e.Message);
-                                if (wrapper.Session.SubscriptionCount > 0) {
-                                    foreach (var subscription in wrapper.Session.Subscriptions) {
+                                var subscriptions = wrapper.Session.Subscriptions.ToList();
+                                if (subscriptions.Count > 0) {
+                                    foreach (var subscription in subscriptions) {
                                         Try.Op(() => subscription.DeleteItems());
                                         Try.Op(() => subscription.Delete(true));
                                     }
-                                    Try.Op(() => wrapper.Session.RemoveSubscriptions(wrapper.Session.Subscriptions));
+                                    Try.Op(() => wrapper.Session.RemoveSubscriptions(subscriptions));
                                 }
                                 Try.Op(wrapper.Session.Close);
                                 Try.Op(wrapper.Session.Dispose);

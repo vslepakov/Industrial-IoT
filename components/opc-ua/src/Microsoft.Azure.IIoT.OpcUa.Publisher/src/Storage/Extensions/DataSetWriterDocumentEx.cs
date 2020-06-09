@@ -4,6 +4,7 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default {
+    using Microsoft.Azure.IIoT.OpcUa.Core.Models;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
 
     /// <summary>
@@ -50,6 +51,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default {
                 SubscriptionPriority = model.DataSet?.SubscriptionSettings?.Priority,
                 PublishingInterval = model.DataSet?.SubscriptionSettings?.PublishingInterval,
                 ResolveDisplayName = model.DataSet?.SubscriptionSettings?.ResolveDisplayName,
+                LastResultChange = model.DataSet?.State?.LastResultChange,
+                LastResultDiagnostics = model.DataSet?.State?.LastResult?.Diagnostics,
+                LastResultErrorMessage = model.DataSet?.State?.LastResult?.ErrorMessage,
+                LastResultStatusCode = model.DataSet?.State?.LastResult?.StatusCode,
                 ClassType = DataSetWriterDocument.ClassTypeName
             };
         }
@@ -57,53 +62,61 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default {
         /// <summary>
         /// Convert to Service model
         /// </summary>
-        /// <param name="model"></param>
+        /// <param name="document"></param>
         /// <returns></returns>
-        public static DataSetWriterInfoModel ToFrameworkModel(this DataSetWriterDocument model) {
-            if (model == null) {
+        public static DataSetWriterInfoModel ToFrameworkModel(this DataSetWriterDocument document) {
+            if (document == null) {
                 return null;
             }
             return new DataSetWriterInfoModel {
-                DataSetWriterId = model.Id,
-                GenerationId = model.ETag,
-                WriterGroupId = model.WriterGroupId,
+                DataSetWriterId = document.Id,
+                GenerationId = document.ETag,
+                WriterGroupId = document.WriterGroupId,
                 DataSet = new PublishedDataSetSourceInfoModel {
-                    User = model.CredentialType == null ? null :
-                        new Core.Models.CredentialModel {
-                            Type = model.CredentialType,
-                            Value = model.Credential
+                    User = document.CredentialType == null ? null :
+                        new CredentialModel {
+                            Type = document.CredentialType,
+                            Value = document.Credential
                         },
-                    OperationTimeout = model.OperationTimeout,
-                    DiagnosticsLevel = model.DiagnosticsLevel,
-                    EndpointId = model.EndpointId,
-                    ExtensionFields = model.ExtensionFields,
-                    Name = model.DataSetName,
+                    State = document.LastResultChange == null ? null : new PublishedDataSetSourceStateModel {
+                        LastResult = new ServiceResultModel {
+                            ErrorMessage = document.LastResultErrorMessage,
+                            Diagnostics = document.LastResultDiagnostics,
+                            StatusCode = document.LastResultStatusCode,
+                        },
+                        LastResultChange = document.LastResultChange
+                    },
+                    OperationTimeout = document.OperationTimeout,
+                    DiagnosticsLevel = document.DiagnosticsLevel,
+                    EndpointId = document.EndpointId,
+                    ExtensionFields = document.ExtensionFields,
+                    Name = document.DataSetName,
                     SubscriptionSettings = new PublishedDataSetSourceSettingsModel {
-                        LifeTimeCount = model.SubscriptionLifeTimeCount,
-                        MaxKeepAliveCount = model.MaxKeepAliveCount,
-                        MaxNotificationsPerPublish = model.MaxNotificationsPerPublish,
-                        Priority = model.SubscriptionPriority,
-                        PublishingInterval = model.PublishingInterval,
-                        ResolveDisplayName = model.ResolveDisplayName
+                        LifeTimeCount = document.SubscriptionLifeTimeCount,
+                        MaxKeepAliveCount = document.MaxKeepAliveCount,
+                        MaxNotificationsPerPublish = document.MaxNotificationsPerPublish,
+                        Priority = document.SubscriptionPriority,
+                        PublishingInterval = document.PublishingInterval,
+                        ResolveDisplayName = document.ResolveDisplayName
                     }
                 },
-                DataSetFieldContentMask = model.DataSetFieldContentMask,
-                DataSetMetaDataSendInterval = model.DataSetMetaDataSendInterval,
-                KeyFrameCount = model.KeyFrameCount,
-                KeyFrameInterval = model.KeyFrameInterval,
+                DataSetFieldContentMask = document.DataSetFieldContentMask,
+                DataSetMetaDataSendInterval = document.DataSetMetaDataSendInterval,
+                KeyFrameCount = document.KeyFrameCount,
+                KeyFrameInterval = document.KeyFrameInterval,
                 MessageSettings = new DataSetWriterMessageSettingsModel {
-                    ConfiguredSize = model.ConfiguredSize,
-                    DataSetMessageContentMask = model.DataSetMessageContentMask,
-                    DataSetOffset = model.DataSetOffset,
-                    NetworkMessageNumber = model.NetworkMessageNumber
+                    ConfiguredSize = document.ConfiguredSize,
+                    DataSetMessageContentMask = document.DataSetMessageContentMask,
+                    DataSetOffset = document.DataSetOffset,
+                    NetworkMessageNumber = document.NetworkMessageNumber
                 },
-                Created = model.Created == null ? null : new PublisherOperationContextModel {
-                    AuthorityId = model.CreatedAuditId,
-                    Time = model.Created.Value
+                Created = document.Created == null ? null : new PublisherOperationContextModel {
+                    AuthorityId = document.CreatedAuditId,
+                    Time = document.Created.Value
                 },
-                Updated = model.Updated == null ? null : new PublisherOperationContextModel {
-                    AuthorityId = model.UpdatedAuditId,
-                    Time = model.Updated.Value
+                Updated = document.Updated == null ? null : new PublisherOperationContextModel {
+                    AuthorityId = document.UpdatedAuditId,
+                    Time = document.Updated.Value
                 }
             };
         }

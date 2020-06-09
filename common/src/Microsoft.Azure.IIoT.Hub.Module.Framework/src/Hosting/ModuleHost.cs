@@ -186,7 +186,7 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
 
         /// <inheritdoc/>
         public async Task SendEventAsync(IEnumerable<byte[]> batch, string contentType,
-            string eventSchema, string contentEncoding) {
+            string eventSchema, string contentEncoding, CancellationToken ct) {
             try {
                 await _lock.WaitAsync();
                 if (Client != null) {
@@ -210,13 +210,13 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
 
         /// <inheritdoc/>
         public async Task SendEventAsync(byte[] data, string contentType, string eventSchema,
-            string contentEncoding) {
+            string contentEncoding, CancellationToken ct) {
             try {
                 await _lock.WaitAsync();
                 if (Client != null) {
                     using (var msg = CreateMessage(data, contentEncoding, contentType,
                         eventSchema, DeviceId, ModuleId)) {
-                        await Client.SendEventAsync(msg);
+                        await Client.SendEventAsync(msg, ct);
                     }
                 }
             }
@@ -226,7 +226,8 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
         }
 
         /// <inheritdoc/>
-        public async Task ReportAsync(IEnumerable<KeyValuePair<string, VariantValue>> properties) {
+        public async Task ReportAsync(IEnumerable<KeyValuePair<string, VariantValue>> properties,
+            CancellationToken ct) {
             try {
                 await _lock.WaitAsync();
                 if (Client != null) {
@@ -234,7 +235,7 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
                     foreach (var property in properties) {
                         collection[property.Key] = property.Value?.ConvertTo<object>();
                     }
-                    await Client.UpdateReportedPropertiesAsync(collection);
+                    await Client.UpdateReportedPropertiesAsync(collection, ct);
                     foreach (var property in properties) {
                         _reported.Remove(property.Key);
                         _reported.Add(property.Key, property.Value);
@@ -247,14 +248,14 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
         }
 
         /// <inheritdoc/>
-        public async Task ReportAsync(string propertyId, VariantValue value) {
+        public async Task ReportAsync(string propertyId, VariantValue value, CancellationToken ct) {
             try {
                 await _lock.WaitAsync();
                 if (Client != null) {
                     var collection = new TwinCollection {
                         [propertyId] = value?.ConvertTo<object>()
                     };
-                    await Client.UpdateReportedPropertiesAsync(collection);
+                    await Client.UpdateReportedPropertiesAsync(collection, ct);
                     _reported.Remove(propertyId);
                     _reported.Add(propertyId, value);
                 }

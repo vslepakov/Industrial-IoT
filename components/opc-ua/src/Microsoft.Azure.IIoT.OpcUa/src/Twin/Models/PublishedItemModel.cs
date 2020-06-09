@@ -9,7 +9,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Models {
     /// <summary>
     /// A monitored and published variable
     /// </summary>
-    public class PublishedNodeModel {
+    public class PublishedItemModel {
 
         /// <summary>
         /// Variable node id to monitor

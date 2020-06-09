@@ -10,6 +10,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// <summary>
     /// List of data set writer groups
     /// </summary>
+    [DataContract]
     public class WriterGroupInfoListApiModel {
 
         /// <summary>

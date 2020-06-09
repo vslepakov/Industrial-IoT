@@ -270,19 +270,20 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
             }
 
             /// <inheritdoc />
-            public async Task SendEventAsync(Message message) {
+            public async Task SendEventAsync(Message message, CancellationToken ct) {
                 if (IsClosed) {
                     return;
                 }
-                await _client.SendEventAsync(message);
+                await _client.SendEventAsync(message, ct);
             }
 
             /// <inheritdoc />
-            public async Task SendEventBatchAsync(IEnumerable<Message> messages) {
+            public async Task SendEventBatchAsync(IEnumerable<Message> messages,
+                CancellationToken ct) {
                 if (IsClosed) {
                     return;
                 }
-                await _client.SendEventBatchAsync(messages);
+                await _client.SendEventBatchAsync(messages, ct);
             }
 
             /// <inheritdoc />
@@ -304,28 +305,29 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
             }
 
             /// <inheritdoc />
-            public Task<Twin> GetTwinAsync() {
-                return _client.GetTwinAsync();
+            public Task<Twin> GetTwinAsync(CancellationToken ct) {
+                return _client.GetTwinAsync(ct);
             }
 
             /// <inheritdoc />
-            public async Task UpdateReportedPropertiesAsync(TwinCollection reportedProperties) {
+            public async Task UpdateReportedPropertiesAsync(TwinCollection reportedProperties,
+                CancellationToken ct) {
                 if (IsClosed) {
                     return;
                 }
-                await _client.UpdateReportedPropertiesAsync(reportedProperties);
+                await _client.UpdateReportedPropertiesAsync(reportedProperties, ct);
             }
 
             /// <inheritdoc />
             public Task<MethodResponse> InvokeMethodAsync(string deviceId, string moduleId,
-                MethodRequest methodRequest, CancellationToken cancellationToken) {
-                return _client.InvokeMethodAsync(deviceId, moduleId, methodRequest, cancellationToken);
+                MethodRequest methodRequest, CancellationToken ct) {
+                return _client.InvokeMethodAsync(deviceId, moduleId, methodRequest, ct);
             }
 
             /// <inheritdoc />
             public Task<MethodResponse> InvokeMethodAsync(string deviceId,
-                MethodRequest methodRequest, CancellationToken cancellationToken) {
-                return _client.InvokeMethodAsync(deviceId, methodRequest, cancellationToken);
+                MethodRequest methodRequest, CancellationToken ct) {
+                return _client.InvokeMethodAsync(deviceId, methodRequest, ct);
             }
 
             /// <inheritdoc />
@@ -468,19 +470,20 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
             }
 
             /// <inheritdoc />
-            public async Task SendEventAsync(Message message) {
+            public async Task SendEventAsync(Message message, CancellationToken ct) {
                 if (IsClosed) {
                     return;
                 }
-                await _client.SendEventAsync(message);
+                await _client.SendEventAsync(message, ct);
             }
 
             /// <inheritdoc />
-            public async Task SendEventBatchAsync(IEnumerable<Message> messages) {
+            public async Task SendEventBatchAsync(IEnumerable<Message> messages,
+                CancellationToken ct) {
                 if (IsClosed) {
                     return;
                 }
-                await _client.SendEventBatchAsync(messages);
+                await _client.SendEventBatchAsync(messages, ct);
             }
 
             /// <inheritdoc />
@@ -502,27 +505,28 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
             }
 
             /// <inheritdoc />
-            public Task<Twin> GetTwinAsync() {
-                return _client.GetTwinAsync();
+            public Task<Twin> GetTwinAsync(CancellationToken ct) {
+                return _client.GetTwinAsync(ct);
             }
 
             /// <inheritdoc />
-            public async Task UpdateReportedPropertiesAsync(TwinCollection reportedProperties) {
+            public async Task UpdateReportedPropertiesAsync(TwinCollection reportedProperties,
+                CancellationToken ct) {
                 if (IsClosed) {
                     return;
                 }
-                await _client.UpdateReportedPropertiesAsync(reportedProperties);
+                await _client.UpdateReportedPropertiesAsync(reportedProperties, ct);
             }
 
             /// <inheritdoc />
             public Task<MethodResponse> InvokeMethodAsync(string deviceId, string moduleId,
-                MethodRequest methodRequest, CancellationToken cancellationToken) {
+                MethodRequest methodRequest, CancellationToken ct) {
                 throw new NotSupportedException("Device client does not support methods");
             }
 
             /// <inheritdoc />
             public Task<MethodResponse> InvokeMethodAsync(string deviceId,
-                MethodRequest methodRequest, CancellationToken cancellationToken) {
+                MethodRequest methodRequest, CancellationToken ct) {
                 throw new NotSupportedException("Device client does not support methods");
             }
 

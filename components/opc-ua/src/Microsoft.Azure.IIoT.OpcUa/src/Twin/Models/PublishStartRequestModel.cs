@@ -14,7 +14,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Models {
         /// <summary>
         /// Node to publish
         /// </summary>
-        public PublishedNodeModel Item { get; set; }
+        public PublishedItemModel Item { get; set; }
 
         /// <summary>
         /// Optional request header

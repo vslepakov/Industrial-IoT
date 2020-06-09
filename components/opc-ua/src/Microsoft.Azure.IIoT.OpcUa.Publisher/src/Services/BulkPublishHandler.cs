@@ -91,7 +91,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Services {
                 var ctx = context.ToMessageContext();
                 await _outer._publish.NodePublishBulkAsync(_endpointId, new PublishBulkRequestModel {
                     NodesToAdd = _cache
-                        .Select(n => new PublishedNodeModel {
+                        .Select(n => new PublishedItemModel {
                             DisplayName = n.DisplayName.Text,
                             SamplingInterval = n.MinimumSamplingInterval == null ? (TimeSpan?)null :
                                 TimeSpan.FromMilliseconds(n.MinimumSamplingInterval.Value),

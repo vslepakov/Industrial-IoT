@@ -9,6 +9,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// <summary>
     /// Result of a event dataset registration
     /// </summary>
+    [DataContract]
     public class DataSetAddEventResponseApiModel {
 
         /// <summary>

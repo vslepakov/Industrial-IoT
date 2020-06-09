@@ -12,6 +12,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// <summary>
     /// Data set writer registration request
     /// </summary>
+    [DataContract]
     public class DataSetWriterAddRequestApiModel {
 
         /// <summary>

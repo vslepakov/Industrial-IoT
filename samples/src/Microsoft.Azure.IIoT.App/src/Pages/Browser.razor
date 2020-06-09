@@ -278,7 +278,7 @@
 
     public PagedResult<ListNode> NodeList = new PagedResult<ListNode>();
     public PagedResult<ListNode> PagedNodeList = new PagedResult<ListNode>();
-    public PagedResult<PublishListItemApiModel> PublishedNodes = new PagedResult<PublishListItemApiModel>();
+    public PagedResult<PublishedItemApiModel> PublishedNodes = new PagedResult<PublishedItemApiModel>();
     public CredentialModel Credential = new CredentialModel();
     public bool IsOpened { get; set; } = false;
     public ListNode NodeData { get; set; }
@@ -465,7 +465,7 @@
         var result = await Publisher.StartPublishingAsync(endpointId, node.Id, node.NodeName, samplingInterval, publishingInterval, heartbeatInterval, Credential);
         if (result)
         {
-            node.PublishedItem = new PublishListItemApiModel()
+            node.PublishedItem = new PublishedItemApiModel()
             {
                 NodeId = node.Id,
                 DisplayName = node.NodeName,

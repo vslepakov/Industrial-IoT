@@ -12,7 +12,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Default {
     using System.Collections.Concurrent;
 
     /// <summary>
-    /// Application event broker - publishes locally, and also
+    /// Dataset writer event broker - publishes locally, and also
     /// all event versions to event bus
     /// </summary>
     public sealed class DataSetWriterEventBroker :

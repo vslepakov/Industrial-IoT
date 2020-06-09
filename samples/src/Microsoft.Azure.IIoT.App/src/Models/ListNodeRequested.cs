@@ -9,7 +9,7 @@ namespace Microsoft.Azure.IIoT.App.Models {
 
     public class ListNodeRequested {
 
-        public ListNodeRequested(PublishListItemApiModel publishedItem) {
+        public ListNodeRequested(PublishedItemApiModel publishedItem) {
             if (publishedItem?.PublishingInterval != null) {
                 RequestedPublishingInterval = publishedItem.PublishingInterval.Value.TotalMilliseconds.ToString();
             }

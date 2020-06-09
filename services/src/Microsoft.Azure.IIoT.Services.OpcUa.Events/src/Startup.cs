@@ -233,11 +233,17 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events {
             builder.RegisterType<SignalRHub<DataSetWritersHub>>()
                 .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<
+                PublishedDataSetEventForwarder<DataSetWritersHub>>()
+                .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<
                 DataSetWriterEventForwarder<DataSetWritersHub>>()
                 .AsImplementedInterfaces().SingleInstance();
 
             // Writer groups event hub
             builder.RegisterType<SignalRHub<WriterGroupsHub>>()
+                .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<
+                DataSetWriterMessagePublisher<WriterGroupsHub>>()
                 .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<
                 WriterGroupEventForwarder<WriterGroupsHub>>()

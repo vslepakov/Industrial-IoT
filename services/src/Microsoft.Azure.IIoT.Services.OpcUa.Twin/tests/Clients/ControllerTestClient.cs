@@ -149,9 +149,9 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.Controllers.Test {
             return Task.FromException<PublishBulkResponseApiModel>(new NotImplementedException());
         }
 
-        public Task<PublishListResponseApiModel> NodePublishListAsync(string endpointId,
-            PublishListRequestApiModel request, CancellationToken ct) {
-            return Task.FromException<PublishListResponseApiModel>(new NotImplementedException());
+        public Task<PublishedItemListResponseApiModel> NodePublishListAsync(string endpointId,
+            PublishedItemListRequestApiModel request, CancellationToken ct) {
+            return Task.FromException<PublishedItemListResponseApiModel>(new NotImplementedException());
         }
 
         /// <inheritdoc/>

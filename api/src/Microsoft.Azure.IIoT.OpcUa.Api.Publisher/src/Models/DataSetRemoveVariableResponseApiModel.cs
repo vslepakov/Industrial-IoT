@@ -10,6 +10,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// <summary>
     /// Result of a variable removal
     /// </summary>
+    [DataContract]
     public class DataSetRemoveVariableResponseApiModel {
 
         /// <summary>

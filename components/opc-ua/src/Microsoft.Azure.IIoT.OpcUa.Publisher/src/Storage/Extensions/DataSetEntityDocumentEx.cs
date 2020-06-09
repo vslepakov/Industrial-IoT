@@ -4,7 +4,9 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default {
+    using Microsoft.Azure.IIoT.OpcUa.Core.Models;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
+    using Opc.Ua;
     using System;
 
     /// <summary>
@@ -55,6 +57,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default {
                 EventNotifier = model.EventNotifier,
                 FilterElements = model.Filter?.Elements,
                 SelectedFields = model.SelectedFields,
+                Order = 0,
                 VariableId = null,
                 Attribute = null,
                 DataChangeFilter = null,
@@ -71,6 +74,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default {
                 UpdatedAuditId = model.Updated?.AuthorityId,
                 Created = model.Created?.Time ?? DateTime.UtcNow,
                 CreatedAuditId = model.Created?.AuthorityId,
+                LastResultChange = model.State?.LastResultChange,
+                LastResultDiagnostics = model.State?.LastResult?.Diagnostics,
+                ServerId = model.State?.ServerId,
+                ClientId = model.State?.ClientId,
+                LastResultErrorMessage = model.State?.LastResult?.ErrorMessage,
+                LastResultStatusCode = model.State?.LastResult?.StatusCode,
                 Type = DataSetEntityDocument.EventSet,
                 ClassType = DataSetEntityDocument.ClassTypeName
             };
@@ -111,6 +120,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default {
                 EventNotifier = null,
                 FilterElements = null,
                 SelectedFields = null,
+                Order = model.Order ?? 0,
+                LastResultChange = model.State?.LastResultChange,
+                LastResultDiagnostics = model.State?.LastResult?.Diagnostics,
+                ServerId = model.State?.ServerId,
+                ClientId = model.State?.ClientId,
+                LastResultErrorMessage = model.State?.LastResult?.ErrorMessage,
+                LastResultStatusCode = model.State?.LastResult?.StatusCode,
                 Updated = model.Updated?.Time ?? DateTime.UtcNow,
                 UpdatedAuditId = model.Updated?.AuthorityId,
                 Created = model.Created?.Time ?? DateTime.UtcNow,
@@ -123,33 +139,43 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default {
         /// <summary>
         /// Convert to Service model
         /// </summary>
-        /// <param name="model"></param>
+        /// <param name="document"></param>
         /// <returns></returns>
         public static PublishedDataSetEventsModel ToEventDataSetModel(
-            this DataSetEntityDocument model) {
-            if (model == null) {
+            this DataSetEntityDocument document) {
+            if (document == null) {
                 return null;
             }
             return new PublishedDataSetEventsModel {
-                GenerationId = model.ETag,
-                Id = model.DataSetWriterId,
-                BrowsePath = model.BrowsePath,
-                DiscardNew = model.DiscardNew,
-                MonitoringMode = model.MonitoringMode,
-                QueueSize = model.QueueSize,
-                TriggerId = model.TriggerId,
-                EventNotifier = model.EventNotifier,
-                Filter = new Core.Models.ContentFilterModel {
-                    Elements = model.FilterElements,
+                GenerationId = document.ETag,
+                Id = document.DataSetWriterId,
+                BrowsePath = document.BrowsePath,
+                DiscardNew = document.DiscardNew,
+                MonitoringMode = document.MonitoringMode,
+                QueueSize = document.QueueSize,
+                TriggerId = document.TriggerId,
+                EventNotifier = document.EventNotifier,
+                Filter = new ContentFilterModel {
+                    Elements = document.FilterElements,
                 },
-                SelectedFields = model.SelectedFields,
-                Updated = model.Updated == null ? null : new PublisherOperationContextModel {
-                    Time = model.Updated.Value,
-                    AuthorityId = model.UpdatedAuditId
+                SelectedFields = document.SelectedFields,
+                State = document.LastResultChange == null ? null : new PublishedDataSetItemStateModel {
+                    LastResult = new ServiceResultModel {
+                        ErrorMessage = document.LastResultErrorMessage,
+                        Diagnostics = document.LastResultDiagnostics,
+                        StatusCode = document.LastResultStatusCode,
+                    },
+                    ServerId = document.ServerId,
+                    ClientId = document.ClientId,
+                    LastResultChange = document.LastResultChange
                 },
-                Created = model.Created == null ? null : new PublisherOperationContextModel {
-                    Time = model.Created.Value,
-                    AuthorityId = model.CreatedAuditId
+                Updated = document.Updated == null ? null : new PublisherOperationContextModel {
+                    Time = document.Updated.Value,
+                    AuthorityId = document.UpdatedAuditId
+                },
+                Created = document.Created == null ? null : new PublisherOperationContextModel {
+                    Time = document.Created.Value,
+                    AuthorityId = document.CreatedAuditId
                 }
             };
         }
@@ -157,39 +183,50 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default {
         /// <summary>
         /// Convert to Service model
         /// </summary>
-        /// <param name="model"></param>
+        /// <param name="document"></param>
         /// <returns></returns>
         public static PublishedDataSetVariableModel ToDataSetVariableModel(
-            this DataSetEntityDocument model) {
-            if (model == null) {
+            this DataSetEntityDocument document) {
+            if (document == null) {
                 return null;
             }
             return new PublishedDataSetVariableModel {
-                Id = model.VariableId,
-                GenerationId = model.ETag,
-                Attribute = model.Attribute,
-                BrowsePath = model.BrowsePath,
-                DataChangeFilter = model.DataChangeFilter,
-                DeadbandType = model.DeadbandType,
-                DeadbandValue = model.DeadbandValue,
-                DiscardNew = model.DiscardNew,
-                PublishedVariableDisplayName = model.DisplayName,
-                HeartbeatInterval = model.HeartbeatInterval,
-                IndexRange = model.IndexRange,
-                MetaDataProperties = model.MetaDataProperties,
-                MonitoringMode = model.MonitoringMode,
-                PublishedVariableNodeId = model.NodeId,
-                QueueSize = model.QueueSize,
-                SamplingInterval = model.SamplingInterval,
-                SubstituteValue = model.SubstituteValue?.Copy(),
-                TriggerId = model.TriggerId,
-                Updated = model.Updated == null ? null : new PublisherOperationContextModel {
-                    Time = model.Updated.Value,
-                    AuthorityId = model.UpdatedAuditId
+                Id = document.VariableId,
+                GenerationId = document.ETag,
+                Attribute = document.Attribute,
+                BrowsePath = document.BrowsePath,
+                DataChangeFilter = document.DataChangeFilter,
+                DeadbandType = document.DeadbandType,
+                DeadbandValue = document.DeadbandValue,
+                DiscardNew = document.DiscardNew,
+                PublishedVariableDisplayName = document.DisplayName,
+                HeartbeatInterval = document.HeartbeatInterval,
+                IndexRange = document.IndexRange,
+                MetaDataProperties = document.MetaDataProperties,
+                MonitoringMode = document.MonitoringMode,
+                PublishedVariableNodeId = document.NodeId,
+                QueueSize = document.QueueSize,
+                Order = document.Order,
+                SamplingInterval = document.SamplingInterval,
+                SubstituteValue = document.SubstituteValue?.Copy(),
+                TriggerId = document.TriggerId,
+                State = document.LastResultChange == null ? null : new PublishedDataSetItemStateModel {
+                    LastResult = new ServiceResultModel {
+                        ErrorMessage = document.LastResultErrorMessage,
+                        Diagnostics = document.LastResultDiagnostics,
+                        StatusCode = document.LastResultStatusCode,
+                    },
+                    ServerId = document.ServerId,
+                    ClientId = document.ClientId,
+                    LastResultChange = document.LastResultChange
                 },
-                Created = model.Created == null ? null : new PublisherOperationContextModel {
-                    Time = model.Created.Value,
-                    AuthorityId = model.CreatedAuditId
+                Updated = document.Updated == null ? null : new PublisherOperationContextModel {
+                    Time = document.Updated.Value,
+                    AuthorityId = document.UpdatedAuditId
+                },
+                Created = document.Created == null ? null : new PublisherOperationContextModel {
+                    Time = document.Created.Value,
+                    AuthorityId = document.CreatedAuditId
                 }
             };
         }

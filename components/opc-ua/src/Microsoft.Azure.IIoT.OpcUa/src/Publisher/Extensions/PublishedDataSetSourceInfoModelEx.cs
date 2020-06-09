@@ -26,7 +26,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
                 User = model.User.Clone(),
                 EndpointId = model.EndpointId,
                 ExtensionFields = model.ExtensionFields,
-                SubscriptionSettings = model.SubscriptionSettings.Clone()
+                SubscriptionSettings = model.SubscriptionSettings.Clone(),
+                State = model.State.Clone(),
+                DiagnosticsLevel = model.DiagnosticsLevel,
+                OperationTimeout = model.OperationTimeout
             };
         }
 
@@ -52,8 +55,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
                     Connection = connection,
                     PublishedEvents = events,
                     PublishedVariables = variables,
-                    SubscriptionSettings = model.SubscriptionSettings.Clone()
+                    SubscriptionSettings = model.SubscriptionSettings.Clone(),
+                    State = model.State.Clone()
                 },
+                DataSetMetaData = null, // TODO
                 ExtensionFields = model.ExtensionFields
             };
         }

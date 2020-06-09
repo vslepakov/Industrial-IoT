@@ -18,7 +18,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Models {
         /// </summary>
         [DataMember(Name = "nodesToAdd", Order = 0,
             EmitDefaultValue = false)]
-        public List<PublishListItemApiModel> NodesToAdd { get; set; }
+        public List<PublishedItemApiModel> NodesToAdd { get; set; }
 
         /// <summary>
         /// Node to remove

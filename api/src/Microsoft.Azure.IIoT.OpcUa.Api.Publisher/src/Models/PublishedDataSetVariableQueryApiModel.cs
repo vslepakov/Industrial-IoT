@@ -10,6 +10,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// <summary>
     /// Query data set variables
     /// </summary>
+    [DataContract]
     public class PublishedDataSetVariableQueryApiModel {
 
         /// <summary>

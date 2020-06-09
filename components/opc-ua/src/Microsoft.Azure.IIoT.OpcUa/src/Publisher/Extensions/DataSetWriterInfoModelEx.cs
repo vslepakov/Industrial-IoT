@@ -81,6 +81,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
                     ExtensionFields = model.ExtensionFields,
                     User = model.User.Clone(),
                     SubscriptionSettings = model.SubscriptionSettings.Clone(),
+                    State = null,
                     DiagnosticsLevel = null,
                     OperationTimeout = null
                 },

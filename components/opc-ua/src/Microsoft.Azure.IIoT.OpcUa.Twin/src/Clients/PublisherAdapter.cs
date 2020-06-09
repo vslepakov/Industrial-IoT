@@ -162,8 +162,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Clients {
         }
 
         /// <inheritdoc/>
-        public async Task<PublishedNodeListModel> NodePublishListAsync(
-            string endpointId, PublishedNodeQueryModel request) {
+        public async Task<PublishedItemListResultModel> NodePublishListAsync(
+            string endpointId, PublishedItemListRequestModel request) {
             if (string.IsNullOrEmpty(endpointId)) {
                 throw new ArgumentNullException(nameof(endpointId));
             }
@@ -172,8 +172,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Clients {
             }
             var writer = await _writers.GetDataSetWriterAsync(endpointId);
             var dataset = writer.DataSet?.DataSetSource?.PublishedVariables?.PublishedData;
-            return new PublishedNodeListModel {
-                Items = dataset?.Select(d => new PublishedNodeModel {
+            return new PublishedItemListResultModel {
+                Items = dataset?.Select(d => new PublishedItemModel {
                     DisplayName = d.PublishedVariableDisplayName,
                     HeartbeatInterval = d.HeartbeatInterval,
                     NodeId = d.PublishedVariableNodeId,

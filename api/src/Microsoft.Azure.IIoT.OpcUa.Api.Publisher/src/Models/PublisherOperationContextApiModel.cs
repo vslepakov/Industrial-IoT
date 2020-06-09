@@ -10,6 +10,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// <summary>
     /// Publisher operation log model
     /// </summary>
+    [DataContract]
     public class PublisherOperationContextApiModel {
 
         /// <summary>

@@ -122,16 +122,12 @@ namespace Microsoft.Azure.IIoT.Services.Processor.Tunnel {
                 .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<EventProcessorFactory>()
                 .AsImplementedInterfaces();
-            // ... and auto start
-            builder.RegisterType<HostAutoStart>()
-                .AutoActivate()
-                .AsImplementedInterfaces().SingleInstance();
 
             // Handle tunnel server events
             builder.RegisterType<IoTHubDeviceEventHandler>()
                 .AsImplementedInterfaces();
             builder.RegisterType<HttpTunnelServer>()
-                .AsImplementedInterfaces().SingleInstance(); // TODO : no singleton?
+                .AsImplementedInterfaces();
 
             // which builds on Iot hub method calls for responses
             builder.RegisterType<ChunkMethodClient>()
@@ -140,6 +136,11 @@ namespace Microsoft.Azure.IIoT.Services.Processor.Tunnel {
                 .AsImplementedInterfaces();
             builder.RegisterType<IoTHubServiceClient>()
                 .AsImplementedInterfaces();
+
+            // ... and auto start
+            builder.RegisterType<HostAutoStart>()
+                .AutoActivate()
+                .AsImplementedInterfaces().SingleInstance();
 
             return builder;
         }

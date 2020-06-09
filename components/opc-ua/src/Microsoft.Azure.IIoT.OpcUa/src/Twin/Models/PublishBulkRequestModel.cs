@@ -15,7 +15,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Models {
         /// <summary>
         /// Node to add
         /// </summary>
-        public List<PublishedNodeModel> NodesToAdd { get; set; }
+        public List<PublishedItemModel> NodesToAdd { get; set; }
 
         /// <summary>
         /// Node to remove

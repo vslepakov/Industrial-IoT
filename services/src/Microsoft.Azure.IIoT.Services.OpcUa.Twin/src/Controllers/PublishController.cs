@@ -111,8 +111,8 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.Controllers {
         /// <param name="request">The list request</param>
         /// <returns>The list of published nodes</returns>
         [HttpPost("{endpointId}")]
-        public async Task<PublishListResponseApiModel> GetFirstListOfPublishedNodesAsync(
-            string endpointId, [FromBody] [Required] PublishListRequestApiModel request) {
+        public async Task<PublishedItemListResponseApiModel> GetFirstListOfPublishedNodesAsync(
+            string endpointId, [FromBody] [Required] PublishedItemListRequestApiModel request) {
             if (request == null) {
                 throw new ArgumentNullException(nameof(request));
             }
@@ -134,13 +134,13 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.Controllers {
         /// <returns>The list of published nodes</returns>
         [HttpGet("{endpointId}")]
         [AutoRestExtension(NextPageLinkName = "continuationToken")]
-        public async Task<PublishListResponseApiModel> GetNextListOfPublishedNodesAsync(
+        public async Task<PublishedItemListResponseApiModel> GetNextListOfPublishedNodesAsync(
             string endpointId, [FromQuery] [Required] string continuationToken) {
             if (Request.Headers.ContainsKey(HttpHeader.ContinuationToken)) {
                 continuationToken = Request.Headers[HttpHeader.ContinuationToken].FirstOrDefault();
             }
             var result = await _publisher.NodePublishListAsync(endpointId,
-                new PublishListRequestApiModel {
+                new PublishedItemListRequestApiModel {
                     ContinuationToken = continuationToken
                 }.ToServiceModel());
             return result.ToApiModel();

@@ -21,6 +21,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Events.v2.Models {
         Updated,
 
         /// <summary>
+        /// State change
+        /// </summary>
+        StateChange,
+
+        /// <summary>
         /// Deleted
         /// </summary>
         Removed,

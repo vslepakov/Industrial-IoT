@@ -10,7 +10,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Models {
     /// <summary>
     /// List of published items
     /// </summary>
-    public class PublishedNodeListModel {
+    public class PublishedItemListResultModel {
 
         /// <summary>
         /// Continuation or null if final
@@ -20,7 +20,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Models {
         /// <summary>
         /// Monitored items
         /// </summary>
-        public List<PublishedNodeModel> Items { get; set; }
+        public List<PublishedItemModel> Items { get; set; }
 
         /// <summary>
         /// Service result in case of error

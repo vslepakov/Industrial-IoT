@@ -8,7 +8,6 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
     using Microsoft.Azure.Devices.Shared;
     using System;
     using System.Collections.Generic;
-    using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -20,14 +19,19 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
         /// <summary>
         /// Sends an event to device hub
         /// </summary>
+        /// <param name="message"></param>
+        /// <param name="ct"></param>
         /// <returns>The message containing the event</returns>
-        Task SendEventAsync(Message message);
+        Task SendEventAsync(Message message, CancellationToken ct = default);
 
         /// <summary>
         /// Sends a batch of events to device hub
         /// </summary>
+        /// <param name="messages"></param>
+        /// <param name="ct"></param>
         /// <returns>The task containing the event</returns>
-        Task SendEventBatchAsync(IEnumerable<Message> messages);
+        Task SendEventBatchAsync(IEnumerable<Message> messages,
+            CancellationToken ct = default);
 
         /// <summary>
         /// Registers a new delegate that is called for a method that
@@ -40,8 +44,8 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
         /// delegate registered for that method name.</param>
         /// <param name="userContext">Generic parameter to be interpreted
         /// by the client code.</param>
-        Task SetMethodDefaultHandlerAsync(
-            MethodCallback methodHandler, object userContext);
+        Task SetMethodDefaultHandlerAsync(MethodCallback methodHandler,
+            object userContext);
 
         /// <summary>
         /// Registers a new delegate for the named method. If a delegate
@@ -54,15 +58,16 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
         /// <param name="userContext">generic parameter to be interpreted
         /// by the client code.</param>
         /// </summary>
-        Task SetMethodHandlerAsync(string methodName,
-            MethodCallback methodHandler, object userContext);
+        Task SetMethodHandlerAsync(string methodName, MethodCallback methodHandler,
+            object userContext);
 
         /// <summary>
         /// Retrieve a device twin object for the current device.
         /// </summary>
+        /// <param name="ct"></param>
         /// <returns>The device twin object for the current
         /// device</returns>
-        Task<Twin> GetTwinAsync();
+        Task<Twin> GetTwinAsync(CancellationToken ct = default);
 
         /// <summary>
         /// Set a callback that will be called whenever the client
@@ -82,7 +87,9 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
         /// </summary>
         /// <param name="reportedProperties">Reported properties
         /// to push</param>
-        Task UpdateReportedPropertiesAsync(TwinCollection reportedProperties);
+        /// <param name="ct"></param>
+        Task UpdateReportedPropertiesAsync(TwinCollection reportedProperties,
+            CancellationToken ct = default);
 
         /// <summary>
         /// Interactively invokes a method on module
@@ -90,22 +97,20 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
         /// <param name="deviceId"></param>
         /// <param name="moduleId"></param>
         /// <param name="methodRequest"></param>
-        /// <param name="cancellationToken"></param>
+        /// <param name="ct"></param>
         /// <returns></returns>
         Task<MethodResponse> InvokeMethodAsync(string deviceId, string moduleId,
-            MethodRequest methodRequest,
-            CancellationToken cancellationToken = default);
+            MethodRequest methodRequest, CancellationToken ct = default);
 
         /// <summary>
         /// Interactively invokes a method on a device.
         /// </summary>
         /// <param name="deviceId"></param>
         /// <param name="methodRequest"></param>
-        /// <param name="cancellationToken"></param>
+        /// <param name="ct"></param>
         /// <returns></returns>
         Task<MethodResponse> InvokeMethodAsync(string deviceId,
-            MethodRequest methodRequest,
-            CancellationToken cancellationToken = default);
+            MethodRequest methodRequest, CancellationToken ct = default);
 
         /// <summary>
         /// Close the DeviceClient instance

@@ -352,7 +352,7 @@ Operations (Mutually exclusive):
 
             /// <inheritdoc/>
             public Task SendEventAsync(byte[] data, string contentType,
-                string eventSchema, string contentEncoding) {
+                string eventSchema, string contentEncoding, CancellationToken ct) {
                 var json = Encoding.UTF8.GetString(data);
                 var o = JsonConvert.DeserializeObject(json);
                 Console.WriteLine(contentType);
@@ -362,20 +362,21 @@ Operations (Mutually exclusive):
 
             /// <inheritdoc/>
             public async Task SendEventAsync(IEnumerable<byte[]> batch, string contentType,
-                string eventSchema, string contentEncoding) {
+                string eventSchema, string contentEncoding, CancellationToken ct) {
                 foreach (var data in batch) {
-                    await SendEventAsync(data, contentType, contentType, contentEncoding);
+                    await SendEventAsync(data, contentType, contentType, contentEncoding, ct);
                 }
             }
 
             /// <inheritdoc/>
-            public Task ReportAsync(string propertyId, VariantValue value) {
+            public Task ReportAsync(string propertyId, VariantValue value, CancellationToken ct) {
                 Console.WriteLine($"{propertyId}={value}");
                 return Task.CompletedTask;
             }
 
             /// <inheritdoc/>
-            public Task ReportAsync(IEnumerable<KeyValuePair<string, VariantValue>> properties) {
+            public Task ReportAsync(IEnumerable<KeyValuePair<string, VariantValue>> properties,
+                CancellationToken ct) {
                 foreach (var prop in properties) {
                     Console.WriteLine($"{prop.Key}={prop.Value}");
                 }

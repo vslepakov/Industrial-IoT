@@ -92,7 +92,7 @@ namespace Microsoft.Azure.IIoT.Hub.Mock {
             }
 
             /// <inheritdoc />
-            public Task SendEventAsync(Message message) {
+            public Task SendEventAsync(Message message, CancellationToken ct) {
                 // Add event to telemetry list
                 if (!IsClosed) {
                     Connection.SendEvent(message);
@@ -101,7 +101,8 @@ namespace Microsoft.Azure.IIoT.Hub.Mock {
             }
 
             /// <inheritdoc />
-            public Task SendEventBatchAsync(IEnumerable<Message> messages) {
+            public Task SendEventBatchAsync(IEnumerable<Message> messages,
+                CancellationToken ct) {
                 if (!IsClosed) {
                     foreach (var message in messages) {
                         Connection.SendEvent(message);
@@ -138,12 +139,13 @@ namespace Microsoft.Azure.IIoT.Hub.Mock {
             }
 
             /// <inheritdoc />
-            public Task<Twin> GetTwinAsync() {
+            public Task<Twin> GetTwinAsync(CancellationToken ct) {
                 return Task.FromResult(IsClosed ? null : Connection.GetTwin());
             }
 
             /// <inheritdoc />
-            public Task UpdateReportedPropertiesAsync(TwinCollection reportedProperties) {
+            public Task UpdateReportedPropertiesAsync(TwinCollection reportedProperties,
+                CancellationToken ct) {
                 if (!IsClosed) {
                     Connection.UpdateReportedProperties(reportedProperties);
                 }

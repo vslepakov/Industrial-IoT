@@ -31,7 +31,7 @@ namespace Microsoft.Azure.IIoT.Module.Framework {
 
             // Edge metrics collection
             builder.RegisterType<PrometheusCollectorHost>()
-                .AsImplementedInterfaces().SingleInstance();
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
             builder.RegisterType<LogAnalyticsMetricsHandler>()
                 .AsImplementedInterfaces().InstancePerLifetimeScope()
                 .PropertiesAutowired(
@@ -62,11 +62,11 @@ namespace Microsoft.Azure.IIoT.Module.Framework {
 
             // Registers edgelet client and token generators
             builder.RegisterType<EdgeletClient>()
-                .AsImplementedInterfaces().SingleInstance();
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
             builder.RegisterType<TokenGenerator>()
-                .AsImplementedInterfaces().SingleInstance();
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
             builder.RegisterType<MemoryCache>()
-                .AsImplementedInterfaces().SingleInstance();
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
 
             base.Load(builder);
         }

@@ -19,7 +19,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Models {
         /// </summary>
         [DataMember(Name = "item", Order = 0)]
         [Required]
-        public PublishListItemApiModel Item { get; set; }
+        public PublishedItemApiModel Item { get; set; }
 
         /// <summary>
         /// Optional request header

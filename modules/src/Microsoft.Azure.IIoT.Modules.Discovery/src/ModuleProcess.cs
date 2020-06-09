@@ -146,9 +146,10 @@ namespace Microsoft.Azure.IIoT.Modules.Discovery {
 
             // Register opc ua services
             builder.RegisterType<ClientServices>()
-                .AsImplementedInterfaces().SingleInstance();
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
             builder.RegisterType<StackLogger>()
-                .AsImplementedInterfaces().SingleInstance().AutoActivate();
+                .AsImplementedInterfaces().InstancePerLifetimeScope()
+                .AutoActivate();
 
             // Register discovery services
             builder.RegisterType<DiscoveryServices>()

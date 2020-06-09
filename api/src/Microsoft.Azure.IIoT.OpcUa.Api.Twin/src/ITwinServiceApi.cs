@@ -147,8 +147,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin {
         /// <param name="request"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        Task<PublishListResponseApiModel> NodePublishListAsync(string endpointId,
-            PublishListRequestApiModel request, CancellationToken ct = default);
+        Task<PublishedItemListResponseApiModel> NodePublishListAsync(string endpointId,
+            PublishedItemListRequestApiModel request, CancellationToken ct = default);
 
         /// <summary>
         /// Start model upload

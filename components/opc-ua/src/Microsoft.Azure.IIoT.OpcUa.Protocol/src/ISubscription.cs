@@ -16,14 +16,24 @@ namespace Microsoft.Azure.IIoT.OpcUa.Protocol {
     public interface ISubscription : IDisposable {
 
         /// <summary>
-        /// Subscription change events
+        /// Subscription notification events
         /// </summary>
-        event EventHandler<SubscriptionNotificationModel> OnSubscriptionChange;
+        event EventHandler<SubscriptionNotificationModel> OnSubscriptionNotification;
 
         /// <summary>
-        /// Item change events
+        /// Item notification events
         /// </summary>
-        event EventHandler<SubscriptionNotificationModel> OnMonitoredItemChange;
+        event EventHandler<SubscriptionNotificationModel> OnMonitoredItemNotification;
+
+        /// <summary>
+        /// Subscription status change events
+        /// </summary>
+        event EventHandler<SubscriptionStatusModel> OnSubscriptionStatusChange;
+
+        /// <summary>
+        /// Item status change events
+        /// </summary>
+        event EventHandler<MonitoredItemStatusModel> OnMonitoredItemStatusChange;
 
         /// <summary>
         /// Identifier of the subscription

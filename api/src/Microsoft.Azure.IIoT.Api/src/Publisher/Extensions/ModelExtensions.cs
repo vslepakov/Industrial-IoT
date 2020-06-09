@@ -675,6 +675,40 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
         /// <summary>
         /// Create api model from service model
         /// </summary>
+        /// <returns></returns>
+        public static PublishedDataSetItemStateApiModel ToApiModel(
+            this PublishedDataSetItemStateModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishedDataSetItemStateApiModel {
+                LastResult = model.LastResult.ToApiModel(),
+                LastResultChange = model.LastResultChange,
+                ClientId = model.ClientId,
+                ServerId = model.ServerId,
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static PublishedDataSetItemStateModel ToServiceModel(
+            this PublishedDataSetItemStateApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishedDataSetItemStateModel {
+                LastResult = model.LastResult.ToServiceModel(),
+                LastResultChange = model.LastResultChange,
+                ClientId = model.ClientId,
+                ServerId = model.ServerId,
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
         /// <param name="model"></param>
         public static PublishedDataSetEventsApiModel ToApiModel(
             this PublishedDataSetEventsModel model) {
@@ -683,6 +717,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
             }
             return new PublishedDataSetEventsApiModel {
                 Id = model.Id,
+                State = model.State.ToApiModel(),
                 GenerationId = model.GenerationId,
                 Created = model.Created.ToApiModel(),
                 Updated = model.Updated.ToApiModel(),
@@ -709,6 +744,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
             }
             return new PublishedDataSetEventsModel {
                 Id = model.Id,
+                State = model.State.ToServiceModel(),
                 GenerationId = model.GenerationId,
                 Created = model.Created.ToServiceModel(),
                 Updated = model.Updated.ToServiceModel(),
@@ -774,6 +810,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
             }
             return new PublishedDataSetSourceApiModel {
                 Connection = model.Connection.ToApiModel(),
+                State = model.State.ToApiModel(),
                 PublishedEvents = model.PublishedEvents.ToApiModel(),
                 PublishedVariables = model.PublishedVariables.ToApiModel(),
                 SubscriptionSettings = model.SubscriptionSettings.ToApiModel()
@@ -790,6 +827,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
             }
             return new PublishedDataSetSourceModel {
                 Connection = model.Connection.ToServiceModel(),
+                State = model.State.ToServiceModel(),
                 PublishedEvents = model.PublishedEvents.ToServiceModel(),
                 PublishedVariables = model.PublishedVariables.ToServiceModel(),
                 SubscriptionSettings = model.SubscriptionSettings.ToServiceModel()
@@ -807,6 +845,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
             }
             return new PublishedDataSetVariableApiModel {
                 Id = model.Id,
+                State = model.State.ToApiModel(),
                 GenerationId = model.GenerationId,
                 Created = model.Created.ToApiModel(),
                 Updated = model.Updated.ToApiModel(),
@@ -840,6 +879,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
             }
             return new PublishedDataSetVariableModel {
                 Id = model.Id,
+                State = model.State.ToServiceModel(),
                 GenerationId = model.GenerationId,
                 Created = model.Created.ToServiceModel(),
                 Updated = model.Updated.ToServiceModel(),
@@ -1113,6 +1153,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new WriterGroupInfoApiModel {
+                State = model.State.ToApiModel(),
                 WriterGroupId = model.WriterGroupId,
                 HeaderLayoutUri = model.HeaderLayoutUri,
                 KeepAliveTime = model.KeepAliveTime,
@@ -1145,6 +1186,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
                 return null;
             }
             return new WriterGroupInfoModel {
+                State = model.State.ToServiceModel(),
                 WriterGroupId = model.WriterGroupId,
                 HeaderLayoutUri = model.HeaderLayoutUri,
                 KeepAliveTime = model.KeepAliveTime,
@@ -1863,7 +1905,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
             };
         }
 
-
         /// <summary>
         /// Create api model from service model
         /// </summary>
@@ -1908,6 +1949,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
             return new PublishedDataSetSourceInfoApiModel {
                 Name = model.Name,
                 OperationTimeout = model.OperationTimeout,
+                State = model.State.ToApiModel(),
                 SubscriptionSettings = model.SubscriptionSettings.ToApiModel(),
                 User = model.User.ToApiModel(),
                 DiagnosticsLevel = (Core.Models.DiagnosticsLevel?)model.DiagnosticsLevel,
@@ -1929,12 +1971,43 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
             return new PublishedDataSetSourceInfoModel {
                 Name = model.Name,
                 OperationTimeout = model.OperationTimeout,
+                State = model.State.ToServiceModel(),
                 SubscriptionSettings = model.SubscriptionSettings.ToServiceModel(),
                 User = model.User.ToServiceModel(),
                 DiagnosticsLevel = (OpcUa.Core.Models.DiagnosticsLevel?)model.DiagnosticsLevel,
                 EndpointId = model.EndpointId,
                 ExtensionFields = model.ExtensionFields?
                     .ToDictionary(kv => kv.Key, kv => kv.Value)
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <returns></returns>
+        public static PublishedDataSetSourceStateApiModel ToApiModel(
+            this PublishedDataSetSourceStateModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishedDataSetSourceStateApiModel {
+                LastResult = model.LastResult.ToApiModel(),
+                LastResultChange = model.LastResultChange
+            };
+        }
+
+        /// <summary>
+        /// Convert back to service model
+        /// </summary>
+        /// <returns></returns>
+        public static PublishedDataSetSourceStateModel ToServiceModel(
+            this PublishedDataSetSourceStateApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishedDataSetSourceStateModel {
+                LastResult = model.LastResult.ToServiceModel(),
+                LastResultChange = model.LastResultChange
             };
         }
 
@@ -2077,6 +2150,35 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
             return new WriterGroupAddResultModel {
                 GenerationId = model.GenerationId,
                 WriterGroupId = model.WriterGroupId
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <param name="model"></param>
+        public static WriterGroupStateApiModel ToApiModel(
+            this WriterGroupStateModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new WriterGroupStateApiModel {
+                State = (WriterGroupState)model.State,
+                LastStateChange = model.LastStateChange
+            };
+        }
+
+        /// <summary>
+        /// Create service model from api model
+        /// </summary>
+        public static WriterGroupStateModel ToServiceModel(
+            this WriterGroupStateApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new WriterGroupStateModel {
+                State = (OpcUa.Publisher.WriterGroupState)model.State,
+                LastStateChange = model.LastStateChange
             };
         }
 

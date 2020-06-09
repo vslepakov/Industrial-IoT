@@ -38,5 +38,25 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher {
         Task<IAsyncDisposable> NodePublishSubscribeByEndpointAsync(
             string endpointId,
             Func<MonitoredItemMessageApiModel, Task> callback);
+
+        /// <summary>
+        /// Subscribe to dataset state changes
+        /// </summary>
+        /// <param name="dataSetWriterId"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
+        Task<IAsyncDisposable> SubscribeDataSetItemStatusAsync(
+            string dataSetWriterId,
+            Func<MonitoredItemMessageApiModel, Task> callback);
+
+        /// <summary>
+        /// Subscribe to dataset telemetry
+        /// </summary>
+        /// <param name="dataSetWriterId"></param>
+        /// <param name="callback"></param>
+        /// <returns></returns>
+        Task<IAsyncDisposable> SubscribeDataSetWriterMessagesAsync(
+            string dataSetWriterId,
+            Func<MonitoredItemMessageApiModel, Task> callback);
     }
 }

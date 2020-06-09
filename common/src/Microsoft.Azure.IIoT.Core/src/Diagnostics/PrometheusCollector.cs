@@ -17,9 +17,9 @@ namespace Microsoft.Azure.IIoT.Diagnostics {
 
             // Register prometheus logging
             builder.RegisterType<PrometheusCollectorHost>()
-                .AsImplementedInterfaces().SingleInstance();
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
             builder.RegisterType<LogAnalyticsConfig>()
-                .AsImplementedInterfaces().SingleInstance();
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
 
             builder.RegisterType<LogAnalyticsMetricsHandler>()
                 .AsImplementedInterfaces().InstancePerLifetimeScope()

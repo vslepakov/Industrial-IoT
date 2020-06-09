@@ -12,6 +12,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// <summary>
     /// Writer group information
     /// </summary>
+    [DataContract]
     public class WriterGroupInfoApiModel {
 
         /// <summary>
@@ -125,16 +126,23 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
         public TimeSpan? KeepAliveTime { get; set; }
 
         /// <summary>
+        /// State of the writer group
+        /// </summary>
+        [DataMember(Name = "state", Order = 17,
+            EmitDefaultValue = false)]
+        public WriterGroupStateApiModel State { get; set; }
+
+        /// <summary>
         /// Last updated
         /// </summary>
-        [DataMember(Name = "updated", Order = 17,
+        [DataMember(Name = "updated", Order = 18,
             EmitDefaultValue = false)]
         public PublisherOperationContextApiModel Updated { get; set; }
 
         /// <summary>
         /// Created
         /// </summary>
-        [DataMember(Name = "created", Order = 18,
+        [DataMember(Name = "created", Order = 19,
             EmitDefaultValue = false)]
         public PublisherOperationContextApiModel Created { get; set; }
     }

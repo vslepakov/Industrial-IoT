@@ -54,7 +54,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.History {
             builder.RegisterType<TransferServicesStub<EndpointModel>>()
                 .AsImplementedInterfaces();
             builder.RegisterType<VariantEncoderFactory>()
-                .AsImplementedInterfaces().SingleInstance();
+                .AsImplementedInterfaces();
 
             builder.RegisterType<TestAuthConfig>()
                 .AsImplementedInterfaces();

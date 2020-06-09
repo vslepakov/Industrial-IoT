@@ -29,6 +29,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
         public CredentialModel User { get; set; }
 
         /// <summary>
+        /// Source state
+        /// </summary>
+        public PublishedDataSetSourceStateModel State { get; set; }
+
+        /// <summary>
         /// Subscription settings
         /// </summary>
         public PublishedDataSetSourceSettingsModel SubscriptionSettings { get; set; }

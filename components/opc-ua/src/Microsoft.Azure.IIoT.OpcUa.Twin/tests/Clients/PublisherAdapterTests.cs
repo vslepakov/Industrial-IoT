@@ -48,14 +48,14 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
 
                 // Run
                 var result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                    Item = new PublishedNodeModel {
+                    Item = new PublishedItemModel {
                         NodeId = "i=2258",
                         PublishingInterval = TimeSpan.FromSeconds(2),
                         SamplingInterval = TimeSpan.FromSeconds(1)
                     }
                 });
 
-                var list = await service.NodePublishListAsync("endpoint1", new PublishedNodeQueryModel {
+                var list = await service.NodePublishListAsync("endpoint1", new PublishedItemListRequestModel {
                     ContinuationToken = null
                 });
 
@@ -89,12 +89,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
 
                 // Run
                 var result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                    Item = new PublishedNodeModel {
+                    Item = new PublishedItemModel {
                         NodeId = "i=2258"
                     }
                 });
 
-                var list = await service.NodePublishListAsync("endpoint1", new PublishedNodeQueryModel {
+                var list = await service.NodePublishListAsync("endpoint1", new PublishedItemListRequestModel {
                     ContinuationToken = null
                 });
 
@@ -128,7 +128,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
 
                 // Run
                 var result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                    Item = new PublishedNodeModel {
+                    Item = new PublishedItemModel {
                         NodeId = "i=2258",
                         PublishingInterval = TimeSpan.FromSeconds(2),
                         SamplingInterval = TimeSpan.FromSeconds(1)
@@ -139,7 +139,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
                     NodeId = "i=2258"
                 });
 
-                var list = await service.NodePublishListAsync("endpoint1", new PublishedNodeQueryModel {
+                var list = await service.NodePublishListAsync("endpoint1", new PublishedItemListRequestModel {
                     ContinuationToken = null
                 });
 
@@ -171,14 +171,14 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
 
                 // Run
                 var result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                    Item = new PublishedNodeModel {
+                    Item = new PublishedItemModel {
                         NodeId = "i=2258",
                         PublishingInterval = TimeSpan.FromSeconds(2),
                         SamplingInterval = TimeSpan.FromSeconds(1)
                     }
                 });
                 result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                    Item = new PublishedNodeModel {
+                    Item = new PublishedItemModel {
                         NodeId = "i=2258",
                         PublishingInterval = TimeSpan.FromSeconds(2),
                         SamplingInterval = TimeSpan.FromSeconds(1)
@@ -186,7 +186,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
                 });
 
 
-                var list = await service.NodePublishListAsync("endpoint1", new PublishedNodeQueryModel {
+                var list = await service.NodePublishListAsync("endpoint1", new PublishedItemListRequestModel {
                     ContinuationToken = null
                 });
 
@@ -227,14 +227,14 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
 
                 // Run
                 var result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                    Item = new PublishedNodeModel {
+                    Item = new PublishedItemModel {
                         NodeId = "i=2258",
                         PublishingInterval = TimeSpan.FromSeconds(2),
                         SamplingInterval = TimeSpan.FromSeconds(1)
                     }
                 });
                 result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                    Item = new PublishedNodeModel {
+                    Item = new PublishedItemModel {
                         NodeId = "i=2259",
                         PublishingInterval = TimeSpan.FromSeconds(2),
                         SamplingInterval = TimeSpan.FromSeconds(1)
@@ -242,7 +242,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
                 });
 
 
-                var list = await service.NodePublishListAsync("endpoint1", new PublishedNodeQueryModel {
+                var list = await service.NodePublishListAsync("endpoint1", new PublishedItemListRequestModel {
                     ContinuationToken = null
                 });
 
@@ -283,21 +283,21 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
 
                 // Run
                 var result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                    Item = new PublishedNodeModel {
+                    Item = new PublishedItemModel {
                         NodeId = "i=2258",
                         PublishingInterval = TimeSpan.FromSeconds(2),
                         SamplingInterval = TimeSpan.FromSeconds(1)
                     }
                 });
                 result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                    Item = new PublishedNodeModel {
+                    Item = new PublishedItemModel {
                         NodeId = "i=2258",
                         PublishingInterval = TimeSpan.FromSeconds(3),
                         SamplingInterval = TimeSpan.FromSeconds(2)
                     }
                 });
 
-                var list = await service.NodePublishListAsync("endpoint1", new PublishedNodeQueryModel {
+                var list = await service.NodePublishListAsync("endpoint1", new PublishedItemListRequestModel {
                     ContinuationToken = null
                 });
 
@@ -339,7 +339,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
                 // Run
                 for (var i = 0; i < 100; i++) {
                     var result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                        Item = new PublishedNodeModel {
+                        Item = new PublishedItemModel {
                             NodeId = "i=" + (i + 1000),
                             PublishingInterval = TimeSpan.FromSeconds(i),
                             SamplingInterval = TimeSpan.FromSeconds(i+1)
@@ -354,7 +354,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
                     Assert.NotNull(result);
                 }
 
-                var list = await service.NodePublishListAsync("endpoint1", new PublishedNodeQueryModel {
+                var list = await service.NodePublishListAsync("endpoint1", new PublishedItemListRequestModel {
                     ContinuationToken = null
                 });
 
@@ -366,7 +366,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
                 // Run
                 for (var i = 0; i < 100; i++) {
                     var result = await service.NodePublishStartAsync("endpoint1", new PublishStartRequestModel {
-                        Item = new PublishedNodeModel {
+                        Item = new PublishedItemModel {
                             NodeId = "i=" + (i + 2000),
                             PublishingInterval = TimeSpan.FromSeconds(i),
                             SamplingInterval = TimeSpan.FromSeconds(i + 1)
@@ -381,7 +381,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
                     Assert.NotNull(result);
                 }
 
-                list = await service.NodePublishListAsync("endpoint1", new PublishedNodeQueryModel {
+                list = await service.NodePublishListAsync("endpoint1", new PublishedItemListRequestModel {
                     ContinuationToken = null
                 });
 
@@ -423,7 +423,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Services {
                 builder.RegisterType<DataSetEntityDatabase>().AsImplementedInterfaces();
                 builder.RegisterType<DataSetWriterDatabase>().AsImplementedInterfaces();
                 builder.RegisterType<WriterGroupDatabase>().AsImplementedInterfaces();
-                builder.RegisterType<WriterGroupServices>().AsImplementedInterfaces();
+                builder.RegisterType<WriterGroupManagement>().AsImplementedInterfaces();
                 builder.RegisterType<PublisherAdapter>().As<IPublishServices>();
             });
             return mock;

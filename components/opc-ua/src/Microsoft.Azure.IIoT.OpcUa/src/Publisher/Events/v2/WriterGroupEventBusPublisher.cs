@@ -11,7 +11,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Events.v2 {
     using System.Threading.Tasks;
 
     /// <summary>
-    /// Writer group registry event discoverer
+    /// Writer group registry event publisher
     /// </summary>
     public class WriterGroupEventBusPublisher : IWriterGroupRegistryListener {
 
@@ -39,6 +39,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Events.v2 {
         }
 
         /// <inheritdoc/>
+        public Task OnWriterGroupStateChangeAsync(PublisherOperationContextModel context,
+            WriterGroupInfoModel writerGroup) {
+            return _bus.PublishAsync(Wrap(WriterGroupEventType.StateChange, context,
+                writerGroup.WriterGroupId, writerGroup));
+        }
+
+        /// <inheritdoc/>
         public Task OnWriterGroupRemovedAsync(PublisherOperationContextModel context,
             string writerGroupId) {
             return _bus.PublishAsync(Wrap(WriterGroupEventType.Removed, context,
@@ -50,16 +57,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Events.v2 {
         /// </summary>
         /// <param name="type"></param>
         /// <param name="context"></param>
-        /// <param name="discovererId"></param>
+        /// <param name="writerGroupId"></param>
         /// <param name="writerGroup"></param>
         /// <returns></returns>
         private static WriterGroupEventModel Wrap(WriterGroupEventType type,
-            PublisherOperationContextModel context, string discovererId,
+            PublisherOperationContextModel context, string writerGroupId,
             WriterGroupInfoModel writerGroup) {
             return new WriterGroupEventModel {
                 EventType = type,
                 Context = context,
-                Id = discovererId,
+                Id = writerGroupId,
                 WriterGroup = writerGroup
             };
         }

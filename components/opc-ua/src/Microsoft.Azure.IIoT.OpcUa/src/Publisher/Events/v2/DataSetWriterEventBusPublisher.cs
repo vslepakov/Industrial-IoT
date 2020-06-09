@@ -31,6 +31,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Events.v2 {
         }
 
         /// <inheritdoc/>
+        public Task OnDataSetWriterStateChangeAsync(PublisherOperationContextModel context,
+            string dataSetWriterId, DataSetWriterInfoModel dataSetWriter) {
+            return _bus.PublishAsync(Wrap(DataSetWriterEventType.StateChange, context,
+                dataSetWriterId, dataSetWriter));
+        }
+
+        /// <inheritdoc/>
         public Task OnDataSetWriterUpdatedAsync(PublisherOperationContextModel context,
             string dataSetWriterId, DataSetWriterInfoModel dataSetWriter) {
             return _bus.PublishAsync(Wrap(DataSetWriterEventType.Updated, context,
@@ -45,20 +52,20 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Events.v2 {
         }
 
         /// <summary>
-        /// Create application event
+        /// Create data set writer event
         /// </summary>
         /// <param name="type"></param>
         /// <param name="context"></param>
-        /// <param name="applicationId"></param>
+        /// <param name="dataSetWriterId"></param>
         /// <param name="dataSetWriter"></param>
         /// <returns></returns>
         private static DataSetWriterEventModel Wrap(DataSetWriterEventType type,
-            PublisherOperationContextModel context, string applicationId,
+            PublisherOperationContextModel context, string dataSetWriterId,
             DataSetWriterInfoModel dataSetWriter) {
             return new DataSetWriterEventModel {
                 EventType = type,
                 Context = context,
-                Id = applicationId,
+                Id = dataSetWriterId,
                 DataSetWriter = dataSetWriter
             };
         }

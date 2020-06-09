@@ -64,6 +64,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
         public string GenerationId { get; set; }
 
         /// <summary>
+        /// Events state
+        /// </summary>
+        public PublishedDataSetItemStateModel State { get; set; }
+
+        /// <summary>
         /// Last updated
         /// </summary>
         public PublisherOperationContextModel Updated { get; set; }

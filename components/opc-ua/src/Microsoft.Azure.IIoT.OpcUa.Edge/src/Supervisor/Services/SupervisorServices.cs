@@ -272,7 +272,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Supervisor.Services {
                 // Create twin scoped component context for the host
                 _container = outer._factory.Create(builder => {
                     builder.RegisterInstance(this)
-                        .AsImplementedInterfaces().SingleInstance();
+                        .AsImplementedInterfaces();
                 });
 
                 _cts = new CancellationTokenSource();

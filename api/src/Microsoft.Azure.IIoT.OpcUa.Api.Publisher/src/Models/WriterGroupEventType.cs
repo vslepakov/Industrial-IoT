@@ -25,6 +25,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
         Updated,
 
         /// <summary>
+        /// State changed
+        /// </summary>
+        [EnumMember]
+        StateChange,
+
+        /// <summary>
         /// Deleted
         /// </summary>
         [EnumMember]

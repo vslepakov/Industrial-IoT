@@ -11,6 +11,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// <summary>
     /// Writer group update request
     /// </summary>
+    [DataContract]
     public class WriterGroupUpdateRequestApiModel {
 
         /// <summary>

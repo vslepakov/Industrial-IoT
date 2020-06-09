@@ -36,8 +36,8 @@ namespace Microsoft.Azure.IIoT.App.Services {
         /// </summary>
         /// <param name="endpointId"></param>
         /// <returns>PublishedNode</returns>
-        public async Task<PagedResult<PublishListItemApiModel>> PublishedAsync(string endpointId) {
-            var pageResult = new PagedResult<PublishListItemApiModel>();
+        public async Task<PagedResult<PublishedItemApiModel>> PublishedAsync(string endpointId) {
+            var pageResult = new PagedResult<PublishedItemApiModel>();
             try {
                 var continuationToken = string.Empty;
                 do {
@@ -80,7 +80,7 @@ namespace Microsoft.Azure.IIoT.App.Services {
 
             try {
                 var requestApiModel = new PublishStartRequestApiModel() {
-                    Item = new PublishListItemApiModel() {
+                    Item = new PublishedItemApiModel() {
                         NodeId = nodeId,
                         DisplayName = displayName,
                         SamplingInterval = samplingInterval,

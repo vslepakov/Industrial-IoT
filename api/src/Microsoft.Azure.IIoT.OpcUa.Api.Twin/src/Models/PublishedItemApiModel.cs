@@ -12,7 +12,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Models {
     /// A monitored and published item in a start request
     /// </summary>
     [DataContract]
-    public class PublishListItemApiModel {
+    public class PublishedItemApiModel {
 
         /// <summary>
         /// Node to monitor

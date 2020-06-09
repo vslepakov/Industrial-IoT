@@ -8,7 +8,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Twin.Models {
     /// <summary>
     /// Query list of published items
     /// </summary>
-    public class PublishedNodeQueryModel {
+    public class PublishedItemListRequestModel {
 
         /// <summary>
         /// Continuation token or null to start

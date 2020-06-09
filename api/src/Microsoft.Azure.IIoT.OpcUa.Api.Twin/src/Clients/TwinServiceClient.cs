@@ -281,8 +281,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
         }
 
         /// <inheritdoc/>
-        public async Task<PublishListResponseApiModel> NodePublishListAsync(
-            string endpointId, PublishListRequestApiModel content, CancellationToken ct) {
+        public async Task<PublishedItemListResponseApiModel> NodePublishListAsync(
+            string endpointId, PublishedItemListRequestApiModel content, CancellationToken ct) {
             if (string.IsNullOrEmpty(endpointId)) {
                 throw new ArgumentNullException(nameof(endpointId));
             }
@@ -291,7 +291,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
             _serializer.SerializeToRequest(request, content);
             var response = await _httpClient.PostAsync(request, ct).ConfigureAwait(false);
             response.Validate();
-            return _serializer.DeserializeResponse<PublishListResponseApiModel>(response);
+            return _serializer.DeserializeResponse<PublishedItemListResponseApiModel>(response);
         }
 
         /// <inheritdoc/>

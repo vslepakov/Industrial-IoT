@@ -256,8 +256,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
                         }))
                     .SelectMany(dataSetSourceBatches => dataSetSourceBatches
                         .Select(dataSetSource => new DataSetWriterModel {
-                            DataSetWriterId = $"{dataSetSource.Connection.Endpoint.Url}_" +
-                                $"{dataSetSource.GetHashSafe()}",
+                            DataSetWriterId = dataSetSource.Connection.Endpoint.Url + "_" + Hash(dataSetSource),
                             DataSet = new PublishedDataSetModel {
                                 DataSetSource = dataSetSource.Clone(),
                             },
@@ -286,6 +285,26 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
                 _logger.Error(ex, "failed to convert published nodes to dataset writers.");
                 return Enumerable.Empty<DataSetWriterModel>();
             }
+        }
+
+        /// <summary>
+        /// Get an id for data source
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        public static string Hash(PublishedDataSetSourceModel model) {
+            var id = model.Connection?.Endpoint?.Url +
+                model.Connection?.Endpoint?.SecurityMode.ToString() +
+                model.Connection?.Endpoint?.SecurityPolicy +
+                model.Connection?.User?.Type.ToString() +
+                model.Connection?.User?.Value.ToJson() +
+                model.SubscriptionSettings?.PublishingInterval.ToString() +
+                model.PublishedVariables.PublishedData.First()?.Id +
+                model.PublishedVariables.PublishedData.First()?.PublishedVariableNodeId +
+                model.PublishedVariables.PublishedData.First()?.PublishedVariableDisplayName +
+                model.PublishedVariables.PublishedData.First()?.SamplingInterval +
+                model.PublishedVariables.PublishedData.First()?.HeartbeatInterval;
+            return id.ToSha1Hash();
         }
 
         /// <summary>

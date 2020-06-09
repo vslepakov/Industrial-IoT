@@ -109,8 +109,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher {
         /// <param name="generationId"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        Task DeleteDataSetVariableAsync(string dataSetWriterId, string variableId,
-            string generationId, CancellationToken ct = default);
+        Task DeleteDataSetVariableAsync(string dataSetWriterId,
+            string variableId, string generationId, CancellationToken ct = default);
 
         /// <summary>
         /// Delete event dataset

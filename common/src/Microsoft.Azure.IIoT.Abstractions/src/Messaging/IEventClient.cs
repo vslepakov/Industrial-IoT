@@ -5,6 +5,7 @@
 
 namespace Microsoft.Azure.IIoT.Messaging {
     using System.Collections.Generic;
+    using System.Threading;
     using System.Threading.Tasks;
 
     /// <summary>
@@ -19,9 +20,11 @@ namespace Microsoft.Azure.IIoT.Messaging {
         /// <param name="contentType"></param>
         /// <param name="eventSchema"></param>
         /// <param name="contentEncoding"></param>
+        /// <param name="ct"></param>
         /// <returns></returns>
-        Task SendEventAsync(byte[] data, string contentType,
-            string eventSchema, string contentEncoding);
+        Task SendEventAsync(byte[] data,
+            string contentType, string eventSchema,
+            string contentEncoding, CancellationToken ct = default);
 
         /// <summary>
         /// Send batch of events
@@ -30,9 +33,10 @@ namespace Microsoft.Azure.IIoT.Messaging {
         /// <param name="contentType"></param>
         /// <param name="eventSchema"></param>
         /// <param name="contentEncoding"></param>
+        /// <param name="ct"></param>
         /// <returns></returns>
         Task SendEventAsync(IEnumerable<byte[]> batch,
             string contentType, string eventSchema,
-            string contentEncoding);
+            string contentEncoding, CancellationToken ct = default);
     }
 }

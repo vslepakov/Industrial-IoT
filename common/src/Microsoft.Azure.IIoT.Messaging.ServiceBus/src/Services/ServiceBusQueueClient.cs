@@ -10,6 +10,7 @@ namespace Microsoft.Azure.IIoT.Messaging.ServiceBus.Services {
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
 
     /// <summary>
@@ -51,7 +52,7 @@ namespace Microsoft.Azure.IIoT.Messaging.ServiceBus.Services {
 
             /// <inheritdoc/>
             public async Task SendAsync(byte[] payload, IDictionary<string, string> properties,
-                string partitionKey) {
+                string partitionKey, CancellationToken ct) {
                 var msg = new Message(payload);
                 if (properties != null) {
                     foreach (var prop in properties) {
@@ -68,14 +69,14 @@ namespace Microsoft.Azure.IIoT.Messaging.ServiceBus.Services {
 
             /// <inheritdoc/>
             public async Task SendEventAsync(byte[] data, string contentType,
-                string eventSchema, string contentEncoding) {
+                string eventSchema, string contentEncoding, CancellationToken ct) {
                 var client = await _outer._factory.CreateOrGetGetQueueClientAsync(_name);
                 await client.SendAsync(CreateMessage(data, contentType, eventSchema, contentEncoding));
             }
 
             /// <inheritdoc/>
             public async Task SendEventAsync(IEnumerable<byte[]> batch, string contentType,
-                string eventSchema, string contentEncoding) {
+                string eventSchema, string contentEncoding, CancellationToken ct) {
                 var client = await _outer._factory.CreateOrGetGetQueueClientAsync(_name);
                 await client.SendAsync(batch
                     .Select(b => CreateMessage(b, contentType, eventSchema, contentEncoding))

@@ -106,12 +106,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
         }
 
         /// <inheritdoc/>
-        public string MessageSchema {
-            get => _messageSchema;
-            set {
-                _messageSchema = value;
-            }
-        }
+        public string MessageSchema { get; set; }
 
         /// <inheritdoc/>
         public string HeaderLayoutUri { get; set; }
@@ -141,11 +136,14 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
         /// Create writer group processor
         /// </summary>
         /// <param name="encoders"></param>
+        /// <param name="state"></param>
         /// <param name="events"></param>
         /// <param name="subscriptions"></param>
         /// <param name="logger"></param>
         public WriterGroupProcessingEngine(IEventEmitter events, ISubscriptionManager subscriptions,
-            IEnumerable<INetworkMessageEncoder> encoders, ILogger logger) {
+            IEnumerable<INetworkMessageEncoder> encoders, IWriterGroupStateReporter state,
+            ILogger logger) {
+            _state = state ?? throw new ArgumentNullException(nameof(state));
             _events = events ?? throw new ArgumentNullException(nameof(events));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _subscriptions = subscriptions ?? throw new ArgumentNullException(nameof(subscriptions));
@@ -442,9 +440,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
                     return;
                 }
 
-                var sc = await _outer._subscriptions.GetOrCreateSubscriptionAsync(
-                    _subscriptionInfo);
-                sc.OnSubscriptionChange += OnSubscriptionChangedAsync;
+                var sc = await _outer._subscriptions.GetOrCreateSubscriptionAsync(_subscriptionInfo);
+
+                sc.OnSubscriptionNotification += OnSubscriptionChangedAsync;
+                sc.OnMonitoredItemStatusChange += OnMonitoredItemStatusAsync;
+                sc.OnSubscriptionStatusChange += OnSubscriptionStatusAsync;
+
                 await sc.ApplyAsync(_subscriptionInfo.MonitoredItems,
                     _subscriptionInfo.Configuration, false);
                 Subscription = sc;
@@ -498,8 +499,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
             /// <inheritdoc/>
             public void Dispose() {
                 if (Subscription != null) {
-                    Subscription.OnSubscriptionChange -= OnSubscriptionChangedAsync;
                     Subscription.ApplyAsync(null, _subscriptionInfo.Configuration, false);
+
+                    Subscription.OnSubscriptionNotification -= OnSubscriptionChangedAsync;
+                    Subscription.OnMonitoredItemStatusChange -= OnMonitoredItemStatusAsync;
+                    Subscription.OnSubscriptionStatusChange -= OnSubscriptionStatusAsync;
+
                     Subscription.Dispose();
                 }
                 _keyframeTimer?.Dispose();
@@ -541,21 +546,67 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
             }
 
             /// <summary>
+            /// Handle subscription status changes
+            /// </summary>
+            /// <param name="sender"></param>
+            /// <param name="e"></param>
+            private void OnSubscriptionStatusAsync(object sender, SubscriptionStatusModel e) {
+                var state = new PublishedDataSetSourceStateModel {
+                    LastResultChange = DateTime.UtcNow,
+                    LastResult = e.Error,
+
+                    // ...
+                };
+                _outer._state.OnDataSetWriterStateChange(_dataSetWriter.DataSetWriterId, state);
+            }
+
+            /// <summary>
+            /// Process monitored item status change message
+            /// </summary>
+            /// <param name="sender"></param>
+            /// <param name="e"></param>
+            private void OnMonitoredItemStatusAsync(object sender, MonitoredItemStatusModel e) {
+                var state = new PublishedDataSetItemStateModel {
+                    LastResultChange = DateTime.UtcNow,
+                    LastResult = e.Error,
+                    ServerId = e.ServerId,
+                    ClientId = e.ClientHandle,
+
+                    // ...
+                };
+
+                var item = _subscriptionInfo.MonitoredItems.FirstOrDefault(m => m.Id == e.Id);
+                if (item.EventFilter == null) {
+                    // Report as variable state change
+                    _outer._state.OnDataSetVariableStateChange(_dataSetWriter.DataSetWriterId,
+                        item.Id, state);
+                }
+                else {
+                    // Report as event state
+                    _outer._state.OnDataSetEventStateChange(_dataSetWriter.DataSetWriterId, state);
+                }
+            }
+
+            /// <summary>
             /// Handle subscription change messages
             /// </summary>
             /// <param name="sender"></param>
-            /// <param name="notification"></param>
-            private async void OnSubscriptionChangedAsync(
-                object sender, SubscriptionNotificationModel notification) {
-                var sequenceNumber = (uint)Interlocked.Increment(ref _currentSequenceNumber);
-                if (_keyFrameCount.HasValue && _keyFrameCount.Value != 0 &&
-                    (sequenceNumber % _keyFrameCount.Value) == 0) {
-                    var snapshot = await Try.Async(() => Subscription.GetSnapshotAsync());
-                    if (snapshot != null) {
-                        notification = snapshot;
+            /// <param name="e"></param>
+            private async void OnSubscriptionChangedAsync(object sender, SubscriptionNotificationModel e) {
+                try {
+                    var sequenceNumber = (uint)Interlocked.Increment(ref _currentSequenceNumber);
+                    if (_keyFrameCount.HasValue && _keyFrameCount.Value != 0 &&
+                        (sequenceNumber % _keyFrameCount.Value) == 0) {
+                        var snapshot = await Try.Async(() => Subscription.GetSnapshotAsync());
+                        if (snapshot != null) {
+                            e = snapshot;
+                        }
                     }
+                    _outer.ProcessDataSetWriterNotification(_dataSetWriter, sequenceNumber, e);
                 }
-                _outer.ProcessDataSetWriterNotification(_dataSetWriter, sequenceNumber, notification);
+                catch (Exception ex) {
+                    _logger.Error(ex, "Failed to process writer notification");
+                }
             }
 
             private readonly System.Timers.Timer _keyframeTimer;
@@ -618,6 +669,21 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
             return encoder.EncodeBatch(input, (int)MaxNetworkMessageSize.Value);
         }
 
+        // Services
+        private readonly Dictionary<string, INetworkMessageEncoder> _encoders;
+        private readonly ISubscriptionManager _subscriptions;
+        private readonly IWriterGroupStateReporter _state;
+        private readonly IEventEmitter _events;
+        private readonly ILogger _logger;
+
+        // State
+        private readonly ConcurrentDictionary<string, DataSetWriterSubscription> _writers;
+        private uint? _maxEncodedMessageSize;
+        private int? _batchSize;
+        private TimeSpan? _publishingInterval;
+        private string _writerGroupId;
+        private readonly DataFlowEngine _engine;
+
         /// <summary>
         /// Diagnostics timer
         /// </summary>
@@ -635,20 +701,25 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
                 .Select(sc => sc.Subscription)
                 .Sum(sc => sc.NumberOfConnectionRetries);
 
+            var notificationsProcessedCount = _encoders.Values.Sum(e => e.NotificationsProcessedCount);
+            var messagesProcessedCount = _encoders.Values.Sum(e => e.MessagesProcessedCount);
+            var notificationsDroppedCount = _encoders.Values.Sum(e => e.NotificationsDroppedCount);
+            var avgNotificationsPerMessage = _encoders.Values.Sum(e => e.AvgNotificationsPerMessage);
+            var avgMessageSize = _encoders.Values.Sum(e => e.AvgMessageSize);
+
             var diagInfo = new StringBuilder();
             diagInfo.AppendLine();
             diagInfo.AppendLine("   DIAGNOSTICS INFORMATION for         : {publisherId}:{writerGroupId}");
             diagInfo.AppendLine("   # Ingestion duration                : {duration,14:dd\\:hh\\:mm\\:ss} (dd:hh:mm:ss)");
             diagInfo.AppendLine("   # Ingress DataChanges (from OPC)    : {dataChangesCount,14:0}({dataChangesAverage:0.##}/s)");
             diagInfo.AppendLine("   # Ingress ValueChanges (from OPC)   : {valueChangesCount,14:0}({valueChangesAverage:0.##}/s)");
-
             diagInfo.AppendLine("   # Ingress BatchBlock buffer size    : {sourceMessageCount,14:0}");
             diagInfo.AppendLine("   # Encoding Block input/output size  : {encodingBlockInputCount,14:0} | {encodingBlockOutputCount:0}");
-            // diagInfo.AppendLine("   # Encoder Notifications processed   : {notificationsProcessedCount,14:0}");
-            // diagInfo.AppendLine("   # Encoder Notifications dropped     : {notificationsDroppedCount,14:0}");
-            // diagInfo.AppendLine("   # Encoder IoT Messages processed    : {messagesProcessedCount,14:0}");
-            // diagInfo.AppendLine("   # Encoder avg Notifications/Message : {notificationsPerMessage,14:0}");
-            // diagInfo.AppendLine("   # Encoder avg IoT Message body size : {messageSizeAverage,14:0}");
+            diagInfo.AppendLine("   # Encoder Notifications processed   : {notificationsProcessedCount,14:0}");
+            diagInfo.AppendLine("   # Encoder Notifications dropped     : {notificationsDroppedCount,14:0}");
+            diagInfo.AppendLine("   # Encoder IoT Messages processed    : {messagesProcessedCount,14:0}");
+            diagInfo.AppendLine("   # Encoder avg Notifications/Message : {notificationsPerMessage,14:0}");
+            diagInfo.AppendLine("   # Encoder avg IoT Message body size : {messageSizeAverage,14:0}");
             diagInfo.AppendLine("   # Outgress input buffer count       : {sinkBlockInputCount,14:0}");
             diagInfo.AppendLine("   # Outgress IoT message count        : {messageSinkSentMessagesCount,14:0}({sentMessagesAverage:0.##}/s)");
             diagInfo.AppendLine("   # Connection retries                : {connectionRetries,14:0}");
@@ -667,11 +738,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
                 _valueChangesCount, valueChangesAverage,
                 _engine?.SourceMessageCount,
                 _engine?.EncodingInputCount, _engine?.EncodingOutputCount,
-                // _messageEncoder.NotificationsProcessedCount,
-                // _messageEncoder.NotificationsDroppedCount,
-                // _messageEncoder.MessagesProcessedCount,
-                // _messageEncoder.AvgNotificationsPerMessage,
-                // _messageEncoder.AvgMessageSize,
+                notificationsProcessedCount,
+                notificationsDroppedCount,
+                messagesProcessedCount,
+                avgNotificationsPerMessage,
+                avgMessageSize,
                 _engine?.SentPendingCount,
                 _engine.SentCompleteCount, sentMessagesAverage,
                 numberOfConnectionRetries);
@@ -684,16 +755,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
                 .Set(_valueChangesCount);
             kValueChangesPerSecond.WithLabels(PublisherId, writerGroupId)
                 .Set(_valueChangesCount / totalDuration);
-            //    kNotificationsProcessedCount.WithLabels(PublisherId, writerGroupId)
-            //        .Set(_messageEncoder.NotificationsProcessedCount);
-            //    kNotificationsDroppedCount.WithLabels(PublisherId, writerGroupId)
-            //        .Set(_messageEncoder.NotificationsDroppedCount);
-            //    kMessagesProcessedCount.WithLabels(PublisherId, writerGroupId)
-            //        .Set(_messageEncoder.MessagesProcessedCount);
-            //    kNotificationsPerMessageAvg.WithLabels(PublisherId, writerGroupId)
-            //        .Set(_messageEncoder.AvgNotificationsPerMessage);
-            //    kMesageSizeAvg.WithLabels(PublisherId, writerGroupId)
-            //        .Set(_messageEncoder.AvgMessageSize);
+            kNotificationsProcessedCount.WithLabels(PublisherId, writerGroupId)
+                .Set(notificationsProcessedCount);
+            kNotificationsDroppedCount.WithLabels(PublisherId, writerGroupId)
+                .Set(notificationsDroppedCount);
+            kMessagesProcessedCount.WithLabels(PublisherId, writerGroupId)
+                .Set(messagesProcessedCount);
+            kNotificationsPerMessageAvg.WithLabels(PublisherId, writerGroupId)
+                .Set(avgNotificationsPerMessage);
+            kMesageSizeAvg.WithLabels(PublisherId, writerGroupId)
+                .Set(avgMessageSize);
             kIoTHubQueueBuffer.WithLabels(PublisherId, writerGroupId)
                 .Set((long)_engine?.SentPendingCount);
             kSentMessagesCount.WithLabels(PublisherId, writerGroupId)
@@ -702,27 +773,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
                 .Set(numberOfConnectionRetries);
         }
 
-        // Services
-        private readonly Dictionary<string, INetworkMessageEncoder> _encoders;
-        private readonly ISubscriptionManager _subscriptions;
-        private readonly IEventEmitter _events;
-        private readonly ILogger _logger;
-
-        // State
-        private readonly ConcurrentDictionary<string, DataSetWriterSubscription> _writers;
-        private uint? _maxEncodedMessageSize;
-        private int? _batchSize;
-        private TimeSpan? _publishingInterval;
-        private readonly DataFlowEngine _engine;
-
         // Diagnostics
         private readonly DateTime _diagnosticStart = DateTime.UtcNow;
         private TimeSpan? _diagnosticsInterval;
         private readonly Timer _diagnosticsOutputTimer;
         private long _valueChangesCount;
         private long _dataChangesCount;
-        private string _writerGroupId;
-        private string _messageSchema;
+
         private static readonly GaugeConfiguration kGaugeConfig = new GaugeConfiguration {
             LabelNames = new[] { "publisherid", "triggerid" }
         };

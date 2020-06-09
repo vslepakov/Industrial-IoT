@@ -15,17 +15,17 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events.Controllers {
     /// Value and Event monitoring services
     /// </summary>
     [ApiVersion("2")]
-    [Route("v{version:apiVersion}/telemetry")]
+    [Route("v{version:apiVersion}/endpoints")]
     [ExceptionsFilter]
     [Authorize(Policy = Policies.CanWrite)]
     [ApiController]
-    public class TelemetryController : ControllerBase {
+    public class EndpointsController : ControllerBase {
 
         /// <summary>
         /// Create controller with service
         /// </summary>
         /// <param name="events"></param>
-        public TelemetryController(IGroupRegistrationT<PublishersHub> events) {
+        public EndpointsController(IGroupRegistrationT<PublishersHub> events) {
             _events = events;
         }
 

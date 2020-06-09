@@ -39,5 +39,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
         [DataMember(Name = "subscriptionSettings", Order = 3,
             EmitDefaultValue = false)]
         public PublishedDataSetSourceSettingsApiModel SubscriptionSettings { get; set; }
+
+        /// <summary>
+        /// Source state
+        /// </summary>
+        [DataMember(Name = "state", Order = 4,
+            EmitDefaultValue = false)]
+        public PublishedDataSetSourceStateApiModel State { get; set; }
     }
 }

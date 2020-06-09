@@ -33,9 +33,15 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients {
                 await _callback.MulticastAsync(sample.EndpointId,
                     EventTargets.PublisherSampleTarget, arguments);
             }
+
+            // TODO: Should we convert to dataset message like below?
         }
+
         /// <inheritdoc/>
         public async Task HandleMessageAsync(DataSetMessageModel message) {
+            if (string.IsNullOrEmpty(message.DataSetWriterId)) {
+                return;
+            }
             foreach (var datapoint in message.Payload) {
                 var arguments = new object[] {
                      new MonitoredItemMessageApiModel {
@@ -54,11 +60,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients {
                         EndpointId = null // TODO Remove
                     }
                 };
-                if (!string.IsNullOrEmpty(message.DataSetWriterId)) {
-                    // Send to endpoint listeners
-                    await _callback.MulticastAsync(message.DataSetWriterId,
-                        EventTargets.PublisherSampleTarget, arguments);
-                }
+                // Send to endpoint listeners
+                await _callback.MulticastAsync(message.DataSetWriterId,
+                    EventTargets.PublisherSampleTarget, arguments);
             }
         }
 

@@ -11,6 +11,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
     using Microsoft.Azure.IIoT.Module.Framework.Services;
     using Microsoft.Azure.IIoT.Module;
     using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients;
+    using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Clients;
     using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services;
     using Microsoft.Azure.IIoT.OpcUa.Edge.Supervisor.Services;
     using Microsoft.Azure.IIoT.OpcUa.Edge;
@@ -158,14 +159,17 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
 
                 // Configure the processing engine from nodes file
                 builder.RegisterType<PublishedNodesFileLoader>()
-                    .AsImplementedInterfaces().SingleInstance();
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
                 // ... and start it
                 builder.RegisterType<HostAutoStart>()
                     .AutoActivate()
-                    .AsImplementedInterfaces().SingleInstance();
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
 
                 // Configure root scope as supervisor
                 WriterGroupContainerFactory.ConfigureServices(builder);
+
+                builder.RegisterType<WriterGroupStateLogger>()
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
             }
             else {
                 builder.AddDiagnostics(config);
@@ -178,15 +182,15 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
 
                 // Add controllers
                 builder.RegisterType<SupervisorMethodsController>()
-                    .AsImplementedInterfaces().SingleInstance();
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
                 builder.RegisterType<SupervisorSettingsController>()
-                    .AsImplementedInterfaces().SingleInstance();
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
             }
 
             builder.RegisterType<PublisherSettingsController>()
                 .AsImplementedInterfaces().InstancePerLifetimeScope();
             builder.RegisterType<DefaultSessionManager>()
-                .AsImplementedInterfaces().SingleInstance();
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
 
             if (_injector != null) {
                 // Inject additional services
@@ -256,6 +260,9 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
                 builder.RegisterType<PublisherEdgeApiClient>()
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
+                // Publish writer group state updates back to iot hub
+                builder.RegisterType<WriterGroupStatePublisher>()
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
 
                 configure?.Invoke(builder);
                 _injector?.Inject(builder);
@@ -287,7 +294,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                 builder.RegisterType<VariantEncoderFactory>()
                     .AsImplementedInterfaces();
                 builder.RegisterType<SubscriptionServices>()
-                    .AsImplementedInterfaces().SingleInstance();
+                    .AsImplementedInterfaces().InstancePerLifetimeScope();
             }
 
             private readonly ISessionManager _sessions;

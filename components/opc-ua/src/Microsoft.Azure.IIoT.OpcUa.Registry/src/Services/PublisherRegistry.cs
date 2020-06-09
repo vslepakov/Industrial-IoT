@@ -215,6 +215,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
         }
 
         /// <inheritdoc/>
+        public Task OnWriterGroupStateChangeAsync(PublisherOperationContextModel context,
+            WriterGroupInfoModel writerGroup) {
+            // Dont care - registry is the source of state changes
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
         public async Task OnWriterGroupUpdatedAsync(PublisherOperationContextModel context,
             WriterGroupInfoModel writerGroup) {
             if (writerGroup?.WriterGroupId == null) {
@@ -283,6 +290,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             }
             await AddRemoveWriterFromWriterGroupTwinAsync(
                 WriterGroupRegistryEx.ToDeviceId(writerGroupId), dataSetWriterId);
+        }
+
+        /// <inheritdoc/>
+        public Task OnDataSetWriterStateChangeAsync(PublisherOperationContextModel context,
+            string dataSetWriterId, DataSetWriterInfoModel writer) {
+            // Not interested
+            return Task.CompletedTask;
         }
 
         /// <inheritdoc/>

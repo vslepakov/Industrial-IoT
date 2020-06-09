@@ -1268,12 +1268,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Models {
         /// Create api model from service model
         /// </summary>
         /// <param name="model"></param>
-        public static PublishListItemApiModel ToApiModel(
-            this PublishedNodeModel model) {
+        public static PublishedItemApiModel ToApiModel(
+            this PublishedItemModel model) {
             if (model == null) {
                 return null;
             }
-            return new PublishListItemApiModel {
+            return new PublishedItemApiModel {
                 NodeId = model.NodeId,
                 DisplayName = model.DisplayName,
                 HeartbeatInterval = model.HeartbeatInterval,
@@ -1285,12 +1285,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Models {
         /// <summary>
         /// Create service model from api model
         /// </summary>
-        public static PublishedNodeModel ToServiceModel(
-            this PublishListItemApiModel model) {
+        public static PublishedItemModel ToServiceModel(
+            this PublishedItemApiModel model) {
             if (model == null) {
                 return null;
             }
-            return new PublishedNodeModel {
+            return new PublishedItemModel {
                 NodeId = model.NodeId,
                 DisplayName = model.DisplayName,
                 HeartbeatInterval = model.HeartbeatInterval,
@@ -1302,12 +1302,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Models {
         /// <summary>
         /// Create api model from service model
         /// </summary>
-        public static PublishListRequestApiModel ToApiModel(
-            this PublishedNodeQueryModel model) {
+        public static PublishedItemListRequestApiModel ToApiModel(
+            this PublishedItemListRequestModel model) {
             if (model == null) {
                 return null;
             }
-            return new PublishListRequestApiModel {
+            return new PublishedItemListRequestApiModel {
                 ContinuationToken = model.ContinuationToken
             };
         }
@@ -1315,12 +1315,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Models {
         /// <summary>
         /// Create service model from api model
         /// </summary>
-        public static PublishedNodeQueryModel ToServiceModel(
-            this PublishListRequestApiModel model) {
+        public static PublishedItemListRequestModel ToServiceModel(
+            this PublishedItemListRequestApiModel model) {
             if (model == null) {
                 return null;
             }
-            return new PublishedNodeQueryModel {
+            return new PublishedItemListRequestModel {
                 ContinuationToken = model.ContinuationToken
             };
         }
@@ -1329,12 +1329,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Models {
         /// Create api model from service model
         /// </summary>
         /// <param name="model"></param>
-        public static PublishListResponseApiModel ToApiModel(
-            this PublishedNodeListModel model) {
+        public static PublishedItemListResponseApiModel ToApiModel(
+            this PublishedItemListResultModel model) {
             if (model == null) {
                 return null;
             }
-            return new PublishListResponseApiModel {
+            return new PublishedItemListResponseApiModel {
                 ContinuationToken = model.ContinuationToken,
                 Items = model.Items?
                     .Select(n => n.ToApiModel())
@@ -1346,12 +1346,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Models {
         /// Create service model from api model
         /// </summary>
         /// <param name="model"></param>
-        public static PublishedNodeListModel ToServiceModel(
-            this PublishListResponseApiModel model) {
+        public static PublishedItemListResultModel ToServiceModel(
+            this PublishedItemListResponseApiModel model) {
             if (model == null) {
                 return null;
             }
-            return new PublishedNodeListModel {
+            return new PublishedItemListResultModel {
                 ContinuationToken = model.ContinuationToken,
                 Items = model.Items?
                     .Select(n => n.ToServiceModel())

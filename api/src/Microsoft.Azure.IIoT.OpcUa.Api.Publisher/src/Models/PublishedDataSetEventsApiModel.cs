@@ -83,16 +83,23 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
         public string GenerationId { get; set; }
 
         /// <summary>
+        /// Events state
+        /// </summary>
+        [DataMember(Name = "state", Order = 10,
+            EmitDefaultValue = false)]
+        public PublishedDataSetItemStateApiModel State { get; set; }
+
+        /// <summary>
         /// Last updated
         /// </summary>
-        [DataMember(Name = "updated", Order = 10,
+        [DataMember(Name = "updated", Order = 11,
             EmitDefaultValue = false)]
         public PublisherOperationContextApiModel Updated { get; set; }
 
         /// <summary>
         /// Created
         /// </summary>
-        [DataMember(Name = "created", Order = 11,
+        [DataMember(Name = "created", Order = 12,
             EmitDefaultValue = false)]
         public PublisherOperationContextApiModel Created { get; set; }
     }

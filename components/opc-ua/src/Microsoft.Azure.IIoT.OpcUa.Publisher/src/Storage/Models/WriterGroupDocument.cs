@@ -125,6 +125,18 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default {
         public int? BatchSize { get; set; }
 
         /// <summary>
+        /// Last reported state
+        /// </summary>
+        [DataMember]
+        public WriterGroupState? LastState { get; set; }
+
+        /// <summary>
+        /// Last state change
+        /// </summary>
+        [DataMember]
+        public DateTime? LastStateChange { get; set; }
+
+        /// <summary>
         /// Updated at
         /// </summary>
         [DataMember]

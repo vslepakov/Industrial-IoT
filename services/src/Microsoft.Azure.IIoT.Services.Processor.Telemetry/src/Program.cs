@@ -114,10 +114,6 @@ namespace Microsoft.Azure.IIoT.Services.Processor.Telemetry {
                 .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<EventProcessorFactory>()
                 .AsImplementedInterfaces();
-            // ... and auto start
-            builder.RegisterType<HostAutoStart>()
-                .AutoActivate()
-                .AsImplementedInterfaces().SingleInstance();
 
             // Handle telemetry events
             builder.RegisterType<IoTHubDeviceEventHandler>()
@@ -148,6 +144,11 @@ namespace Microsoft.Azure.IIoT.Services.Processor.Telemetry {
             // ... forward unknown samples to the secondary eventhub
             builder.RegisterType<UnknownTelemetryForwarder>()
                 .AsImplementedInterfaces();
+
+            // ... and auto start
+            builder.RegisterType<HostAutoStart>()
+                .AutoActivate()
+                .AsImplementedInterfaces().SingleInstance();
 
             return builder;
         }

@@ -72,7 +72,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
             builder.RegisterModule<HttpClientModule>();
             // ... as well as signalR client (needed for api)
             builder.RegisterType<SignalRHubClient>()
-                .AsImplementedInterfaces().SingleInstance();
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
             // Use default token sources
             builder.RegisterModule<NativeClientAuthentication>();
 
@@ -414,7 +414,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
             Console.WriteLine($"{endpoint.Id} has {nodes.Count} variables.");
             sw.Restart();
             await _twin.NodePublishBulkAsync(endpoint.Id, new PublishBulkRequestApiModel {
-                NodesToAdd = nodes.Select(n => new PublishListItemApiModel {
+                NodesToAdd = nodes.Select(n => new PublishedItemApiModel {
                     NodeId = n
                 }).ToList()
             });

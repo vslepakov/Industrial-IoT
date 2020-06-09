@@ -9,6 +9,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// <summary>
     /// Result of a writer group registration
     /// </summary>
+    [DataContract]
     public class WriterGroupAddResponseApiModel {
 
         /// <summary>

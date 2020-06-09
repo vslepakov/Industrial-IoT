@@ -4,9 +4,9 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
+    using Microsoft.Azure.IIoT.OpcUa.Core;
     using Microsoft.Azure.IIoT.Crypto;
     using Microsoft.Azure.IIoT.Serializers;
-    using Microsoft.Azure.IIoT.Module;
     using Microsoft.Azure.IIoT.Utils;
     using Serilog;
     using System;
@@ -15,7 +15,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
     using System.Security.Cryptography;
     using System.Linq;
     using System.Threading.Tasks;
-    using Microsoft.Azure.IIoT.OpcUa.Core;
 
     /// <summary>
     /// Loads published nodes file and configures the engine
@@ -96,55 +95,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
         }
 
         /// <summary>
-        /// Reconfigures the engine from the published nodes file stream
-        /// </summary>
-        /// <param name="reader"></param>
-        internal void ConfigureEngineFromStream(TextReader reader) {
-            var group = _file.Read(reader);
-
-            group.DataSetWriters.ForEach(d => {
-                d.DataSet.ExtensionFields ??= new Dictionary<string, string>();
-                d.DataSet.ExtensionFields["DataSetWriterId"] = d.DataSetWriterId;
-            });
-
-            lock (_fileLock) {
-
-                // Update under lock
-                _engine.Priority =
-                    group.Priority;
-                _engine.BatchSize =
-                    group.BatchSize;
-                _engine.PublishingInterval =
-                    group.PublishingInterval;
-                _engine.DataSetOrdering =
-                    group.MessageSettings?.DataSetOrdering;
-                _engine.GroupVersion =
-                    group.MessageSettings?.GroupVersion;
-                _engine.HeaderLayoutUri =
-                    group.HeaderLayoutUri;
-                _engine.KeepAliveTime =
-                    group.KeepAliveTime;
-                _engine.MaxNetworkMessageSize =
-                    group.MaxNetworkMessageSize;
-                _engine.NetworkMessageContentMask =
-                    group.MessageSettings?.NetworkMessageContentMask;
-                _engine.PublishingOffset =
-                    group.MessageSettings?.PublishingOffset?.ToList();
-                _engine.SamplingOffset =
-                    group.MessageSettings?.SamplingOffset;
-
-                var dataSetWriterIds = group?.DataSetWriters?
-                    .Select(w => w.DataSetWriterId)
-                    .ToHashSet() ?? new HashSet<string>();
-
-                _lastSetOfWriterIds.ExceptWith(dataSetWriterIds);
-                _engine.RemoveWriters(_lastSetOfWriterIds);
-                _engine.AddWriters(group.DataSetWriters);
-                _lastSetOfWriterIds = dataSetWriterIds;
-            }
-        }
-
-        /// <summary>
         /// Called on change
         /// </summary>
         /// <param name="sender"></param>
@@ -158,8 +108,38 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services {
                         _logger.Information("File {fileName} has changed, reloading...",
                             _file.FileName);
                         _lastKnownFileHash = currentFileHash;
-                        using (var reader = new StreamReader(_file.FileName)) {
-                            ConfigureEngineFromStream(reader);
+                        var group = _file.Read();
+
+                        group.DataSetWriters.ForEach(d => {
+                            d.DataSet.ExtensionFields ??= new Dictionary<string, string>();
+                            d.DataSet.ExtensionFields["DataSetWriterId"] = d.DataSetWriterId;
+                        });
+
+                        // Update engine under lock
+                        lock (_fileLock) {
+                            _engine.Priority = group.Priority;
+                            _engine.BatchSize = group.BatchSize;
+                            _engine.PublishingInterval = group.PublishingInterval;
+                            _engine.DataSetOrdering = group.MessageSettings?.DataSetOrdering;
+                            _engine.GroupVersion = group.MessageSettings?.GroupVersion;
+                            _engine.HeaderLayoutUri = group.HeaderLayoutUri;
+                            _engine.KeepAliveTime = group.KeepAliveTime;
+                            _engine.MaxNetworkMessageSize = group.MaxNetworkMessageSize;
+
+                            _engine.NetworkMessageContentMask =
+                                group.MessageSettings?.NetworkMessageContentMask;
+                            _engine.PublishingOffset =
+                                group.MessageSettings?.PublishingOffset?.ToList();
+                            _engine.SamplingOffset =
+                                group.MessageSettings?.SamplingOffset;
+
+                            var dataSetWriterIds = group?.DataSetWriters?
+                                .Select(w => w.DataSetWriterId)
+                                .ToHashSet() ?? new HashSet<string>();
+                            _lastSetOfWriterIds.ExceptWith(dataSetWriterIds);
+                            _engine.RemoveWriters(_lastSetOfWriterIds);
+                            _engine.AddWriters(group.DataSetWriters);
+                            _lastSetOfWriterIds = dataSetWriterIds;
                         }
                     }
                     break; // Success

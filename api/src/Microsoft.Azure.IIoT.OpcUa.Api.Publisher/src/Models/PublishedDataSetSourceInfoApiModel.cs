@@ -12,6 +12,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// <summary>
     /// Data set information describing metadata and settings
     /// </summary>
+    [DataContract]
     public class PublishedDataSetSourceInfoApiModel {
 
         /// <summary>
@@ -36,30 +37,37 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
         public CredentialApiModel User { get; set; }
 
         /// <summary>
+        /// Source state
+        /// </summary>
+        [DataMember(Name = "state", Order = 3,
+            EmitDefaultValue = false)]
+        public PublishedDataSetSourceStateApiModel State { get; set; }
+
+        /// <summary>
         /// Subscription settings
         /// </summary>
-        [DataMember(Name = "subscriptionSettings", Order = 3,
+        [DataMember(Name = "subscriptionSettings", Order = 4,
             EmitDefaultValue = false)]
         public PublishedDataSetSourceSettingsApiModel SubscriptionSettings { get; set; }
 
         /// <summary>
         /// Operation timeout
         /// </summary>
-        [DataMember(Name = "operationTimeout", Order = 4,
+        [DataMember(Name = "operationTimeout", Order = 5,
             EmitDefaultValue = false)]
         public TimeSpan? OperationTimeout { get; set; }
 
         /// <summary>
         /// Diagnostics to use on the source
         /// </summary>
-        [DataMember(Name = "diagnosticsLevel", Order = 5,
+        [DataMember(Name = "diagnosticsLevel", Order = 6,
             EmitDefaultValue = false)]
         public DiagnosticsLevel? DiagnosticsLevel { get; set; }
 
         /// <summary>
         /// Extension fields
         /// </summary>
-        [DataMember(Name = "extensionFields", Order = 6,
+        [DataMember(Name = "extensionFields", Order = 7,
             EmitDefaultValue = false)]
         public Dictionary<string, string> ExtensionFields { get; set; }
     }

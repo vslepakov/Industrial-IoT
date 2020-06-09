@@ -10,6 +10,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// <summary>
     /// Result of a variable registration
     /// </summary>
+    [DataContract]
     public class DataSetAddVariableResponseApiModel {
 
         /// <summary>

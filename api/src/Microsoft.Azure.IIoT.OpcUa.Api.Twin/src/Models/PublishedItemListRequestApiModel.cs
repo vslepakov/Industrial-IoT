@@ -5,24 +5,17 @@
 
 namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Models {
     using System.Runtime.Serialization;
-    using System.Collections.Generic;
 
     /// <summary>
-    /// List of published nodes
+    /// Request list of published items
     /// </summary>
     [DataContract]
-    public class PublishListResponseApiModel {
+    public class PublishedItemListRequestApiModel {
 
         /// <summary>
-        /// Monitored items
+        /// Continuation token or null to start
         /// </summary>
-        [DataMember(Name = "items", Order = 0)]
-        public List<PublishListItemApiModel> Items { get; set; }
-
-        /// <summary>
-        /// Continuation or null if final
-        /// </summary>
-        [DataMember(Name = "continuationToken", Order = 1,
+        [DataMember(Name = "continuationToken", Order = 0,
             EmitDefaultValue = false)]
         public string ContinuationToken { get; set; }
     }

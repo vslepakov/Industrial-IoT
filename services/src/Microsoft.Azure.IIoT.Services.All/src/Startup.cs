@@ -131,7 +131,7 @@ namespace Microsoft.Azure.IIoT.Services.All {
             builder.RegisterModule<DefaultServiceAuthProviders>();
 
             builder.RegisterType<ProcessorHost>()
-                .AsImplementedInterfaces().SingleInstance();
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
         }
 
         /// <summary>

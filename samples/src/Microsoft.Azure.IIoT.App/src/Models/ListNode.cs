@@ -31,7 +31,7 @@ namespace Microsoft.Azure.IIoT.App.Models {
         public ListNode() {
             ParentIdList = new List<string>();
         }
-        public PublishListItemApiModel PublishedItem { get; set; }
+        public PublishedItemApiModel PublishedItem { get; set; }
 
         public bool Publishing { get; set; }
 

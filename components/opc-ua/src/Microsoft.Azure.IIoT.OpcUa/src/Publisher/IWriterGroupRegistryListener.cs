@@ -31,6 +31,15 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher {
             WriterGroupInfoModel writerGroup);
 
         /// <summary>
+        /// Called when group state changed
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="writerGroup"></param>
+        /// <returns></returns>
+        Task OnWriterGroupStateChangeAsync(PublisherOperationContextModel context,
+            WriterGroupInfoModel writerGroup);
+
+        /// <summary>
         /// Called when writer group.
         /// </summary>
         /// <param name="context"></param>

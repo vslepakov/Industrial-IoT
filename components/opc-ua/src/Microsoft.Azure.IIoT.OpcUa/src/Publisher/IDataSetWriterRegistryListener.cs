@@ -32,6 +32,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher {
             string dataSetWriterId, DataSetWriterInfoModel dataSetWriter = null);
 
         /// <summary>
+        /// Called when writer state changed
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="dataSetWriterId"></param>
+        /// <param name="writer"></param>
+        /// <returns></returns>
+        Task OnDataSetWriterStateChangeAsync(PublisherOperationContextModel context,
+            string dataSetWriterId, DataSetWriterInfoModel writer = null);
+
+        /// <summary>
         /// Called when writer was deleted which implies all
         /// dataset items were also deleted.
         /// </summary>

@@ -36,7 +36,7 @@ namespace Microsoft.Azure.IIoT.AspNetCore.Auth.Clients {
 
             // Cache tokens in protected cache - by default in memory
             builder.RegisterType<MemoryCache>()
-                .AsImplementedInterfaces().SingleInstance()
+                .AsImplementedInterfaces().InstancePerLifetimeScope()
                 .IfNotRegistered(typeof(ICache));
             builder.RegisterType<DistributedProtectedCache>()
                 .AsImplementedInterfaces();

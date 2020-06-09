@@ -129,8 +129,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
         }
 
         /// <inheritdoc/>
-        public async Task<PublishedNodeListModel> NodePublishListAsync(
-            string endpoint, PublishedNodeQueryModel request) {
+        public async Task<PublishedItemListResultModel> NodePublishListAsync(
+            string endpoint, PublishedItemListRequestModel request) {
             var result = await _client.NodePublishListAsync(endpoint,
                 request.ToApiModel());
             return result.ToServiceModel();

@@ -11,6 +11,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models {
     /// <summary>
     /// A data set variable update request
     /// </summary>
+    [DataContract]
     public class DataSetUpdateVariableRequestApiModel {
 
         /// <summary>

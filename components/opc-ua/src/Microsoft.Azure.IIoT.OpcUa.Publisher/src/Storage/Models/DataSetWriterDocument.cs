@@ -194,6 +194,30 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Default {
         public string CreatedAuditId { get; set; }
 
         /// <summary>
+        /// Error code - if null operation succeeded.
+        /// </summary>
+        [DataMember]
+        public uint? LastResultStatusCode { get; set; }
+
+        /// <summary>
+        /// Error message in case of error or null.
+        /// </summary>
+        [DataMember]
+        public string LastResultErrorMessage { get; set; }
+
+        /// <summary>
+        /// Additional diagnostics information
+        /// </summary>
+        [DataMember]
+        public VariantValue LastResultDiagnostics { get; set; }
+
+        /// <summary>
+        /// Last result change
+        /// </summary>
+        [DataMember]
+        public DateTime? LastResultChange { get; set; }
+
+        /// <summary>
         /// Etag
         /// </summary>
         [DataMember(Name = "_etag")]

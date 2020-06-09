@@ -6,6 +6,9 @@
 namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Cli {
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Sample;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Services;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
+    using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services;
+    using Microsoft.Azure.IIoT.OpcUa.Core.Models;
     using Microsoft.Azure.IIoT.Diagnostics.Runtime;
     using Microsoft.Azure.IIoT.Diagnostics;
     using Microsoft.Azure.IIoT.Utils;
@@ -27,9 +30,6 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Cli {
     using System.Threading;
     using System.Threading.Tasks;
     using System.IO;
-    using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
-    using Microsoft.Azure.IIoT.OpcUa.Core.Models;
 
     /// <summary>
     /// Publisher module host process
@@ -44,6 +44,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Cli {
             var legacyTest = false;
             var withServer = false;
             var verbose = false;
+            var scale = 1;
             string deviceId = null, moduleId = null;
             Console.WriteLine("Publisher module command line interface.");
             var configuration = new ConfigurationBuilder()
@@ -87,8 +88,15 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Cli {
                             break;
                         case "-l":
                         case "--legacy-test":
+                        case "--scale-test":
                             legacyTest = true;
                             withServer = true;
+                            i++;
+                            if (i < args.Length) {
+                                if (!int.TryParse(args[i], out scale)) {
+                                    i--;
+                                }
+                            }
                             break;
                         case "-v":
                         case "--verbose":
@@ -130,6 +138,12 @@ Options:
              IoT Hub owner connection string to use to connect to IoT hub for
              operations on the registry.  If not provided, read from environment.
 
+     -l
+    --legacy-test
+    --scale-test <scale-count>
+            Spins up a test server and subscribes to clock on server
+            <scale-count> times.
+
     --help
      -?
      -h      Prints out this help.
@@ -151,7 +165,7 @@ Options:
                 }
                 else {
                     WithServerAsync(config, diagnostics, logger, deviceId,
-                        moduleId, args, legacyTest, verbose).Wait();
+                        moduleId, args, legacyTest, scale, verbose).Wait();
                 }
             }
             catch (Exception e) {
@@ -191,7 +205,8 @@ Options:
         /// setup publishing from sample server
         /// </summary>
         private static async Task WithServerAsync(IIoTHubConfig config, ILogAnalyticsConfig diagnostics,
-            ILogger logger, string deviceId, string moduleId, string[] args, bool startLegacy, bool verbose) {
+            ILogger logger, string deviceId, string moduleId, string[] args, bool startLegacy, int scale,
+            bool verbose) {
             var fileName = Path.GetRandomFileName() + ".json";
             try {
                 using (var cts = new CancellationTokenSource())
@@ -224,6 +239,9 @@ Options:
                             }
                         });
                         arguments.Add($"--pf={fileName}");
+                        if (scale > 1) {
+                            arguments.Add($"--sc={scale}");
+                        }
                     }
 
                     // Start publisher module
