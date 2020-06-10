@@ -17,6 +17,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
     using Microsoft.Azure.IIoT.OpcUa.Edge;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Services;
     using Microsoft.Azure.IIoT.OpcUa.Protocol;
+    using Microsoft.Azure.IIoT.Tasks.Default;
     using Microsoft.Azure.IIoT.Hub;
     using Microsoft.Azure.IIoT.Utils;
     using Microsoft.Azure.IIoT.Serializers;
@@ -170,6 +171,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
 
                 builder.RegisterType<WriterGroupStateLogger>()
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
+                builder.RegisterType<TaskProcessor>()
+                    .AsImplementedInterfaces();
             }
             else {
                 builder.AddDiagnostics(config);
@@ -263,6 +266,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
                 // Publish writer group state updates back to iot hub
                 builder.RegisterType<WriterGroupStatePublisher>()
                     .AsImplementedInterfaces().InstancePerLifetimeScope();
+                builder.RegisterType<TaskProcessor>()
+                    .AsImplementedInterfaces();
 
                 configure?.Invoke(builder);
                 _injector?.Inject(builder);
