@@ -15,6 +15,11 @@ namespace Microsoft.Azure.IIoT.Crypto {
     public interface ISecureElement {
 
         /// <summary>
+        /// True if secure element is present
+        /// </summary>
+        bool IsPresent { get; }
+
+        /// <summary>
         /// Create a certificate
         /// </summary>
         /// <param name="commonName"></param>
@@ -32,7 +37,6 @@ namespace Microsoft.Azure.IIoT.Crypto {
         /// <param name="ciphertext"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        ///
         Task<byte[]> DecryptAsync(string initializationVector,
             byte[] ciphertext, CancellationToken ct = default);
 
@@ -45,5 +49,16 @@ namespace Microsoft.Azure.IIoT.Crypto {
         /// <returns></returns>
         Task<byte[]> EncryptAsync(string initializationVector,
             byte[] plaintext, CancellationToken ct = default);
+
+        /// <summary>
+        /// Sign data into digest using algorithm and key.
+        /// </summary>
+        /// <param name="keyId"></param>
+        /// <param name="algo"></param>
+        /// <param name="data"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        Task<byte[]> SignAsync(byte[] data, string keyId,
+            string algo = null, CancellationToken ct = default);
     }
 }

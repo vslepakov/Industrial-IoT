@@ -5,6 +5,7 @@
 
 namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Cli {
     using Microsoft.Azure.IIoT.Diagnostics;
+    using Microsoft.Azure.IIoT.Diagnostics.Runtime;
     using Microsoft.Azure.IIoT.Http.Default;
     using Microsoft.Azure.IIoT.Hub;
     using Microsoft.Azure.IIoT.Hub.Client;
@@ -48,7 +49,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Cli {
         /// </summary>
         public static void Main(string[] args) {
             var op = Op.None;
-            bool verbose = false;
+            var verbose = false;
             string deviceId = null, moduleId = null;
             Console.WriteLine("Twin module command line interface.");
             var configuration = new ConfigurationBuilder()
@@ -63,6 +64,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Cli {
             if (string.IsNullOrEmpty(cs)) {
                 cs = configuration.GetValue<string>("_HUB_CS", null);
             }
+            var diagnostics = new LogAnalyticsConfig(configuration);
             IIoTHubConfig config = null;
             try {
                 for (var i = 0; i < args.Length; i++) {
@@ -169,7 +171,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Cli {
                             Console.WriteLine($"Using <deviceId> '{deviceId}'");
                         }
                         if (moduleId == null) {
-                            moduleId = "opctwin";
+                            moduleId = "twin";
                             Console.WriteLine($"Using <moduleId> '{moduleId}'");
                         }
                         break;
@@ -227,10 +229,10 @@ Options:
             try {
                 switch (op) {
                     case Op.Host:
-                        HostAsync(config, deviceId, moduleId, verbose).Wait();
+                        HostAsync(config, diagnostics, deviceId, moduleId, verbose).Wait();
                         break;
                     case Op.Add:
-                        AddAsync(config, deviceId, moduleId).Wait();
+                        AddAsync(config, diagnostics, deviceId, moduleId).Wait();
                         break;
                     case Op.Get:
                         GetAsync(config, deviceId, moduleId).Wait();
@@ -264,11 +266,11 @@ Options:
         /// Host the module giving it its connection string.
         /// </summary>
         private static async Task HostAsync(IIoTHubConfig config,
-            string deviceId, string moduleId, bool verbose = false) {
+            ILogAnalyticsConfig diagnostics, string deviceId, string moduleId, bool verbose = false) {
             Console.WriteLine("Create or retrieve connection string...");
             var logger = ConsoleLogger.Create(LogEventLevel.Error);
             var cs = await Retry.WithExponentialBackoff(logger,
-                () => AddOrGetAsync(config, deviceId, moduleId));
+                () => AddOrGetAsync(config, diagnostics, deviceId, moduleId));
 
             // Hook event source
             using (var broker = new EventSourceBroker()) {
@@ -288,9 +290,9 @@ Options:
         /// <summary>
         /// Add supervisor
         /// </summary>
-        private static async Task AddAsync(IIoTHubConfig config,
+        private static async Task AddAsync(IIoTHubConfig config, ILogAnalyticsConfig diagnostics,
             string deviceId, string moduleId) {
-            var cs = await AddOrGetAsync(config, deviceId, moduleId);
+            var cs = await AddOrGetAsync(config, diagnostics, deviceId, moduleId);
             Console.WriteLine(cs);
         }
 
@@ -418,19 +420,19 @@ Options:
                     }
                 }
             }
-            await registry.CreateAsync(item, true, CancellationToken.None);
+            await registry.CreateOrUpdateAsync(item, true, CancellationToken.None);
         }
 
         /// <summary>
         /// Add or get module identity
         /// </summary>
         private static async Task<ConnectionString> AddOrGetAsync(IIoTHubConfig config,
-            string deviceId, string moduleId) {
+            ILogAnalyticsConfig diagnostics, string deviceId, string moduleId) {
             var logger = ConsoleLogger.Create(LogEventLevel.Error);
             var registry = new IoTHubServiceHttpClient(new HttpClient(logger),
                 config, new NewtonSoftJsonSerializer(), logger);
             try {
-                await registry.CreateAsync(new DeviceTwinModel {
+                await registry.CreateOrUpdateAsync(new DeviceTwinModel {
                     Id = deviceId,
                     Tags = new Dictionary<string, VariantValue> {
                         [TwinProperty.Type] = IdentityType.Gateway
@@ -444,10 +446,16 @@ Options:
                 logger.Information("Gateway {deviceId} exists.", deviceId);
             }
             try {
-                await registry.CreateAsync(new DeviceTwinModel {
+                await registry.CreateOrUpdateAsync(new DeviceTwinModel {
                     Id = deviceId,
-                    ModuleId = moduleId
-                }, false, CancellationToken.None);
+                    ModuleId = moduleId,
+                    Properties = new TwinPropertiesModel {
+                        Desired = new Dictionary<string, VariantValue> {
+                            [nameof(diagnostics.LogWorkspaceId)] = diagnostics?.LogWorkspaceId,
+                            [nameof(diagnostics.LogWorkspaceKey)] = diagnostics?.LogWorkspaceKey
+                        }
+                    }
+                }, true, CancellationToken.None);
             }
             catch (ConflictingResourceException) {
                 logger.Information("Module {moduleId} exists...", moduleId);
@@ -459,7 +467,7 @@ Options:
         /// <summary>
         /// Sdk logger event source hook
         /// </summary>
-        sealed class IoTSdkLogger : EventSourceSerilogSink {
+        private sealed class IoTSdkLogger : EventSourceSerilogSink {
             public IoTSdkLogger(ILogger logger) :
                 base(logger.ForContext("SourceContext", EventSource.Replace('-', '.'))) {
             }

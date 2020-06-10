@@ -41,25 +41,95 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher {
         /// <param name="serializer"></param>
         public PublisherServiceEvents(IHttpClient httpClient, ICallbackClient client,
             string serviceUri, ISerializer serializer = null) {
-            if (string.IsNullOrEmpty(serviceUri)) {
+            if (string.IsNullOrWhiteSpace(serviceUri)) {
                 throw new ArgumentNullException(nameof(serviceUri),
                     "Please configure the Url of the events micro service.");
             }
             _client = client ?? throw new ArgumentNullException(nameof(client));
-            _serviceUri = serviceUri;
+            _serviceUri = serviceUri.TrimEnd('/');
             _serializer = serializer ?? new NewtonSoftJsonSerializer();
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         }
 
+        /// <inheritdoc/>
+        public async Task<IAsyncDisposable> SubscribeWriterGroupEventsAsync(
+            Func<WriterGroupEventApiModel, Task> callback) {
+            if (callback == null) {
+                throw new ArgumentNullException(nameof(callback));
+            }
+            var hub = await _client.GetHubAsync($"{_serviceUri}/v2/groups/events",
+                Resource.Platform);
+            var registration = hub.Register(EventTargets.GroupEventTarget, callback);
+            return new AsyncDisposable(registration);
+        }
 
         /// <inheritdoc/>
-        public async Task<IAsyncDisposable> NodePublishSubscribeByEndpointAsync(string endpointId,
-            Func<MonitoredItemMessageApiModel, Task> callback) {
+        public async Task<IAsyncDisposable> SubscribeDataSetWriterMessagesAsync(
+            string dataSetWriterId, Func<MonitoredItemMessageApiModel, Task> callback) {
 
             if (callback == null) {
                 throw new ArgumentNullException(nameof(callback));
             }
-            var hub = await _client.GetHubAsync($"{_serviceUri}/v2/publishers/events", Resource.Platform);
+            var hub = await _client.GetHubAsync($"{_serviceUri}/v2/groups/events",
+                Resource.Platform);
+            var registration = hub.Register(EventTargets.DataSetMessageTarget, callback);
+            try {
+                await SubscribeDataSetWriterMessagesAsync(dataSetWriterId, hub.ConnectionId,
+                    CancellationToken.None);
+                return new AsyncDisposable(registration,
+                    () => UnsubscribeDataSetWriterMessagesAsync(dataSetWriterId,
+                        hub.ConnectionId, CancellationToken.None));
+            }
+            catch {
+                registration.Dispose();
+                throw;
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<IAsyncDisposable> SubscribeDataSetWriterEventsAsync(
+            Func<DataSetWriterEventApiModel, Task> callback) {
+            if (callback == null) {
+                throw new ArgumentNullException(nameof(callback));
+            }
+            var hub = await _client.GetHubAsync($"{_serviceUri}/v2/writers/events",
+                Resource.Platform);
+            var registration = hub.Register(EventTargets.WriterEventTarget, callback);
+            return new AsyncDisposable(registration);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IAsyncDisposable> SubscribeDataSetItemStatusAsync(
+            string dataSetWriterId, Func<MonitoredItemMessageApiModel, Task> callback) {
+
+            if (callback == null) {
+                throw new ArgumentNullException(nameof(callback));
+            }
+            var hub = await _client.GetHubAsync($"{_serviceUri}/v2/writers/events",
+                Resource.Platform);
+            var registration = hub.Register(EventTargets.DataSetEventTarget, callback);
+            try {
+                await SubscribeDataSetItemStatusAsync(dataSetWriterId, hub.ConnectionId,
+                    CancellationToken.None);
+                return new AsyncDisposable(registration,
+                    () => UnsubscribeDataSetItemStatusAsync(dataSetWriterId,
+                        hub.ConnectionId, CancellationToken.None));
+            }
+            catch {
+                registration.Dispose();
+                throw;
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<IAsyncDisposable> NodePublishSubscribeByEndpointAsync(
+            string endpointId, Func<MonitoredItemMessageApiModel, Task> callback) {
+
+            if (callback == null) {
+                throw new ArgumentNullException(nameof(callback));
+            }
+            var hub = await _client.GetHubAsync($"{_serviceUri}/v2/publishers/events",
+                Resource.Platform);
             var registration = hub.Register(EventTargets.PublisherSampleTarget, callback);
             try {
                 await NodePublishSubscribeByEndpointAsync(endpointId, hub.ConnectionId,
@@ -75,24 +145,72 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher {
         }
 
         /// <inheritdoc/>
-        public async Task NodePublishSubscribeByEndpointAsync(string endpointId, string connectionId,
-            CancellationToken ct) {
-            if (string.IsNullOrEmpty(endpointId)) {
-                throw new ArgumentNullException(nameof(endpointId));
+        public async Task SubscribeDataSetItemStatusAsync(string dataSetWriterId,
+            string connectionId, CancellationToken ct) {
+            if (string.IsNullOrEmpty(dataSetWriterId)) {
+                throw new ArgumentNullException(nameof(dataSetWriterId));
             }
             if (string.IsNullOrEmpty(connectionId)) {
                 throw new ArgumentNullException(nameof(connectionId));
             }
             var request = _httpClient.NewRequest(
-                $"{_serviceUri}/v2/telemetry/{endpointId}/samples", Resource.Platform);
+                $"{_serviceUri}/v2/writers/{dataSetWriterId}/status", Resource.Platform);
             _serializer.SerializeToRequest(request, connectionId);
             var response = await _httpClient.PutAsync(request, ct).ConfigureAwait(false);
             response.Validate();
         }
 
         /// <inheritdoc/>
-        public async Task NodePublishUnsubscribeByEndpointAsync(string endpointId, string connectionId,
-            CancellationToken ct) {
+        public async Task UnsubscribeDataSetItemStatusAsync(string dataSetWriterId,
+            string connectionId, CancellationToken ct) {
+            if (string.IsNullOrEmpty(dataSetWriterId)) {
+                throw new ArgumentNullException(nameof(dataSetWriterId));
+            }
+            if (string.IsNullOrEmpty(connectionId)) {
+                throw new ArgumentNullException(nameof(connectionId));
+            }
+            var request = _httpClient.NewRequest(
+                $"{_serviceUri}/v2/writers/{dataSetWriterId}/status/{connectionId}",
+                Resource.Platform);
+            var response = await _httpClient.DeleteAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+        }
+
+        /// <inheritdoc/>
+        public async Task SubscribeDataSetWriterMessagesAsync(string dataSetWriterId,
+            string connectionId, CancellationToken ct) {
+            if (string.IsNullOrEmpty(dataSetWriterId)) {
+                throw new ArgumentNullException(nameof(dataSetWriterId));
+            }
+            if (string.IsNullOrEmpty(connectionId)) {
+                throw new ArgumentNullException(nameof(connectionId));
+            }
+            var request = _httpClient.NewRequest(
+                $"{_serviceUri}/v2/groups/{dataSetWriterId}/messages", Resource.Platform);
+            _serializer.SerializeToRequest(request, connectionId);
+            var response = await _httpClient.PutAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+        }
+
+        /// <inheritdoc/>
+        public async Task UnsubscribeDataSetWriterMessagesAsync(string dataSetWriterId,
+            string connectionId, CancellationToken ct) {
+            if (string.IsNullOrEmpty(dataSetWriterId)) {
+                throw new ArgumentNullException(nameof(dataSetWriterId));
+            }
+            if (string.IsNullOrEmpty(connectionId)) {
+                throw new ArgumentNullException(nameof(connectionId));
+            }
+            var request = _httpClient.NewRequest(
+                $"{_serviceUri}/v2/groups/{dataSetWriterId}/messages/{connectionId}",
+                Resource.Platform);
+            var response = await _httpClient.DeleteAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+        }
+
+        /// <inheritdoc/>
+        public async Task NodePublishSubscribeByEndpointAsync(string endpointId,
+            string connectionId, CancellationToken ct) {
             if (string.IsNullOrEmpty(endpointId)) {
                 throw new ArgumentNullException(nameof(endpointId));
             }
@@ -100,7 +218,24 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher {
                 throw new ArgumentNullException(nameof(connectionId));
             }
             var request = _httpClient.NewRequest(
-                $"{_serviceUri}/v2/telemetry/{endpointId}/samples/{connectionId}", Resource.Platform);
+                $"{_serviceUri}/v2/endpoints/{endpointId}/samples", Resource.Platform);
+            _serializer.SerializeToRequest(request, connectionId);
+            var response = await _httpClient.PutAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+        }
+
+        /// <inheritdoc/>
+        public async Task NodePublishUnsubscribeByEndpointAsync(string endpointId,
+            string connectionId, CancellationToken ct) {
+            if (string.IsNullOrEmpty(endpointId)) {
+                throw new ArgumentNullException(nameof(endpointId));
+            }
+            if (string.IsNullOrEmpty(connectionId)) {
+                throw new ArgumentNullException(nameof(connectionId));
+            }
+            var request = _httpClient.NewRequest(
+                $"{_serviceUri}/v2/endpoints/{endpointId}/samples/{connectionId}",
+                Resource.Platform);
             var response = await _httpClient.DeleteAsync(request, ct).ConfigureAwait(false);
             response.Validate();
         }

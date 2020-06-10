@@ -16,11 +16,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         public string Id { get; set; }
 
         /// <summary>
-        /// Site of the discoverer
-        /// </summary>
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Whether discoverer is in discovery mode
         /// </summary>
         public DiscoveryMode? Discovery { get; set; }
@@ -55,5 +50,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         /// Whether discoverer is connected
         /// </summary>
         public bool? Connected { get; set; }
+
+        /// <summary>
+        /// Version information
+        /// </summary>
+        public string Version { get; set; }
     }
 }

@@ -326,16 +326,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                     t.Properties.Reported = new Dictionary<string, VariantValue> {
                         [TwinProperty.Type] = "Twin"
                     };
-                    if (a.Registration.SiteId != null) {
-                        t.Properties.Reported.Add(TwinProperty.SiteId, a.Registration.SiteId);
-                    }
-                    if (a.IsTwinConnected()) {
-                        t.ConnectionState = "Connected";
-                        t.Properties.Reported.Add(TwinProperty.Connected, true);
-                    }
+                    t.ConnectionState = a.IsTwinConnected() ? "Connected" : "Disconnected";
                     return t;
                 })
-                .Select(t => (t, new DeviceModel { Id = t.Id }))
+                .Select(t => (t, new DeviceModel { Id = t.Id, ConnectionState = t.ConnectionState }))
                 .ToList();
         }
 

@@ -150,19 +150,6 @@ namespace Microsoft.Azure.IIoT.Utils {
         }
 
         /// <summary>
-        /// Create endpoint access string
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static ConnectionString CreateFromAccessToken(IdentityTokenModel token) {
-            var connectionString = new ConnectionString();
-            connectionString._items[Id.Expires] = token.Expires.ToBinary().ToString();
-            connectionString._items[Id.Endpoint] = token.Identity;
-            connectionString._items[Id.AccessKey] = token.Key;
-            return connectionString;
-        }
-
-        /// <summary>
         /// Create Signalr connection string
         /// </summary>
         /// <param name="endpoint"></param>
@@ -252,20 +239,6 @@ namespace Microsoft.Azure.IIoT.Utils {
         }
 
         /// <summary>
-        /// Create device connection string
-        /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public static ConnectionString CreateDeviceConnectionString(
-            IdentityTokenModel token) {
-            var connectionString = new ConnectionString();
-            connectionString._items[Id.Expires] = token.Expires.ToBinary().ToString();
-            connectionString._items[Id.DeviceId] = token.Identity;
-            connectionString._items[Id.AccessKey] = token.Key;
-            return connectionString;
-        }
-
-        /// <summary>
         /// Create module connection string
         /// </summary>
         /// <param name="hostName"></param>
@@ -296,19 +269,6 @@ namespace Microsoft.Azure.IIoT.Utils {
                 b.Append(";");
             }
             return b.ToString().TrimEnd(';');
-        }
-
-        /// <summary>
-        /// Convert to identity token
-        /// </summary>
-        /// <returns></returns>
-        public IdentityTokenModel ToIdentityToken() {
-            return new IdentityTokenModel {
-                Expires = this[Id.Expires] == null ? DateTime.UtcNow :
-                    DateTime.FromBinary(long.Parse(this[Id.Expires])),
-                Identity = this[Id.Endpoint] ?? this[Id.ModuleId] ?? this[Id.DeviceId],
-                Key = this[Id.AccessKey]
-            };
         }
 
         /// <summary>

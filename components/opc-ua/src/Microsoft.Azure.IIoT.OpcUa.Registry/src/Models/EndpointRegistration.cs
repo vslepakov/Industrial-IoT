@@ -6,8 +6,8 @@
 namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
     using Microsoft.Azure.IIoT.OpcUa.Core.Models;
     using Microsoft.Azure.IIoT.Hub;
-    using System.Runtime.Serialization;
     using Microsoft.Azure.IIoT.Serializers;
+    using System.Runtime.Serialization;
     using System.Collections.Generic;
 
     /// <summary>
@@ -27,10 +27,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         public override string DeviceId => base.DeviceId ?? Id;
 
         /// <summary>
+        /// Site of the registration
+        /// </summary>
+        [DataMember]
+        public string SiteId { get; set; }
+
+        /// <summary>
         /// Site or gateway id
         /// </summary>
         [DataMember]
-        public override string SiteOrGatewayId => this.GetSiteOrGatewayId();
+        public string SiteOrGatewayId => this.GetSiteOrGatewayId();
 
         /// <summary>
         /// Identity that owns the twin.
@@ -129,23 +135,23 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         /// Activation state
         /// </summary>
         /// <returns></returns>
-        public EndpointActivationState? ActivationState {
+        public EntityActivationState? ActivationState {
             get {
                 if (Activated == true) {
                     if (Connected && !(IsDisabled ?? false) && NotSeenSince == null) {
-                        return EndpointActivationState.ActivatedAndConnected;
+                        return EntityActivationState.ActivatedAndConnected;
                     }
-                    return EndpointActivationState.Activated;
+                    return EntityActivationState.Activated;
                 }
-                return EndpointActivationState.Deactivated;
+                return EntityActivationState.Deactivated;
             }
             set {
-                if (value == EndpointActivationState.Activated ||
-                    value == EndpointActivationState.ActivatedAndConnected) {
+                if (value == EntityActivationState.Activated ||
+                    value == EntityActivationState.ActivatedAndConnected) {
                     Activated = true;
                 }
 #pragma warning disable RECS0093 // Convert 'if' to '&&' expression
-                else if (value == EndpointActivationState.Deactivated) {
+                else if (value == EntityActivationState.Deactivated) {
 #pragma warning restore RECS0093 // Convert 'if' to '&&' expression
                     Activated = false;
                 }
@@ -158,6 +164,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 return false;
             }
             if (!base.Equals(registration)) {
+                return false;
+            }
+            if (SiteId != registration.SiteId) {
                 return false;
             }
             if (DiscovererId != registration.DiscovererId) {
@@ -188,7 +197,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 return false;
             }
             if (!AuthenticationMethods.DecodeAsList().SetEqualsSafe(
-                    AuthenticationMethods.DecodeAsList(), VariantValue.DeepEquals)) {
+                    registration.AuthenticationMethods.DecodeAsList(),
+                        VariantValue.DeepEquals)) {
                 return false;
             }
             return true;
@@ -206,6 +216,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         /// <inheritdoc/>
         public override int GetHashCode() {
             var hashCode = base.GetHashCode();
+            hashCode = (hashCode * -1521134295) +
+                EqualityComparer<string>.Default.GetHashCode(SiteId);
             hashCode = (hashCode * -1521134295) +
                 EqualityComparer<string>.Default.GetHashCode(EndpointUrlLC);
             hashCode = (hashCode * -1521134295) +

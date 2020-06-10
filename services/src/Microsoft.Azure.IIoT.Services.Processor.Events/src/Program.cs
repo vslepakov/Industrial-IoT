@@ -8,6 +8,7 @@ namespace Microsoft.Azure.IIoT.Services.Processor.Events {
     using Microsoft.Azure.IIoT.OpcUa.Registry;
     using Microsoft.Azure.IIoT.OpcUa.Registry.Handlers;
     using Microsoft.Azure.IIoT.OpcUa.Registry.Events.v2;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Default;
     using Microsoft.Azure.IIoT.Exceptions;
     using Microsoft.Azure.IIoT.Messaging.Default;
     using Microsoft.Azure.IIoT.Messaging.ServiceBus.Clients;
@@ -28,6 +29,8 @@ namespace Microsoft.Azure.IIoT.Services.Processor.Events {
     using System.IO;
     using System.Runtime.Loader;
     using System.Threading.Tasks;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher;
+    using Microsoft.Azure.IIoT.Storage.CosmosDb.Services;
 
     /// <summary>
     /// IoT Hub device events event processor host.  Processes all
@@ -144,7 +147,17 @@ namespace Microsoft.Azure.IIoT.Services.Processor.Events {
             // 2.) Handlers for twin and device change events ...
             builder.RegisterModule<RegistryTwinEventHandlers>();
 
-            // ... publish received events to registered event bus
+            // 3.) Publisher events
+            // TODO: because of dependencies should be in seperate processor
+            builder.RegisterType<WriterGroupTwinEventHandler>()
+                .AsImplementedInterfaces();
+            builder.RegisterType<WriterGroupEventHandler>()
+                .AsImplementedInterfaces();
+            builder.RegisterModule<PublisherServices>();
+            builder.RegisterType<CosmosDbServiceClient>()
+                .AsImplementedInterfaces();
+
+            // ... publish events to registered event bus
             builder.RegisterType<EventBusHost>()
                 .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<ServiceBusClientFactory>()

@@ -9,7 +9,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
     using System.Collections.Generic;
 
     /// <summary>
-    /// Network message writer group model
+    /// Network message writer group model fully materialized
     /// </summary>
     public class WriterGroupModel {
 
@@ -19,9 +19,29 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
         public string WriterGroupId { get; set; }
 
         /// <summary>
+        /// Name of the writer group
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// Priority of the writer group
+        /// </summary>
+        public byte? Priority { get; set; }
+
+        /// <summary>
+        /// Site id this writer group applies to
+        /// </summary>
+        public string SiteId { get; set; }
+
+        /// <summary>
+        /// Generation id
+        /// </summary>
+        public string GenerationId { get; set; }
+
+        /// <summary>
         /// Network message types to generate (publisher extension)
         /// </summary>
-        public MessageEncoding? MessageType { get; set; }
+        public NetworkMessageType? MessageType { get; set; }
 
         /// <summary>
         /// The data set writers generating dataset messages in the group
@@ -32,16 +52,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
         /// Network message configuration
         /// </summary>
         public WriterGroupMessageSettingsModel MessageSettings { get; set; }
-
-        /// <summary>
-        /// Priority of the writer group
-        /// </summary>
-        public byte? Priority { get; set; }
-
-        /// <summary>
-        /// Name of the writer group
-        /// </summary>
-        public string Name { get; set; }
 
         /// <summary>
         /// Locales to use
@@ -72,6 +82,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
         /// Max network message size
         /// </summary>
         public uint? MaxNetworkMessageSize { get; set; }
+
+        /// <summary>
+        /// Batch buffer size (Publisher extension)
+        /// </summary>
+        public int? BatchSize { get; set; }
 
         /// <summary>
         /// Publishing interval

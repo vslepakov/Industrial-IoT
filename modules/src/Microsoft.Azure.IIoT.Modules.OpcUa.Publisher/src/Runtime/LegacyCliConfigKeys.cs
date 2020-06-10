@@ -12,15 +12,11 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
     /// the IConfiguration-instance.
     /// </summary>
     public static class LegacyCliConfigKeys {
+
         /// <summary>
         /// Key for default published nodes file.
         /// </summary>
         public const string DefaultPublishedNodesFilename = "publishednodes.json";
-
-        /// <summary>
-        /// Key for the publisher site.
-        /// </summary>
-        public const string PublisherSite = "Site";
 
         /// <summary>
         /// Key for the specified published nodes filename.
@@ -43,15 +39,20 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
         public const string SkipFirstDefault = "DefaultSkipFirst";
 
         /// <summary>
-        /// Key for the messaging mode
+        /// Network message type for pub/sub messages
         /// </summary>
-        public const string MessagingMode = "MessagingMode";
+        public const string NetworkMessageType = "NetworkMessageType";
+
+        /// <summary>
+        /// Key for the messaging schema type
+        /// </summary>
+        public const string MessageSchemaType = "MessageSchemaType";
 
         /// <summary>
         /// Flag to demand full featured message creation from publisher
         /// </summary>
         public const string FullFeaturedMessage = "FullFeaturedMessage";
-        
+
         /// <summary>
         /// Key for the default sampling interval in milliseconds.
         /// </summary>
@@ -61,6 +62,11 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
         /// Key for the default publishing interval in milliseconds.
         /// </summary>
         public const string OpcPublishingInterval = "DefaultPublishingInterval";
+
+        /// <summary>
+        /// Key for the default queue size fro monitored items
+        /// </summary>
+        public const string DefaultQueueSize = "DefaultQueueSize";
 
         /// <summary>
         /// Key for the flag whether to fetch the display names of the nodes.
@@ -78,9 +84,19 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
         public const string BatchSize = "BatchSize";
 
         /// <summary>
-        /// Key for the max (IoT Hub D2C)message size 
+        /// Key for the batch size of the batching buffer
+        /// </summary>
+        public const string BatchTriggerInterval = "BatchTriggerInterval";
+
+        /// <summary>
+        /// Key for the max (IoT Hub D2C)message size
         /// </summary>
         public const string MaxMessageSize = "MaxMessageSize";
+
+        /// <summary>
+        /// Key for the scale test monitored items clones count .
+        /// </summary>
+        public const string ScaleTestCount = "ScaleTestCount";
 
         /// <summary>
         /// Key for the time for the logfile to flush to disc in seconds.
@@ -95,12 +111,12 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
         /// <summary>
         /// Key for the transport mode to IoT Hub.
         /// </summary>
-        public const string HubTransport = ModuleConfig.kTransportKey;
+        public const string HubTransport = ModuleConfig.TransportKey;
 
         /// <summary>
         /// Key for the EdgeHub connection string.
         /// </summary>
-        public const string EdgeHubConnectionString = ModuleConfig.kEdgeHubConnectionStringKey;
+        public const string EdgeHubConnectionString = ModuleConfig.EdgeHubConnectionStringKey;
 
         /// <summary>
         /// Key for the operation timeout in milliseconds.
@@ -115,22 +131,22 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Runtime {
         /// <summary>
         /// Key for the OPC Session creation timeout in seconds.
         /// </summary>
-        public const string OpcSessionCreationTimeout = ClientServicesConfig2.DefaultSessionTimeoutKey;
+        public const string OpcSessionCreationTimeout = ClientServicesConfig.DefaultSessionTimeoutKey;
 
         /// <summary>
         /// Key for the OPC Keep Alive Interval in seconds.
         /// </summary>
-        public const string OpcKeepAliveIntervalInSec = ClientServicesConfig2.KeepAliveIntervalKey;
+        public const string OpcKeepAliveIntervalInSec = ClientServicesConfig.KeepAliveIntervalKey;
 
         /// <summary>
         /// Key for the disconnect thresholt for missed keep alive signals.
         /// </summary>
-        public const string OpcKeepAliveDisconnectThreshold = ClientServicesConfig2.MaxKeepAliveCountKey;
+        public const string OpcKeepAliveDisconnectThreshold = ClientServicesConfig.MaxKeepAliveCountKey;
 
         /// <summary>
         /// Key for the flag to trust own certificate.
         /// </summary>
-        public const string TrustMyself = "TrustSelf";
+        public const string TrustMyself = SecurityConfig.AddAppCertToTrustedStoreKey;
 
         /// <summary>
         /// Key for the flat to auto-accept untrusted certificates.

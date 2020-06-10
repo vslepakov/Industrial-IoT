@@ -26,6 +26,7 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
     using Microsoft.Azure.IIoT.Utils;
     using Microsoft.Azure.IIoT.Auth.Runtime;
     using Microsoft.Azure.IIoT.Serializers;
+    using Microsoft.Azure.IIoT.Diagnostics;
     using Microsoft.Extensions.Configuration;
     using Autofac;
     using System;
@@ -34,6 +35,7 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
+    using Prometheus;
 
     /// <summary>
     /// Api command line interface
@@ -59,6 +61,8 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
 
             // Register logger
             builder.AddDiagnostics(config, addConsole: false);
+            builder.RegisterModule<PrometheusCollector>();
+
             builder.RegisterModule<NewtonSoftJsonModule>();
             if (useMsgPack) {
                 builder.RegisterModule<MessagePackModule>();
@@ -68,7 +72,7 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
             builder.RegisterModule<HttpClientModule>();
             // ... as well as signalR client (needed for api)
             builder.RegisterType<SignalRHubClient>()
-                .AsImplementedInterfaces().SingleInstance();
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
 
             // Use bearer authentication
             builder.RegisterModule<NativeClientAuthentication>();
@@ -83,8 +87,6 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
             builder.RegisterType<VaultServiceClient>()
                 .AsImplementedInterfaces();
             builder.RegisterType<PublisherServiceClient>()
-                .AsImplementedInterfaces();
-            builder.RegisterType<PublisherJobServiceClient>()
                 .AsImplementedInterfaces();
 
             // ... with client event callbacks
@@ -131,12 +133,15 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
             _history = _scope.Resolve<IHistoryServiceApi>();
             _publisher = _scope.Resolve<IPublisherServiceApi>();
             _vault = _scope.Resolve<IVaultServiceApi>();
-            _jobs = _scope.Resolve<IPublisherJobServiceApi>();
             _serializer = _scope.Resolve<IJsonSerializer>();
+            if (_scope.TryResolve(out _metrics)) {
+                _metrics.Start();
+            }
         }
 
         /// <inheritdoc/>
         public void Dispose() {
+            _metrics?.Stop();
             _scope.Dispose();
         }
 
@@ -282,48 +287,155 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
                                     throw new ArgumentException($"Unknown command {command}.");
                             }
                             break;
-                        case "jobs":
+                        case "groups":
+                        case "writergroups":
                             if (args.Length < 2) {
                                 throw new ArgumentException("Need a command!");
                             }
                             command = args[1].ToLowerInvariant();
                             options = new CliOptions(args, 2);
                             switch (command) {
-                                case "get":
-                                    await GetJobAsync(options);
+                                case "create":
+                                    await AddWriterGroupAsync(options);
                                     break;
-                                case "list":
-                                    await ListJobsAsync(options);
-                                    break;
-                                case "workers":
-                                    await ListWorkersAsync(options);
-                                    break;
-                                case "select":
-                                    await SelectJobAsync(options);
-                                    break;
-                                case "query":
-                                    await QueryJobAsync(options);
-                                    break;
-                                case "restart":
-                                    await RestartJobAsync(options);
-                                    break;
-                                case "cancel":
-                                    await CancelJobAsync(options);
+                                case "update":
+                                    await UpdateWriterGroupAsync(options);
                                     break;
                                 case "delete":
-                                    await DeleteJobAsync(options);
+                                    await DeleteWriterGroupAsync(options);
+                                    break;
+                                case "list":
+                                    await ListWriterGroupsAsync(options);
+                                    break;
+                                case "query":
+                                    await QueryWriterGroupsAsync(options);
+                                    break;
+                                case "monitor":
+                                    await MonitorWriterGroupsAsync();
+                                    break;
+                                case "select":
+                                    await SelectWriterGroupAsync(options);
+                                    break;
+                                case "get":
+                                    await GetWriterGroupAsync(options);
                                     break;
                                 case "-?":
                                 case "-h":
                                 case "--help":
                                 case "help":
-                                    PrintJobsHelp();
+                                    PrintWriterGroupsHelp();
                                     break;
                                 default:
                                     throw new ArgumentException($"Unknown command {command}.");
                             }
                             break;
-                        case "groups":
+                        case "writers":
+                        case "datasets":
+                            if (args.Length < 2) {
+                                throw new ArgumentException("Need a command!");
+                            }
+                            command = args[1].ToLowerInvariant();
+                            options = new CliOptions(args, 2);
+                            switch (command) {
+                                case "create":
+                                    await AddDataSetWriterAsync(options);
+                                    break;
+                                case "update":
+                                    await UpdateDataSetWriterAsync(options);
+                                    break;
+                                case "delete":
+                                    await RemoveDataSetWriterAsync(options);
+                                    break;
+                                case "list":
+                                    await ListDataSetWritersAsync(options);
+                                    break;
+                                case "query":
+                                    await QueryDataSetWritersAsync(options);
+                                    break;
+                                case "monitor":
+                                    await MonitorDataSetWritersAsync();
+                                    break;
+                                case "select":
+                                    await SelectDataSetWriterAsync(options);
+                                    break;
+                                case "get":
+                                    await GetDataSetWriterAsync(options);
+                                    break;
+                                case "-?":
+                                case "-h":
+                                case "--help":
+                                case "help":
+                                    PrintDataSetWritersHelp();
+                                    break;
+                                default:
+                                    throw new ArgumentException($"Unknown command {command}.");
+                            }
+                            break;
+                        case "variables":
+                            if (args.Length < 2) {
+                                throw new ArgumentException("Need a command!");
+                            }
+                            command = args[1].ToLowerInvariant();
+                            options = new CliOptions(args, 2);
+                            switch (command) {
+                                case "add":
+                                    await AddDataSetVariableAsync(options);
+                                    break;
+                                case "get":
+                                    await ListDataSetVariablesAsync(options);
+                                    break;
+                                case "update":
+                                    await UpdateDataSetVariableAsync(options);
+                                    break;
+                                case "remove":
+                                    await RemoveDataSetVariableAsync(options);
+                                    break;
+                                case "delete":
+                                    await RemoveDataSetWriterAsync(options);
+                                    break;
+                                case "query":
+                                    await QueryDataSetVariablesAsync(options);
+                                    break;
+                                case "-?":
+                                case "-h":
+                                case "--help":
+                                case "help":
+                                    PrintDataSetVariablesHelp();
+                                    break;
+                                default:
+                                    throw new ArgumentException($"Unknown command {command}.");
+                            }
+                            break;
+                        case "events":
+                            if (args.Length < 2) {
+                                throw new ArgumentException("Need a command!");
+                            }
+                            command = args[1].ToLowerInvariant();
+                            options = new CliOptions(args, 2);
+                            switch (command) {
+                                case "add":
+                                    await AddEventDataSetAsync(options);
+                                    break;
+                                case "get":
+                                    await GetEventDataSetAsync(options);
+                                    break;
+                                case "update":
+                                    await UpdateEventDataSetAsync(options);
+                                    break;
+                                case "remove":
+                                    await RemoveEventDataSetAsync(options);
+                                    break;
+                                case "-?":
+                                case "-h":
+                                case "--help":
+                                case "help":
+                                    PrintEventDataSetHelp();
+                                    break;
+                                default:
+                                    throw new ArgumentException($"Unknown command {command}.");
+                            }
+                            break;
+                        case "certificates":
                             if (args.Length < 2) {
                                 throw new ArgumentException("Need a command!");
                             }
@@ -331,25 +443,25 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
                             options = new CliOptions(args, 2);
                             switch (command) {
                                 case "root":
-                                    await CreateRootAsync(options);
+                                    await CreateRootCertificateAsync(options);
                                     break;
                                 case "child":
-                                    await CreateGroupAsync(options);
+                                    await CreateCertificateGroupAsync(options);
                                     break;
                                 case "update":
-                                    await UpdateGroupAsync(options);
+                                    await UpdateCertificateGroupAsync(options);
                                     break;
                                 case "delete":
-                                    await DeleteGroupAsync(options);
+                                    await DeleteCertificateGroupAsync(options);
                                     break;
                                 case "list":
-                                    await ListGroupsAsync(options);
+                                    await ListCertificateGroupsAsync(options);
                                     break;
                                 case "select":
-                                    await SelectGroupAsync(options);
+                                    await SelectCertificateGroupAsync(options);
                                     break;
                                 case "get":
-                                    await GetGroupAsync(options);
+                                    await GetCertificateGroupAsync(options);
                                     break;
                                 case "renew":
                                     await RenewIssuerCertAsync(options);
@@ -358,7 +470,7 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
                                 case "-h":
                                 case "--help":
                                 case "help":
-                                    PrintGroupsHelp();
+                                    PrintCertificateGroupsHelp();
                                     break;
                                 default:
                                     throw new ArgumentException($"Unknown command {command}.");
@@ -858,7 +970,7 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
         /// Publish node
         /// </summary>
         private async Task PublishAsync(CliOptions options) {
-            var result = await _publisher.NodePublishStartAsync(
+            var result = await _twin.NodePublishStartAsync(
                 GetEndpointId(options),
                 new PublishStartRequestApiModel {
                     Item = new PublishedItemApiModel {
@@ -894,7 +1006,7 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
         /// Unpublish node
         /// </summary>
         private async Task UnpublishAsync(CliOptions options) {
-            var result = await _publisher.NodePublishStopAsync(
+            var result = await _twin.NodePublishStopAsync(
                 GetEndpointId(options),
                 new PublishStopRequestApiModel {
                     NodeId = GetNodeId(options)
@@ -909,14 +1021,477 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
         /// </summary>
         private async Task ListPublishedNodesAsync(CliOptions options) {
             if (options.IsSet("-A", "--all")) {
-                var result = await _publisher.NodePublishListAllAsync(GetEndpointId(options));
+                var result = await _twin.NodePublishListAllAsync(GetEndpointId(options));
                 PrintResult(options, result);
                 Console.WriteLine($"{result.Count()} item(s) found...");
             }
             else {
-                var result = await _publisher.NodePublishListAsync(GetEndpointId(options),
+                var result = await _twin.NodePublishListAsync(GetEndpointId(options),
                     options.GetValueOrDefault<string>("-C", "--continuation", null));
                 PrintResult(options, result);
+            }
+        }
+
+        private string _dataSetWriterId;
+
+        /// <summary>
+        /// Get writer id
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        private string GetDataSetWriterId(CliOptions options, bool shouldThrow = true) {
+            var id = options.GetValueOrDefault<string>("-i", "--id", null);
+            if (_dataSetWriterId != null) {
+                if (id == null) {
+                    return _dataSetWriterId;
+                }
+                _dataSetWriterId = null;
+            }
+            if (id != null) {
+                return id;
+            }
+            if (!shouldThrow) {
+                return null;
+            }
+            throw new ArgumentException("Missing -i/--id option.");
+        }
+
+        /// <summary>
+        /// Select writer registration
+        /// </summary>
+        private async Task SelectDataSetWriterAsync(CliOptions options) {
+            if (options.IsSet("-c", "--clear")) {
+                _dataSetWriterId = null;
+            }
+            else if (options.IsSet("-s", "--show")) {
+                Console.WriteLine(_dataSetWriterId);
+            }
+            else {
+                var dataSetWriterId = options.GetValueOrDefault<string>("-i", "--id", null);
+                if (string.IsNullOrEmpty(dataSetWriterId)) {
+                    var result = await _publisher.ListAllDataSetWritersAsync();
+                    dataSetWriterId = ConsoleEx.Select(result.Select(a => a.DataSetWriterId));
+                    if (string.IsNullOrEmpty(dataSetWriterId)) {
+                        Console.WriteLine("Nothing selected - writer selection cleared.");
+                    }
+                }
+                _dataSetWriterId = dataSetWriterId;
+            }
+        }
+
+        /// <summary>
+        /// Register new dataset writer
+        /// </summary>
+        private async Task AddDataSetWriterAsync(CliOptions options) {
+            var result = await _publisher.AddDataSetWriterAsync(new DataSetWriterAddRequestApiModel {
+                DataSetFieldContentMask =
+                    options.GetValueOrDefault<DataSetFieldContentMask?>("-c", "--content", null),
+                EndpointId = options.GetValue<string>("-e", "--endpoint"),
+                WriterGroupId = options.GetValueOrDefault<string>("-g", "--group", null),
+                KeyFrameCount = options.GetValueOrDefault<uint>("-k", "--keyframes", null),
+                KeyFrameInterval = options.GetValueOrDefault<TimeSpan>("-f", "--interval", null),
+                DataSetName = options.GetValueOrDefault<string>("-n", "--name", null),
+               // User = null,
+               // ExtensionFields = null,
+                MessageSettings = BuildDataSetWriterMessageSettings(options),
+                SubscriptionSettings = BuildDataSetWriterSubscriptionSettings(options)
+            });
+            PrintResult(options, result);
+        }
+
+        /// <summary>
+        /// Read full dataset writer model which includes all
+        /// dataset members if there are any.
+        /// </summary>
+        private async Task GetDataSetWriterAsync(CliOptions options) {
+            var result = await _publisher.GetDataSetWriterAsync(GetDataSetWriterId(options));
+            PrintResult(options, result);
+        }
+
+        /// <summary>
+        /// Update an existing application, e.g. server
+        /// certificate, or additional capabilities.
+        /// </summary>
+        private async Task UpdateDataSetWriterAsync(CliOptions options) {
+            await _publisher.UpdateDataSetWriterAsync(GetDataSetWriterId(options),
+                new DataSetWriterUpdateRequestApiModel {
+                    GenerationId = options.GetValueOrDefault<string>("-g", "--genid", null),
+                    DataSetFieldContentMask =
+                        options.GetValueOrDefault<DataSetFieldContentMask?>("-c", "--content", null),
+                    WriterGroupId = options.GetValueOrDefault<string>("-g", "--group", null),
+                    KeyFrameCount = options.GetValueOrDefault<uint>("-k", "--keyframes", null),
+                    KeyFrameInterval = options.GetValueOrDefault<TimeSpan>("-f", "--interval", null),
+                    DataSetName = options.GetValueOrDefault<string>("-n", "--name", null),
+                    // User = null,
+                    // ExtensionFields = null,
+                    MessageSettings = BuildDataSetWriterMessageSettings(options),
+                    SubscriptionSettings = BuildDataSetWriterSubscriptionSettings(options)
+                });
+        }
+
+        /// <summary>
+        /// List all dataset writers or continue find query.
+        /// </summary>
+        private async Task ListDataSetWritersAsync(CliOptions options) {
+            if (options.IsSet("-A", "--all")) {
+                var result = await _publisher.ListAllDataSetWritersAsync();
+                PrintResult(options, result);
+                Console.WriteLine($"{result.Count()} item(s) found...");
+            }
+            else {
+                var result = await _publisher.ListDataSetWritersAsync(
+                    options.GetValueOrDefault<string>("-C", "--continuation", null),
+                    options.GetValueOrDefault<int>("-P", "--page-size", null));
+                PrintResult(options, result);
+            }
+        }
+
+        /// <summary>
+        /// Find dataset writers
+        /// </summary>
+        private async Task QueryDataSetWritersAsync(CliOptions options) {
+            var query = new DataSetWriterInfoQueryApiModel {
+                DataSetName = options.GetValueOrDefault<string>("-n", "--name", null),
+                EndpointId = options.GetValueOrDefault<string>("-e", "--endpoint", null),
+                WriterGroupId = options.GetValueOrDefault<string>("-g", "--group", null)
+            };
+            if (options.IsSet("-A", "--all")) {
+                var result = await _publisher.QueryAllDataSetWritersAsync(query);
+                PrintResult(options, result);
+                Console.WriteLine($"{result.Count()} item(s) found...");
+            }
+            else {
+                var result = await _publisher.QueryDataSetWritersAsync(query,
+                    options.GetValueOrDefault<int>("-P", "--page-size", null));
+                PrintResult(options, result);
+            }
+        }
+
+        /// <summary>
+        /// Unregister dataset writer and linked items.
+        /// </summary>
+        private async Task RemoveDataSetWriterAsync(CliOptions options) {
+            await _publisher.RemoveDataSetWriterAsync(GetDataSetWriterId(options),
+                options.GetValue<string>("-g", "--genid"));
+        }
+
+        /// <summary>
+        /// Monitor writer registrations
+        /// </summary>
+        private async Task MonitorDataSetWritersAsync() {
+            var events = _scope.Resolve<IPublisherServiceEvents>();
+            Console.WriteLine("Press any key to stop.");
+            var complete = await events.SubscribeDataSetWriterEventsAsync(PrintEvent);
+            try {
+                Console.ReadKey();
+            }
+            finally {
+                await complete.DisposeAsync();
+            }
+        }
+
+        /// <summary>
+        /// Register new event based dataset
+        /// </summary>
+        private async Task AddEventDataSetAsync(CliOptions options) {
+            var result = await _publisher.AddEventDataSetAsync(GetDataSetWriterId(options),
+                new DataSetAddEventRequestApiModel {
+                    DiscardNew = options.GetValueOrDefault<bool>("-d", "--discard", null),
+                    EventNotifier = options.GetValueOrDefault<string>("-n", "--notifier", null),
+                    BrowsePath = options.GetValueOrDefault<string[]>("-p", "--path", null),
+                    QueueSize = options.GetValueOrDefault<uint>("-q", "--queue", null),
+                    MonitoringMode = options.GetValueOrDefault<MonitoringMode?>("-m", "--mode", null),
+                    TriggerId = options.GetValueOrDefault<string>("-t", "--triggerid", null),
+                    Filter = null, // TODO
+                    SelectedFields = null // TODO
+                });
+            PrintResult(options, result);
+        }
+
+        /// <summary>
+        /// Read full event set if any.
+        /// </summary>
+        private async Task GetEventDataSetAsync(CliOptions options) {
+            var result = await _publisher.GetEventDataSetAsync(GetDataSetWriterId(options));
+            PrintResult(options, result);
+        }
+
+        /// <summary>
+        /// Update an existing event set.
+        /// </summary>
+        private async Task UpdateEventDataSetAsync(CliOptions options) {
+            await _publisher.UpdateEventDataSetAsync(GetDataSetWriterId(options),
+                new DataSetUpdateEventRequestApiModel {
+                    GenerationId = options.GetValue<string>("-g", "--genid"),
+                    DiscardNew = options.GetValueOrDefault<bool>("-d", "--discard", null),
+                    QueueSize = options.GetValueOrDefault<uint>("-q", "--queue", null),
+                    MonitoringMode = options.GetValueOrDefault<MonitoringMode?>("-m", "--mode", null),
+                    TriggerId = options.GetValueOrDefault<string>("-t", "--triggerid", null),
+                    Filter = null, // TODO
+                    SelectedFields = null // TODO
+                });
+        }
+
+        /// <summary>
+        /// Unregister eventset and remove from dataset.
+        /// </summary>
+        private async Task RemoveEventDataSetAsync(CliOptions options) {
+            await _publisher.RemoveEventDataSetAsync(GetDataSetWriterId(options),
+                options.GetValue<string>("-g", "--genid"));
+        }
+
+        /// <summary>
+        /// Register new dataset variable
+        /// </summary>
+        private async Task AddDataSetVariableAsync(CliOptions options) {
+            var result = await _publisher.AddDataSetVariableAsync(GetDataSetWriterId(options),
+                new DataSetAddVariableRequestApiModel {
+                    PublishedVariableDisplayName = options.GetValueOrDefault<string>("-d", "--name", null),
+                    PublishedVariableNodeId = options.GetValue<string>("-n", "--nodeid"),
+                    DiscardNew = options.GetValueOrDefault<bool>("-D", "--discard", null),
+                    Attribute = options.GetValueOrDefault<NodeAttribute?>("-a", "--attribute", null),
+                    DataChangeFilter = options.GetValueOrDefault<DataChangeTriggerType?>("-f", "--filter", null),
+                    BrowsePath = options.GetValueOrDefault<string[]>("-p", "--path", null),
+                    QueueSize = options.GetValueOrDefault<uint>("-q", "--queue", null),
+                    DeadbandType = options.GetValueOrDefault<DeadbandType?>("-B", "--dbtype", null),
+                    DeadbandValue = options.GetValueOrDefault<double?>("-b", "--deadband", null),
+                    HeartbeatInterval = options.GetValueOrDefault<TimeSpan>("-h", "--heartbeat", null),
+                    SamplingInterval = options.GetValueOrDefault<TimeSpan>("-s", "--sampling", null),
+                    IndexRange = options.GetValueOrDefault<string>("-r", "--range", null),
+                    Order = options.GetValueOrDefault<int>("-o", "--order", null),
+                  //  MetaDataProperties = null, // TODO
+                  //  SubstituteValue = null // TODO
+                    MonitoringMode = options.GetValueOrDefault<MonitoringMode?>("-m", "--mode", null),
+                    TriggerId = options.GetValueOrDefault<string>("-t", "--triggerid", null),
+                });
+            PrintResult(options, result);
+        }
+
+        /// <summary>
+        /// Update an existing variable info.
+        /// </summary>
+        private async Task UpdateDataSetVariableAsync(CliOptions options) {
+            await _publisher.UpdateDataSetVariableAsync(GetDataSetWriterId(options),
+                options.GetValue<string>("-v", "--variable"),
+                new DataSetUpdateVariableRequestApiModel {
+                    GenerationId = options.GetValueOrDefault<string>("-g", "--genid", null),
+                    PublishedVariableDisplayName = options.GetValueOrDefault<string>("-d", "--name", null),
+                    DiscardNew = options.GetValueOrDefault<bool>("-D", "--discard", null),
+                    DataChangeFilter = options.GetValueOrDefault<DataChangeTriggerType?>("-f", "--filter", null),
+                    QueueSize = options.GetValueOrDefault<uint>("-q", "--queue", null),
+                    DeadbandType = options.GetValueOrDefault<DeadbandType?>("-B", "--dbtype", null),
+                    DeadbandValue = options.GetValueOrDefault<double?>("-b", "--deadband", null),
+                    HeartbeatInterval = options.GetValueOrDefault<TimeSpan>("-h", "--heartbeat", null),
+                    SamplingInterval = options.GetValueOrDefault<TimeSpan>("-s", "--sampling", null),
+                    //  MetaDataProperties = null, // TODO
+                    //  SubstituteValue = null // TODO
+                    MonitoringMode = options.GetValueOrDefault<MonitoringMode?>("-m", "--mode", null),
+                    TriggerId = options.GetValueOrDefault<string>("-t", "--triggerid", null),
+                });
+        }
+
+        /// <summary>
+        /// List all dataset variables or continue find query.
+        /// </summary>
+        private async Task ListDataSetVariablesAsync(CliOptions options) {
+            if (options.IsSet("-A", "--all")) {
+                var result = await _publisher.ListAllDataSetVariablesAsync(GetDataSetWriterId(options));
+                PrintResult(options, result);
+                Console.WriteLine($"{result.Count()} item(s) found...");
+            }
+            else {
+                var result = await _publisher.ListDataSetVariablesAsync(GetDataSetWriterId(options),
+                    options.GetValueOrDefault<string>("-C", "--continuation", null),
+                    options.GetValueOrDefault<int>("-P", "--page-size", null));
+                PrintResult(options, result);
+            }
+        }
+
+        /// <summary>
+        /// Query variables in dataset.
+        /// </summary>
+        private async Task QueryDataSetVariablesAsync(CliOptions options) {
+            var query = new PublishedDataSetVariableQueryApiModel {
+                PublishedVariableDisplayName = options.GetValueOrDefault<string>("-d", "--name", null),
+                Attribute = options.GetValueOrDefault<NodeAttribute?>("-a", "--attribute", null),
+                PublishedVariableNodeId = options.GetValue<string>("-n", "--nodeid"),
+            };
+            if (options.IsSet("-A", "--all")) {
+                var result = await _publisher.QueryAllDataSetVariablesAsync(
+                    GetDataSetWriterId(options), query);
+                PrintResult(options, result);
+                Console.WriteLine($"{result.Count()} item(s) found...");
+            }
+            else {
+                var result = await _publisher.QueryDataSetVariablesAsync(
+                    GetDataSetWriterId(options), query,
+                    options.GetValueOrDefault<int>("-P", "--page-size", null));
+                PrintResult(options, result);
+            }
+        }
+
+        /// <summary>
+        /// Unregister dataset variable and remove from dataset.
+        /// </summary>
+        private async Task RemoveDataSetVariableAsync(CliOptions options) {
+            await _publisher.RemoveDataSetVariableAsync(GetDataSetWriterId(options),
+                options.GetValue<string>("-v", "--variable"),
+                options.GetValue<string>("-g", "--genid"));
+        }
+
+        private string _writerGroupId;
+
+        /// <summary>
+        /// Get writer group id
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        private string GetWriterGroupId(CliOptions options, bool shouldThrow = true) {
+            var id = options.GetValueOrDefault<string>("-i", "--id", null);
+            if (_writerGroupId != null) {
+                if (id == null) {
+                    return _writerGroupId;
+                }
+                _writerGroupId = null;
+            }
+            if (id != null) {
+                return id;
+            }
+            if (!shouldThrow) {
+                return null;
+            }
+            throw new ArgumentException("Missing -i/--id option.");
+        }
+
+        /// <summary>
+        /// Select writer group registration
+        /// </summary>
+        private async Task SelectWriterGroupAsync(CliOptions options) {
+            if (options.IsSet("-c", "--clear")) {
+                _writerGroupId = null;
+            }
+            else if (options.IsSet("-s", "--show")) {
+                Console.WriteLine(_writerGroupId);
+            }
+            else {
+                var writerGroupId = options.GetValueOrDefault<string>("-i", "--id", null);
+                if (string.IsNullOrEmpty(writerGroupId)) {
+                    var result = await _publisher.ListAllWriterGroupsAsync();
+                    writerGroupId = ConsoleEx.Select(result.Select(a => a.WriterGroupId));
+                    if (string.IsNullOrEmpty(writerGroupId)) {
+                        Console.WriteLine("Nothing selected - group selection cleared.");
+                    }
+                }
+                _writerGroupId = writerGroupId;
+            }
+        }
+
+        /// <summary>
+        /// List writer groups
+        /// </summary>
+        private async Task ListWriterGroupsAsync(CliOptions options) {
+            if (options.IsSet("-A", "--all")) {
+                var result = await _publisher.ListAllWriterGroupsAsync();
+                PrintResult(options, result);
+                Console.WriteLine($"{result.Count()} item(s) found...");
+            }
+            else {
+                var result = await _publisher.ListWriterGroupsAsync(
+                    options.GetValueOrDefault<string>("-C", "--continuation", null),
+                    options.GetValueOrDefault<int>("-P", "--page-size", null));
+                PrintResult(options, result);
+            }
+        }
+
+        /// <summary>
+        /// Create writer group
+        /// </summary>
+        private async Task AddWriterGroupAsync(CliOptions options) {
+            var result = await _publisher.AddWriterGroupAsync(new WriterGroupAddRequestApiModel {
+                BatchSize = options.GetValueOrDefault<int>("-b", "--batchsize", null),
+                Name = options.GetValueOrDefault<string>("-n", "--name", null),
+                PublishingInterval = options.GetValueOrDefault<TimeSpan>("-p", "--publish", null),
+                HeaderLayoutUri = options.GetValueOrDefault<string>("-h", "--header", null),
+                KeepAliveTime = options.GetValueOrDefault<TimeSpan>("-k", "--keepalive", null),
+                MessageType = options.GetValueOrDefault<NetworkMessageType?>("-m", "--message", null),
+                Priority = options.GetValueOrDefault<byte>("-P", "--priority", null),
+                SiteId = options.GetValueOrDefault<string>("-s", "--siteId", null),
+                // LocaleIds = ...
+                MessageSettings = BuildWriterGroupMessageSettings(options)
+            });
+            PrintResult(options, result);
+        }
+
+        /// <summary>
+        /// Get writer group
+        /// </summary>
+        private async Task GetWriterGroupAsync(CliOptions options) {
+            var result = await _publisher.GetWriterGroupAsync(GetWriterGroupId(options));
+            PrintResult(options, result);
+        }
+
+        /// <summary>
+        /// Delete writer group
+        /// </summary>
+        private async Task DeleteWriterGroupAsync(CliOptions options) {
+            await _publisher.RemoveWriterGroupAsync(GetWriterGroupId(options),
+                options.GetValue<string>("-g", "--genid"));
+        }
+
+        /// <summary>
+        /// Update writer group
+        /// </summary>
+        private async Task UpdateWriterGroupAsync(CliOptions options) {
+            await _publisher.UpdateWriterGroupAsync(GetWriterGroupId(options),
+                new WriterGroupUpdateRequestApiModel {
+                    GenerationId = options.GetValue<string>("-g", "--genid"),
+                    BatchSize = options.GetValueOrDefault<int>("-b", "--batchsize", null),
+                    Name = options.GetValueOrDefault<string>("-n", "--name", null),
+                    PublishingInterval = options.GetValueOrDefault<TimeSpan>("-P", "--publish", null),
+                    HeaderLayoutUri = options.GetValueOrDefault<string>("-h", "--header", null),
+                    KeepAliveTime = options.GetValueOrDefault<TimeSpan>("-k", "--keepalive", null),
+                    MessageType = options.GetValueOrDefault<NetworkMessageType?>("-m", "--message", null),
+                    Priority = options.GetValueOrDefault<byte>("-p", "--priority", null),
+                    // LocaleIds = ...
+                    MessageSettings = BuildWriterGroupMessageSettings(options)
+                });
+        }
+
+        /// <summary>
+        /// Query writer group registrations
+        /// </summary>
+        private async Task QueryWriterGroupsAsync(CliOptions options) {
+            var query = new WriterGroupInfoQueryApiModel {
+                GroupVersion = options.GetValueOrDefault<uint>("-v", "--group-version", null),
+                MessageType = options.GetValueOrDefault<NetworkMessageType?>("-m", "--message", null),
+                Name = options.GetValueOrDefault<string>("-n", "--name", null),
+                Priority = options.GetValueOrDefault<byte>("-p", "--priority", null),
+                SiteId = options.GetValueOrDefault<string>("-s", "--siteId", null)
+            };
+            if (options.IsSet("-A", "--all")) {
+                var result = await _publisher.QueryAllWriterGroupsAsync(query);
+                PrintResult(options, result);
+                Console.WriteLine($"{result.Count()} item(s) found...");
+            }
+            else {
+                var result = await _publisher.QueryWriterGroupsAsync(query,
+                    options.GetValueOrDefault<int>("-P", "--page-size", null));
+                PrintResult(options, result);
+            }
+        }
+
+        /// <summary>
+        /// Monitor writer group registration
+        /// </summary>
+        private async Task MonitorWriterGroupsAsync() {
+            var events = _scope.Resolve<IPublisherServiceEvents>();
+            Console.WriteLine("Press any key to stop.");
+            var complete = await events.SubscribeWriterGroupEventsAsync(PrintEvent);
+            try {
+                Console.ReadKey();
+            }
+            finally {
+                await complete.DisposeAsync();
             }
         }
 
@@ -993,7 +1568,6 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
         private async Task QueryPublishersAsync(CliOptions options) {
             var query = new PublisherQueryApiModel {
                 Connected = options.IsProvidedOrNull("-c", "--connected"),
-                SiteId = options.GetValueOrDefault<string>("-s", "--siteId", null)
             };
             if (options.IsSet("-A", "--all")) {
                 var result = await _registry.QueryAllPublishersAsync(query,
@@ -1022,13 +1596,10 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
         /// Update publisher
         /// </summary>
         private async Task UpdatePublisherAsync(CliOptions options) {
-            var config = BuildPublisherConfig(options);
             await _registry.UpdatePublisherAsync(GetPublisherId(options),
                 new PublisherUpdateApiModel {
-                    SiteId = options.GetValueOrDefault<string>("-s", "--siteId", null),
                     LogLevel = options.GetValueOrDefault<TraceLogLevel>(
-                        "-l", "--log-level", null),
-                    Configuration = config,
+                        "-l", "--log-level", null)
                 });
         }
 
@@ -1165,271 +1736,6 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
             }
         }
 
-        private string _groupId;
-
-        /// <summary>
-        /// Get group id
-        /// </summary>
-        /// <param name="options"></param>
-        /// <returns></returns>
-        private string GetGroupId(CliOptions options, bool shouldThrow = true) {
-            var id = options.GetValueOrDefault<string>("-i", "--id", null);
-            if (_groupId != null) {
-                if (id == null) {
-                    return _groupId;
-                }
-                _groupId = null;
-            }
-            if (id != null) {
-                return id;
-            }
-            if (!shouldThrow) {
-                return null;
-            }
-            throw new ArgumentException("Missing -i/--id option.");
-        }
-
-        /// <summary>
-        /// Select group registration
-        /// </summary>
-        private async Task SelectGroupAsync(CliOptions options) {
-            if (options.IsSet("-c", "--clear")) {
-                _groupId = null;
-            }
-            else if (options.IsSet("-s", "--show")) {
-                Console.WriteLine(_groupId);
-            }
-            else {
-                var groupId = options.GetValueOrDefault<string>("-i", "--id", null);
-                if (string.IsNullOrEmpty(groupId)) {
-                    var result = await _vault.ListAllGroupsAsync();
-                    groupId = ConsoleEx.Select(result);
-                    if (string.IsNullOrEmpty(groupId)) {
-                        Console.WriteLine("Nothing selected - group selection cleared.");
-                    }
-                }
-                _groupId = groupId;
-            }
-        }
-
-        /// <summary>
-        /// List groups
-        /// </summary>
-        private async Task ListGroupsAsync(CliOptions options) {
-            if (options.IsSet("-A", "--all")) {
-                var result = await _vault.ListAllGroupsAsync();
-                PrintResult(options, result);
-                Console.WriteLine($"{result.Count()} item(s) found...");
-            }
-            else {
-                var result = await _vault.ListGroupsAsync(
-                    options.GetValueOrDefault<string>("-C", "--continuation", null),
-                    options.GetValueOrDefault<int>("-P", "--page-size", null));
-                PrintResult(options, result);
-            }
-        }
-
-        /// <summary>
-        /// Get root group
-        /// </summary>
-        private async Task CreateRootAsync(CliOptions options) {
-            var result = await _vault.CreateRootAsync(new TrustGroupRootCreateRequestApiModel {
-                IssuedKeySize = options.GetValueOrDefault<ushort>("-s", "--keysize", null),
-                IssuedLifetime = options.GetValueOrDefault<TimeSpan>("-l", "--lifetime", null),
-                IssuedSignatureAlgorithm = options.GetValueOrDefault<SignatureAlgorithm>(
-                        "-a", "--algorithm", null),
-                Name = options.GetValue<string>("-n", "--name"),
-                SubjectName = options.GetValue<string>("-s", "--subject")
-            });
-            PrintResult(options, result);
-        }
-
-        /// <summary>
-        /// Create group
-        /// </summary>
-        private async Task CreateGroupAsync(CliOptions options) {
-            var result = await _vault.CreateGroupAsync(new TrustGroupRegistrationRequestApiModel {
-                IssuedKeySize = options.GetValueOrDefault<ushort>("-s", "--keysize", null),
-                IssuedLifetime = options.GetValueOrDefault<TimeSpan>("-l", "--lifetime", null),
-                IssuedSignatureAlgorithm = options.GetValueOrDefault<SignatureAlgorithm>(
-                        "-a", "--algorithm", null),
-                Name = options.GetValueOrDefault<string>("-n", "--name", null),
-                ParentId = options.GetValue<string>("-p", "--parent"),
-                SubjectName = options.GetValue<string>("-s", "--subject")
-            });
-            PrintResult(options, result);
-        }
-
-        /// <summary>
-        /// Get group
-        /// </summary>
-        private async Task GetGroupAsync(CliOptions options) {
-            var result = await _vault.GetGroupAsync(GetGroupId(options));
-            PrintResult(options, result);
-        }
-
-        /// <summary>
-        /// Delete group
-        /// </summary>
-        private async Task DeleteGroupAsync(CliOptions options) {
-            await _vault.DeleteGroupAsync(GetGroupId(options));
-        }
-
-        /// <summary>
-        /// Renew issuer cert
-        /// </summary>
-        private async Task RenewIssuerCertAsync(CliOptions options) {
-            var result = await _vault.RenewIssuerCertificateAsync(GetGroupId(options));
-            PrintResult(options, result);
-        }
-
-        /// <summary>
-        /// Update group
-        /// </summary>
-        private async Task UpdateGroupAsync(CliOptions options) {
-            await _vault.UpdateGroupAsync(GetGroupId(options),
-                new TrustGroupUpdateRequestApiModel {
-                    IssuedKeySize = options.GetValueOrDefault<ushort>("-s", "--keysize", null),
-                    IssuedLifetime = options.GetValueOrDefault<TimeSpan>("-l", "--lifetime", null),
-                    IssuedSignatureAlgorithm = options.GetValueOrDefault<SignatureAlgorithm>(
-                        "-a", "--algorithm", null),
-                    Name = options.GetValueOrDefault<string>("-n", "--name", null)
-                });
-        }
-
-
-        private string _jobId;
-
-        /// <summary>
-        /// Get supervisor id
-        /// </summary>
-        private string GetJobId(CliOptions options, bool shouldThrow = true) {
-            var id = options.GetValueOrDefault<string>("-i", "--id", null);
-            if (_jobId != null) {
-                if (id == null) {
-                    return _jobId;
-                }
-                _jobId = null;
-            }
-            if (id != null) {
-                return id;
-            }
-            if (!shouldThrow) {
-                return null;
-            }
-            throw new ArgumentException("Missing -i/--id option.");
-        }
-
-        /// <summary>
-        /// Select job
-        /// </summary>
-        private async Task SelectJobAsync(CliOptions options) {
-            if (options.IsSet("-c", "--clear")) {
-                _jobId = null;
-            }
-            else if (options.IsSet("-s", "--show")) {
-                Console.WriteLine(_jobId);
-            }
-            else {
-                var jobId = options.GetValueOrDefault<string>("-i", "--id", null);
-                if (string.IsNullOrEmpty(jobId)) {
-                    var result = await _jobs.ListAllJobsAsync();
-                    jobId = ConsoleEx.Select(result.Select(r => r.Id));
-                    if (string.IsNullOrEmpty(jobId)) {
-                        Console.WriteLine("Nothing selected - job selection cleared.");
-                    }
-                    else {
-                        Console.WriteLine($"Selected {jobId}.");
-                    }
-                }
-                _jobId = jobId;
-            }
-        }
-
-        /// <summary>
-        /// Get job
-        /// </summary>
-        private async Task GetJobAsync(CliOptions options) {
-            var result = await _jobs.GetJobAsync(GetJobId(options));
-            PrintResult(options, result);
-        }
-
-        /// <summary>
-        /// Delete job
-        /// </summary>
-        private async Task DeleteJobAsync(CliOptions options) {
-            await _jobs.DeleteJobAsync(GetJobId(options));
-        }
-
-        /// <summary>
-        /// Cancel job
-        /// </summary>
-        private async Task CancelJobAsync(CliOptions options) {
-            await _jobs.CancelJobAsync(GetJobId(options));
-        }
-
-        /// <summary>
-        /// Restart job
-        /// </summary>
-        private async Task RestartJobAsync(CliOptions options) {
-            await _jobs.RestartJobAsync(GetJobId(options));
-        }
-
-        /// <summary>
-        /// Query jobs
-        /// </summary>
-        private async Task QueryJobAsync(CliOptions options) {
-            var query = new JobInfoQueryApiModel {
-                JobConfigurationType = options.GetValueOrDefault<string>("-t", "--type", null),
-                Status = options.GetValueOrDefault<JobStatus>("-s", "--status", null),
-                Name = options.GetValueOrDefault<string>("-n", "--name", null)
-            };
-            if (options.IsSet("-A", "--all")) {
-                var result = await _jobs.QueryAllJobsAsync(query);
-                PrintResult(options, result);
-                Console.WriteLine($"{result.Count()} item(s) found...");
-            }
-            else {
-                var result = await _jobs.QueryJobsAsync(query,
-                    options.GetValueOrDefault<int>("-P", "--page-size", null));
-                PrintResult(options, result);
-            }
-        }
-
-        /// <summary>
-        /// List jobs
-        /// </summary>
-        private async Task ListJobsAsync(CliOptions options) {
-            if (options.IsSet("-A", "--all")) {
-                var result = await _jobs.ListAllJobsAsync();
-                PrintResult(options, result);
-                Console.WriteLine($"{result.Count()} item(s) found...");
-            }
-            else {
-                var result = await _jobs.ListJobsAsync(
-                    options.GetValueOrDefault<string>("-C", "--continuation", null),
-                    options.GetValueOrDefault<int>("-P", "--page-size", null));
-                PrintResult(options, result);
-            }
-        }
-
-        /// <summary>
-        /// List workers
-        /// </summary>
-        private async Task ListWorkersAsync(CliOptions options) {
-            if (options.IsSet("-A", "--all")) {
-                var result = await _jobs.ListAllAgentsAsync();
-                PrintResult(options, result);
-                Console.WriteLine($"{result.Count()} item(s) found...");
-            }
-            else {
-                var result = await _jobs.ListWorkersAsync(
-                    options.GetValueOrDefault<string>("-C", "--continuation", null),
-                    options.GetValueOrDefault<int>("-P", "--page-size", null));
-                PrintResult(options, result);
-            }
-        }
-
         private string _supervisorId;
 
         /// <summary>
@@ -1504,7 +1810,6 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
             var query = new SupervisorQueryApiModel {
                 Connected = options.IsProvidedOrNull("-c", "--connected"),
                 EndpointId = options.GetValueOrDefault<string>("-e", "--endpoint", null),
-                SiteId = options.GetValueOrDefault<string>("-s", "--siteId", null)
             };
             if (options.IsSet("-A", "--all")) {
                 var result = await _registry.QueryAllSupervisorsAsync(query,
@@ -1566,7 +1871,6 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
             var config = BuildDiscoveryConfig(options);
             await _registry.UpdateSupervisorAsync(GetSupervisorId(options),
                 new SupervisorUpdateApiModel {
-                    SiteId = options.GetValueOrDefault<string>("-s", "--siteId", null),
                     LogLevel = options.GetValueOrDefault<TraceLogLevel>(
                         "-l", "--log-level", null)
                 });
@@ -1644,7 +1948,6 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
             var query = new DiscovererQueryApiModel {
                 Connected = options.IsProvidedOrNull("-c", "--connected"),
                 Discovery = options.GetValueOrDefault<DiscoveryMode>("-d", "--discovery", null),
-                SiteId = options.GetValueOrDefault<string>("-s", "--siteId", null)
             };
             if (options.IsSet("-A", "--all")) {
                 var result = await _registry.QueryAllDiscoverersAsync(query,
@@ -1698,7 +2001,6 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
             var config = BuildDiscoveryConfig(options);
             await _registry.UpdateDiscovererAsync(GetDiscovererId(options),
                 new DiscovererUpdateApiModel {
-                    SiteId = options.GetValueOrDefault<string>("-s", "--siteId", null),
                     LogLevel = options.GetValueOrDefault<TraceLogLevel>(
                         "-l", "--log-level", null),
                     Discovery = options.GetValueOrDefault("-d", "--discovery",
@@ -2495,6 +2797,137 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
                 options.GetValue<string>("-e", "--entityId"),
                 options.GetValue<string>("-t", "--trustedId"));
         }
+        private string _groupId;
+
+        /// <summary>
+        /// Get group id
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        private string GetGroupId(CliOptions options, bool shouldThrow = true) {
+            var id = options.GetValueOrDefault<string>("-i", "--id", null);
+            if (_groupId != null) {
+                if (id == null) {
+                    return _groupId;
+                }
+                _groupId = null;
+            }
+            if (id != null) {
+                return id;
+            }
+            if (!shouldThrow) {
+                return null;
+            }
+            throw new ArgumentException("Missing -i/--id option.");
+        }
+
+        /// <summary>
+        /// Select group registration
+        /// </summary>
+        private async Task SelectCertificateGroupAsync(CliOptions options) {
+            if (options.IsSet("-c", "--clear")) {
+                _groupId = null;
+            }
+            else if (options.IsSet("-s", "--show")) {
+                Console.WriteLine(_groupId);
+            }
+            else {
+                var groupId = options.GetValueOrDefault<string>("-i", "--id", null);
+                if (string.IsNullOrEmpty(groupId)) {
+                    var result = await _vault.ListAllGroupsAsync();
+                    groupId = ConsoleEx.Select(result);
+                    if (string.IsNullOrEmpty(groupId)) {
+                        Console.WriteLine("Nothing selected - group selection cleared.");
+                    }
+                }
+                _groupId = groupId;
+            }
+        }
+
+        /// <summary>
+        /// List groups
+        /// </summary>
+        private async Task ListCertificateGroupsAsync(CliOptions options) {
+            if (options.IsSet("-A", "--all")) {
+                var result = await _vault.ListAllGroupsAsync();
+                PrintResult(options, result);
+                Console.WriteLine($"{result.Count()} item(s) found...");
+            }
+            else {
+                var result = await _vault.ListGroupsAsync(
+                    options.GetValueOrDefault<string>("-C", "--continuation", null),
+                    options.GetValueOrDefault<int>("-P", "--page-size", null));
+                PrintResult(options, result);
+            }
+        }
+
+        /// <summary>
+        /// Get root group
+        /// </summary>
+        private async Task CreateRootCertificateAsync(CliOptions options) {
+            var result = await _vault.CreateRootAsync(new TrustGroupRootCreateRequestApiModel {
+                IssuedKeySize = options.GetValueOrDefault<ushort>("-s", "--keysize", null),
+                IssuedLifetime = options.GetValueOrDefault<TimeSpan>("-l", "--lifetime", null),
+                IssuedSignatureAlgorithm = options.GetValueOrDefault<SignatureAlgorithm>(
+                        "-a", "--algorithm", null),
+                Name = options.GetValue<string>("-n", "--name"),
+                SubjectName = options.GetValue<string>("-s", "--subject")
+            });
+            PrintResult(options, result);
+        }
+
+        /// <summary>
+        /// Create group
+        /// </summary>
+        private async Task CreateCertificateGroupAsync(CliOptions options) {
+            var result = await _vault.CreateGroupAsync(new TrustGroupRegistrationRequestApiModel {
+                IssuedKeySize = options.GetValueOrDefault<ushort>("-s", "--keysize", null),
+                IssuedLifetime = options.GetValueOrDefault<TimeSpan>("-l", "--lifetime", null),
+                IssuedSignatureAlgorithm = options.GetValueOrDefault<SignatureAlgorithm>(
+                        "-a", "--algorithm", null),
+                Name = options.GetValueOrDefault<string>("-n", "--name", null),
+                ParentId = options.GetValue<string>("-p", "--parent"),
+                SubjectName = options.GetValue<string>("-s", "--subject")
+            });
+            PrintResult(options, result);
+        }
+
+        /// <summary>
+        /// Get group
+        /// </summary>
+        private async Task GetCertificateGroupAsync(CliOptions options) {
+            var result = await _vault.GetGroupAsync(GetGroupId(options));
+            PrintResult(options, result);
+        }
+
+        /// <summary>
+        /// Delete group
+        /// </summary>
+        private async Task DeleteCertificateGroupAsync(CliOptions options) {
+            await _vault.DeleteGroupAsync(GetGroupId(options));
+        }
+
+        /// <summary>
+        /// Renew issuer cert
+        /// </summary>
+        private async Task RenewIssuerCertAsync(CliOptions options) {
+            var result = await _vault.RenewIssuerCertificateAsync(GetGroupId(options));
+            PrintResult(options, result);
+        }
+
+        /// <summary>
+        /// Update group
+        /// </summary>
+        private async Task UpdateCertificateGroupAsync(CliOptions options) {
+            await _vault.UpdateGroupAsync(GetGroupId(options),
+                new TrustGroupUpdateRequestApiModel {
+                    IssuedKeySize = options.GetValueOrDefault<ushort>("-s", "--keysize", null),
+                    IssuedLifetime = options.GetValueOrDefault<TimeSpan>("-l", "--lifetime", null),
+                    IssuedSignatureAlgorithm = options.GetValueOrDefault<SignatureAlgorithm>(
+                        "-a", "--algorithm", null),
+                    Name = options.GetValueOrDefault<string>("-n", "--name", null)
+                });
+        }
 
         /// <summary>
         /// Get status
@@ -2503,7 +2936,6 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
             Console.WriteLine("Twin:      " + await _twin.GetServiceStatusAsync());
             Console.WriteLine("Registry:  " + await _registry.GetServiceStatusAsync());
             Console.WriteLine("Publisher: " + await _publisher.GetServiceStatusAsync());
-            Console.WriteLine("Jobs:      " + await _jobs.GetServiceStatusAsync());
             Console.WriteLine("Vault:     " + await _vault.GetServiceStatusAsync());
             Console.WriteLine("History:   " + await _history.GetServiceStatusAsync());
         }
@@ -2600,6 +3032,22 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
         /// <summary>
         /// Print event
         /// </summary>
+        private Task PrintEvent(WriterGroupEventApiModel ev) {
+            Console.WriteLine(_serializer.SerializePretty(ev));
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Print event
+        /// </summary>
+        private Task PrintEvent(DataSetWriterEventApiModel ev) {
+            Console.WriteLine(_serializer.SerializePretty(ev));
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Print event
+        /// </summary>
         private Task PrintEvent(EndpointEventApiModel ev) {
             Console.WriteLine(_serializer.SerializePretty(ev));
             return Task.CompletedTask;
@@ -2654,6 +3102,107 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
         }
 
         /// <summary>
+        /// Build message settings
+        /// </summary>
+        private WriterGroupMessageSettingsApiModel BuildWriterGroupMessageSettings(CliOptions options) {
+            var config = new WriterGroupMessageSettingsApiModel();
+            var empty = true;
+
+            var groupVersion = options.GetValueOrDefault<uint>("-V", "--version", null);
+            if (groupVersion != null && groupVersion != 0) {
+                config.GroupVersion = groupVersion;
+                empty = false;
+            }
+            var offset = options.GetValueOrDefault<double>("-S", "--offset", null);
+            if (offset != null && offset != 0) {
+                config.SamplingOffset = offset;
+                empty = false;
+            }
+
+            var mask = options.GetValueOrDefault<NetworkMessageContentMask?>("-C", "--content", null);
+            if (mask != null && mask != 0) {
+                config.NetworkMessageContentMask = mask;
+                empty = false;
+            }
+            var order = options.GetValueOrDefault<DataSetOrderingType?>("-O", "--order", null);
+            if (order != null && order != 0) {
+                config.DataSetOrdering = order;
+                empty = false;
+            }
+            return empty ? null : config;
+        }
+
+        /// <summary>
+        /// Build subscription settings
+        /// </summary>
+        private PublishedDataSetSourceSettingsApiModel BuildDataSetWriterSubscriptionSettings(CliOptions options) {
+            var config = new PublishedDataSetSourceSettingsApiModel();
+            var empty = true;
+
+            var resolve = options.GetValueOrDefault<bool>("-R", "--resolve", null);
+            if (resolve != null) {
+                config.ResolveDisplayName = resolve;
+                empty = false;
+            }
+
+            var prio = options.GetValueOrDefault<byte>("-P", "--priority", null);
+            if (prio != null) {
+                config.Priority = prio;
+                empty = false;
+            }
+            var keepAlive = options.GetValueOrDefault<uint>("-K", "--kacount", null);
+            if (keepAlive != null) {
+                config.MaxKeepAliveCount = keepAlive;
+                empty = false;
+            }
+            var count = options.GetValueOrDefault<uint>("-L", "--lifetime", null);
+            if (count != null) {
+                config.LifeTimeCount = count;
+                empty = false;
+            }
+            var maxPublish = options.GetValueOrDefault<uint>("-M", "--maxnotif", null);
+            if (maxPublish != null) {
+                config.MaxNotificationsPerPublish = maxPublish;
+                empty = false;
+            }
+            var publish = options.GetValueOrDefault<TimeSpan>("-p", "--publish", null);
+            if (publish != null) {
+                config.PublishingInterval = publish;
+                empty = false;
+            }
+            return empty ? null : config;
+        }
+
+        /// <summary>
+        /// Build message settings
+        /// </summary>
+        private DataSetWriterMessageSettingsApiModel BuildDataSetWriterMessageSettings(CliOptions options) {
+            var config = new DataSetWriterMessageSettingsApiModel();
+            var empty = true;
+            var messageNumber = options.GetValueOrDefault<ushort>("-N", "--number", null);
+            if (messageNumber != null && messageNumber != 0) {
+                config.NetworkMessageNumber = messageNumber;
+                empty = false;
+            }
+            var size = options.GetValueOrDefault<ushort>("-s", "--size", null);
+            if (size != null && size != 0) {
+                config.ConfiguredSize = size;
+                empty = false;
+            }
+            var mask = options.GetValueOrDefault<DataSetContentMask?>("-d", "--dataset", null);
+            if (mask != null && mask != 0) {
+                config.DataSetMessageContentMask = mask;
+                empty = false;
+            }
+            var offset = options.GetValueOrDefault<ushort>("-o", "--offset", null);
+            if (offset != null && offset != 0) {
+                config.DataSetOffset = offset;
+                empty = false;
+            }
+            return empty ? null : config;
+        }
+
+        /// <summary>
         /// Build discovery config model from options
         /// </summary>
         private DiscoveryConfigApiModel BuildDiscoveryConfig(CliOptions options) {
@@ -2696,67 +3245,28 @@ namespace Microsoft.Azure.IIoT.Api.Cli {
             }
 
             var portProbes = options.GetValueOrDefault<int>("-P", "--port-probes", null);
-            if (portProbes != null && portProbes != 0) {
+            if (portProbes != null) {
                 config.MaxPortProbes = portProbes;
                 empty = false;
             }
 
             var netProbeTimeout = options.GetValueOrDefault<int>("-T", "--address-probe-timeout", null);
-            if (netProbeTimeout != null && netProbeTimeout != 0) {
+            if (netProbeTimeout != null) {
                 config.NetworkProbeTimeout = TimeSpan.FromMilliseconds(netProbeTimeout.Value);
                 empty = false;
             }
 
             var portProbeTimeout = options.GetValueOrDefault<int>("-t", "--port-probe-timeout", null);
-            if (portProbeTimeout != null && portProbeTimeout != 0) {
+            if (portProbeTimeout != null) {
                 config.PortProbeTimeout = TimeSpan.FromMilliseconds(portProbeTimeout.Value);
                 empty = false;
             }
 
             var idleTime = options.GetValueOrDefault<int>("-I", "--idle-time", null);
-            if (idleTime != null && idleTime != 0) {
+            if (idleTime != null) {
                 config.IdleTimeBetweenScans = TimeSpan.FromSeconds(idleTime.Value);
                 empty = false;
             }
-            return empty ? null : config;
-        }
-
-        /// <summary>
-        /// Build publisher config model from options
-        /// </summary>
-        private PublisherConfigApiModel BuildPublisherConfig(CliOptions options) {
-            var config = new PublisherConfigApiModel();
-            var empty = true;
-
-            var url = options.GetValueOrDefault<string>("-o", "--orchestrator", null);
-            if (url != null) {
-                if (url == "true") {
-                    config.JobOrchestratorUrl = "";
-                }
-                else {
-                    config.JobOrchestratorUrl = url;
-                }
-                empty = false;
-            }
-
-            var maxWorkers = options.GetValueOrDefault<int>("-w", "--max-workers", null);
-            if (maxWorkers != null && maxWorkers >= 0) {
-                config.MaxWorkers = maxWorkers;
-                empty = false;
-            }
-
-            var checkIntervalSec = options.GetValueOrDefault<int>("-c", "--check-interval", null);
-            if (checkIntervalSec != null && checkIntervalSec != 0) {
-                config.JobCheckInterval = TimeSpan.FromSeconds(checkIntervalSec.Value);
-                empty = false;
-            }
-
-            var heartbeatInterval = options.GetValueOrDefault<int>("-h", "--heartbeat", null);
-            if (heartbeatInterval != null && heartbeatInterval != 0) {
-                config.HeartbeatInterval = TimeSpan.FromSeconds(heartbeatInterval.Value);
-                empty = false;
-            }
-
             return empty ? null : config;
         }
 
@@ -3149,15 +3659,7 @@ Commands and Options
      update      Update publisher
         with ...
         -i, --id        Id of publisher to retrieve (mandatory)
-        -s, --siteId    Updated site of the publisher.
         -l, --log-level Set publisher module logging level
-        -o, --orchestrator
-                        Orchestrator url
-        -w, --max-workers
-                        Max number of workers to to use
-        -c, --check-interval
-                        Job check interval in seconds
-        -h, --heartbeat Heartbeat interval in seconds
 
      list        List publishers
         with ...
@@ -3171,7 +3673,6 @@ Commands and Options
      query       Find publishers
         -S, --server    Return only server state (default:false)
         -c, --connected Only return connected or disconnected.
-        -s, --siteId    Site of the publishers.
         -P, --page-size Size of page
         -A, --all       Return all endpoints (unpaged)
         -F, --format    Json format for result
@@ -3218,7 +3719,6 @@ Commands and Options
      query       Find supervisors
         -S, --server    Return only server state (default:false)
         -c, --connected Only return connected or disconnected.
-        -s, --siteId    Site of the supervisors.
         -e, --endpoint  Manages Endpoint twin with given id.
         -P, --page-size Size of page
         -A, --all       Return all supervisors (unpaged)
@@ -3238,7 +3738,6 @@ Commands and Options
      update      Update supervisor
         with ...
         -i, --id        Id of supervisor to update (mandatory)
-        -s, --siteId    Updated site of the supervisor.
         -l, --log-level Set supervisor module logging level
 
      reset       Reset supervisor
@@ -3284,7 +3783,6 @@ Commands and Options
      query       Find discoverers
         -c, --connected Only return connected or disconnected.
         -d, --discovery Discovery state.
-        -s, --siteId    Site of the discoverers.
         -P, --page-size Size of page
         -A, --all       Return all discoverers (unpaged)
         -F, --format    Json format for result
@@ -3297,7 +3795,6 @@ Commands and Options
      update      Update discoverer
         with ...
         -i, --id        Id of discoverer to update (mandatory)
-        -s, --siteId    Updated site of the discoverer.
         -d, --discovery Set discoverer discovery mode
         -l, --log-level Set discoverer module logging level
         -a, --activate  Activate all endpoints during onboarding.
@@ -3338,59 +3835,81 @@ Commands and Options
         /// <summary>
         /// Print help
         /// </summary>
-        private void PrintJobsHelp() {
+        private void PrintWriterGroupsHelp() {
             Console.WriteLine(
                 @"
-Manage jobs
+Manage dataset writer groups
 
 Commands and Options
 
-     select      Select job as -i/--id argument in all calls.
+     select      Select group as -i/--id argument in all calls.
         with ...
-        -i, --id        Job id to select.
+        -i, --id        Group id to select.
         -c, --clear     Clear current selection
         -s, --show      Show current selection
 
-     list        List jobs
+     list        List writer groups
         with ...
         -C, --continuation
                         Continuation from previous result.
-        -P, --page-size Size of page
-        -A, --all       Return all jobs (unpaged)
+        -A, --all       Return all items (unpaged)
         -F, --format    Json format for result
 
-     query       Find jobs
-        -S, --status    Status of the job
-        -t, --type      Job type.
-        -n, --name      Name of the job.
-        -P, --page-size Size of page
-        -A, --all       Return all jobs (unpaged)
-        -F, --format    Json format for result
-
-     get         Get Job
+     query       Find writer groups
         with ...
-        -i, --id        Id of job to retrieve (mandatory)
-        -F, --format    Json format for result
-
-     workers     List workers
-        with ...
+        -s, --siteId    Site of the group
+        -n, --name      Name of the group
+        -m, --message   Network message type
+        -P, --priority  Group priority
+        -V, --version   Group version
         -C, --continuation
                         Continuation from previous result.
-        -P, --page-size Size of page
-        -A, --all       Return all jobs (unpaged)
+        -A, --all       Return all items (unpaged)
         -F, --format    Json format for result
 
-     cancel      Cancel job
+     create      Create new writer group
         with ...
-        -i, --id        Id of job to cancel (mandatory)
+        -s, --siteId    Site of the group (mandatory)
+        -n, --name      Name of the group
+        -b, --batchsize Batch size
+        -p, --publish   Publishing interval
+        -h, --header    Network message header uri
+        -k, --keepalive Keep alive interval
+        -m, --message   Network message type
+        -P, --priority  Group priority
+        -V, --version   Group version
+        -S, --offset    Sampling offset
+        -C, --content   Network message content mask
+        -O, --order     Dataset order
 
-     restart     Restart job
-        with ...
-        -i, --id        Id of job to restart (mandatory)
+        -F, --format    Json format for result
 
-     delete      Delete job
+     get         Get writer group
         with ...
-        -i, --id        Id of job to delete (mandatory)
+        -i, --id        Id of group for renewal (mandatory)
+
+     update      Update writer group information
+        with ...
+        -i, --id        Id of the group to update (mandatory)
+        -g, --genid     Generation of group to update (mandatory)
+        -n, --name      Name of the group
+        -b, --batchsize Batch size
+        -p, --publish   Publishing interval
+        -h, --header    Network message header uri
+        -k, --keepalive Keep alive interval
+        -m, --message   Network message type
+        -P, --priority  Group priority
+        -V, --version   Group version
+        -S, --offset    Sampling offset
+        -C, --content   Network message content mask
+        -O, --order     Dataset order
+
+     delete      Delete writer group
+        with ...
+        -i, --id        Id of group to delete (mandatory)
+        -g, --genid     Generation of group to delete (mandatory)
+
+     monitor     Monitor writer groups
 
      help, -h, -? --help
                  Prints out this help.
@@ -3401,7 +3920,219 @@ Commands and Options
         /// <summary>
         /// Print help
         /// </summary>
-        private void PrintGroupsHelp() {
+        private void PrintDataSetWritersHelp() {
+            Console.WriteLine(
+                @"
+Manage dataset and dataset writers
+
+Commands and Options
+
+     select      Select writer as -i/--id argument in all calls.
+        with ...
+        -i, --id        Group id to select.
+        -c, --clear     Clear current selection
+        -s, --show      Show current selection
+
+     list        List dataset writers
+        with ...
+        -C, --continuation
+                        Continuation from previous result.
+        -A, --all       Return all items (unpaged)
+        -F, --format    Json format for result
+
+     query       Find dataset writers
+        with ...
+        -g, --group     Writer group to search in
+        -n, --name      Dataset name to look for
+        -e, --endpoint  Endpoint id of writer
+        -C, --continuation
+                        Continuation from previous result.
+        -A, --all       Return all items (unpaged)
+        -F, --format    Json format for result
+
+     create      Create new dataset
+        with ...
+        -e, --endpoint  Endpoint id for the writer (mandatory)
+        -g, --group     Group the writer should be part of (or default)
+        -n, --name      Dataset name
+        -p, --publish   Publishing interval
+        -R, --resolve   Resolve display name
+        -k, --keyframes Keyframe count
+        -f, --interval  Keyframe interval
+        -N, --number    Network message number
+        -s, --size      Configured size
+        -d, --dataset   Dataset message content mask
+        -o, --offset    Dataset offset
+        -f, --interval  Keyframe interval
+        -P, --priority  Dataset priority
+        -K, --kacount   Keep alive counter
+        -L, --lifetime  Lifetime count
+        -M, --maxnotif  Max notifications per publish
+        -F, --format    Json format for result
+
+     get         Get dataset
+        with ...
+        -i, --id        Id of dataset writer (mandatory)
+
+     update      Update dataset information
+        with ...
+        -i, --id        Id of the dataset writer to update (mandatory)
+        -g, --genid     Generation of writer to update (mandatory)
+        -g, --group     Group writer should be part of
+        -n, --name      Dataset name
+        -p, --publish   Publishing interval
+        -R, --resolve   Resolve display name
+        -k, --keyframes Keyframe count
+        -f, --interval  Keyframe interval
+        -N, --number    Network message number
+        -s, --size      Configured size
+        -d, --dataset   Dataset message content mask
+        -o, --offset    Dataset offset
+        -f, --interval  Keyframe interval
+        -P, --priority  Dataset priority
+        -K, --kacount   Keep alive counter
+        -L, --lifetime  Lifetime count
+        -M, --maxnotif  Max notifications per publish
+
+     delete      Delete dataset
+        with ...
+        -i, --id        Id of dataset writer to delete (mandatory)
+        -g, --genid     Generation of group to delete (mandatory)
+
+     monitor     Monitor dataset writers
+
+     help, -h, -? --help
+                 Prints out this help.
+"
+                );
+        }
+
+        /// <summary>
+        /// Print help
+        /// </summary>
+        private void PrintEventDataSetHelp() {
+            Console.WriteLine(
+                @"
+Manage dataset event definitions
+
+Commands and Options
+
+     add         Create new event definition in empty dataset writer
+        with ...
+        -i, --id        Dataset writer to define event for (mandatory)
+        -n, --notifier  Event Notifier
+        -p, --path      Browse path
+        -D, --discard   Discard new
+        -q, --queue     Queue size
+        -m, --mode      Monitoring mode
+        -t, --triggerid Trigger id
+        -F, --format    Json format for result
+
+     update      Update dataset event definition
+        with ...
+        -i, --id        Id of the dataset writer to update (mandatory)
+        -g, --genid     Generation of writer to update (mandatory)
+        -D, --discard   Discard new
+        -q, --queue     Queue size
+        -m, --mode      Monitoring mode
+        -t, --triggerid Trigger id
+
+     get         Get dataset event definition
+        with ...
+        -i, --id        Dataset writer with event definition (mandatory)
+        -F, --format    Json format for result
+
+     remove      Remove dataset event definition
+        with ...
+        -i, --id        Dataset writer id (mandatory)
+        -g, --genid     Generation of variable to remove (mandatory)
+
+     help, -h, -? --help
+                 Prints out this help.
+"
+                );
+        }
+
+        /// <summary>
+        /// Print help
+        /// </summary>
+        private void PrintDataSetVariablesHelp() {
+            Console.WriteLine(
+                @"
+Manage dataset variables
+
+Commands and Options
+
+     list        List dataset variables
+        with ...
+        -i, --id        Dataset writer (mandator)
+        -C, --continuation
+                        Continuation from previous result.
+        -A, --all       Return all items (unpaged)
+        -F, --format    Json format for result
+
+     query       Find dataset variables
+        with ...
+        -i, --id        Dataset writer (mandatory)
+        -a, --attribute Node attribute to search for
+        -d, --name      Display name to look for
+        -n, --nodeId    Node Id to look for
+        -C, --continuation
+                        Continuation from previous result.
+        -A, --all       Return all items (unpaged)
+        -F, --format    Json format for result
+
+     add         Create new variable in dataset writer
+        with ...
+        -i, --id        Dataset writer (mandatory)
+        -a, --attribute Node attribute to search for
+        -d, --name      Display name to look for
+        -n, --nodeId    Node Id to look for
+        -D, --discard   Discard new
+        -f, --filter    Data change filter
+        -q, --queue     Queue size
+        -B, --dbtype    Deadband type
+        -b, --deadband  Deadband value
+        -h, --heartbeat Heartbeat value
+        -s, --sampling  Sampling interval
+        -o, --order     Order
+        -m, --mode      Monitoring mode
+        -t, --triggerid Trigger id
+        -r, --range     Index range
+        -F, --format    Json format for result
+
+     update      Update dataset variable information
+        with ...
+        -i, --id        Id of the dataset writer to update (mandatory)
+        -v, --variable  Variable id (mandatory)
+        -g, --genid     Generation of writer to update (mandatory)
+        -d, --name      Display name to look for
+        -D, --discard   Discard new
+        -f, --filter    Data change filter
+        -q, --queue     Queue size
+        -B, --dbtype    Deadband type
+        -b, --deadband  Deadband value
+        -h, --heartbeat Heartbeat value
+        -s, --sampling  Sampling interval
+        -m, --mode      Monitoring mode
+        -t, --triggerid Trigger id
+
+     remove      Remove variable
+        with ...
+        -i, --id        Dataset writer id (mandatory)
+        -v, --variable  Variable id (mandatory)
+        -g, --genid     Generation of variable to remove (mandatory)
+
+     help, -h, -? --help
+                 Prints out this help.
+"
+                );
+        }
+
+        /// <summary>
+        /// Print help
+        /// </summary>
+        private void PrintCertificateGroupsHelp() {
             Console.WriteLine(
                 @"
 Manage entity trust groups
@@ -3576,11 +4307,11 @@ Commands and Options
 
         private readonly ILifetimeScope _scope;
         private readonly ITwinServiceApi _twin;
-        private readonly IPublisherJobServiceApi _jobs;
-        private readonly IPublisherServiceApi _publisher;
         private readonly IRegistryServiceApi _registry;
+        private readonly IPublisherServiceApi _publisher;
         private readonly IHistoryServiceApi _history;
         private readonly IVaultServiceApi _vault;
+        private readonly IMetricServer _metrics;
         private readonly IJsonSerializer _serializer;
     }
 }

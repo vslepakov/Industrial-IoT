@@ -12,6 +12,7 @@ namespace Microsoft.Azure.IIoT.Messaging.EventHub.Services {
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
+    using System.Threading;
 
     /// <summary>
     /// Event hub namespace client
@@ -53,7 +54,7 @@ namespace Microsoft.Azure.IIoT.Messaging.EventHub.Services {
 
             /// <inheritdoc/>
             public Task SendAsync(byte[] payload, IDictionary<string, string> properties,
-                string partitionKey) {
+                string partitionKey, CancellationToken ct) {
                 using (var ev = new EventData(payload)) {
                     if (properties != null) {
                         foreach (var prop in properties) {
@@ -69,7 +70,7 @@ namespace Microsoft.Azure.IIoT.Messaging.EventHub.Services {
 
             /// <inheritdoc/>
             public Task SendEventAsync(byte[] data, string contentType,
-                string eventSchema, string contentEncoding) {
+                string eventSchema, string contentEncoding, CancellationToken ct) {
                 using (var ev = CreateEvent(data, contentType, eventSchema, contentEncoding)) {
                     return _client.SendAsync(ev);
                 }
@@ -77,7 +78,7 @@ namespace Microsoft.Azure.IIoT.Messaging.EventHub.Services {
 
             /// <inheritdoc/>
             public Task SendEventAsync(IEnumerable<byte[]> batch, string contentType,
-                string eventSchema, string contentEncoding) {
+                string eventSchema, string contentEncoding, CancellationToken ct) {
                 var events = batch
                     .Select(b => CreateEvent(b, contentType, eventSchema, contentEncoding))
                     .ToList();

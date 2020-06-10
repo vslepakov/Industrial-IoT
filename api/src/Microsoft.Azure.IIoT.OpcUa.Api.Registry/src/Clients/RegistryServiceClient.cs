@@ -37,11 +37,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Clients {
         /// <param name="serializer"></param>
         public RegistryServiceClient(IHttpClient httpClient, string serviceUri,
             ISerializer serializer = null) {
-            if (string.IsNullOrEmpty(serviceUri)) {
+            if (string.IsNullOrWhiteSpace(serviceUri)) {
                 throw new ArgumentNullException(nameof(serviceUri),
                     "Please configure the Url of the registry micro service.");
             }
-            _serviceUri = serviceUri;
+            _serviceUri = serviceUri.TrimEnd('/');
             _serializer = serializer ?? new NewtonSoftJsonSerializer();
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         }
@@ -554,6 +554,31 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Clients {
             var response = await _httpClient.PostAsync(request, ct).ConfigureAwait(false);
             response.Validate();
             return _serializer.DeserializeResponse<PublisherListApiModel>(response);
+        }
+
+        /// <inheritdoc/>
+        public async Task<SupervisorStatusApiModel> GetPublisherStatusAsync(
+            string publisherId, CancellationToken ct) {
+            if (string.IsNullOrEmpty(publisherId)) {
+                throw new ArgumentNullException(nameof(publisherId));
+            }
+            var uri = new UriBuilder($"{_serviceUri}/v2/publishers/{publisherId}/status");
+            var request = _httpClient.NewRequest(uri.Uri, Resource.Platform);
+            _serializer.SetAcceptHeaders(request);
+            var response = await _httpClient.GetAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<SupervisorStatusApiModel>(response);
+        }
+
+        /// <inheritdoc/>
+        public async Task ResetPublisherAsync(string publisherId, CancellationToken ct) {
+            if (string.IsNullOrEmpty(publisherId)) {
+                throw new ArgumentNullException(nameof(publisherId));
+            }
+            var uri = new UriBuilder($"{_serviceUri}/v2/publishers/{publisherId}/reset");
+            var request = _httpClient.NewRequest(uri.Uri, Resource.Platform);
+            var response = await _httpClient.PostAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
         }
 
         /// <inheritdoc/>

@@ -25,6 +25,9 @@ namespace Microsoft.Azure.IIoT.Hub.Mock {
         public string ModuleId { get; }
 
         /// <inheritdoc />
+        public string Gateway { get; }
+
+        /// <inheritdoc />
         public IRetryPolicy RetryPolicy { get; set; }
 
         /// <summary>
@@ -45,6 +48,7 @@ namespace Microsoft.Azure.IIoT.Hub.Mock {
             }
             DeviceId = cs.DeviceId;
             ModuleId = cs.ModuleId;
+            Gateway = cs.GatewayHostName;
         }
 
         /// <inheritdoc/>
@@ -88,7 +92,7 @@ namespace Microsoft.Azure.IIoT.Hub.Mock {
             }
 
             /// <inheritdoc />
-            public Task SendEventAsync(Message message) {
+            public Task SendEventAsync(Message message, CancellationToken ct) {
                 // Add event to telemetry list
                 if (!IsClosed) {
                     Connection.SendEvent(message);
@@ -97,7 +101,8 @@ namespace Microsoft.Azure.IIoT.Hub.Mock {
             }
 
             /// <inheritdoc />
-            public Task SendEventBatchAsync(IEnumerable<Message> messages) {
+            public Task SendEventBatchAsync(IEnumerable<Message> messages,
+                CancellationToken ct) {
                 if (!IsClosed) {
                     foreach (var message in messages) {
                         Connection.SendEvent(message);
@@ -134,12 +139,13 @@ namespace Microsoft.Azure.IIoT.Hub.Mock {
             }
 
             /// <inheritdoc />
-            public Task<Twin> GetTwinAsync() {
+            public Task<Twin> GetTwinAsync(CancellationToken ct) {
                 return Task.FromResult(IsClosed ? null : Connection.GetTwin());
             }
 
             /// <inheritdoc />
-            public Task UpdateReportedPropertiesAsync(TwinCollection reportedProperties) {
+            public Task UpdateReportedPropertiesAsync(TwinCollection reportedProperties,
+                CancellationToken ct) {
                 if (!IsClosed) {
                     Connection.UpdateReportedProperties(reportedProperties);
                 }

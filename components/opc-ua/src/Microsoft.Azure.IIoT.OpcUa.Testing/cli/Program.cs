@@ -5,8 +5,7 @@
 
 namespace Microsoft.Azure.IIoT.OpcUa.Cli {
     using Microsoft.Azure.IIoT.OpcUa.Core.Models;
-    using Microsoft.Azure.IIoT.OpcUa.Edge.Control.Services;
-    using Microsoft.Azure.IIoT.OpcUa.Edge.Export.Services;
+    using Microsoft.Azure.IIoT.OpcUa.Edge.Twin.Services;
     using Microsoft.Azure.IIoT.OpcUa.Protocol;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Sample;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Services;
@@ -32,6 +31,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Cli {
     using System.IO;
     using System.IO.Compression;
     using System.Linq;
+    using System.Net;
     using System.Runtime.Loader;
     using System.Text;
     using System.Threading;
@@ -62,7 +62,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Cli {
             var op = Op.None;
             var endpoint = new EndpointModel();
             string fileName = null;
-            var host = Utils.GetHostName();
+            var host = Dns.GetHostName();
             var ports = new List<int>();
             try {
                 for (var i = 0; i < args.Length; i++) {
@@ -279,17 +279,17 @@ Operations (Mutually exclusive):
             }
 
             /// <inheritdoc/>
-            public string DeviceId { get; } = "";
+            public string Gateway => Dns.GetHostName();
+
+            /// <inheritdoc/>
+            public string DeviceId => Gateway;
 
             /// <inheritdoc/>
             public string ModuleId { get; } = "";
 
             /// <inheritdoc/>
-            public string SiteId => null;
-
-            /// <inheritdoc/>
             public async Task SendEventAsync(byte[] data, string contentType,
-                string eventSchema, string contentEncoding) {
+                string eventSchema, string contentEncoding, CancellationToken ct) {
                 var ev = JsonConvert.DeserializeObject<DiscoveryEventModel>(
                     Encoding.UTF8.GetString(data));
                 var endpoint = ev.Registration?.Endpoint;
@@ -310,7 +310,7 @@ Operations (Mutually exclusive):
                         IgnoreDefaultValues = true,
                         UseAdvancedEncoding = true
                     })
-                    using (var browser = new BrowseStreamEncoder(_client, endpoint, encoder,
+                    using (var browser = new BrowsedNodeStreamEncoder(_client, endpoint, encoder,
                         null, _logger, null)) {
                         await browser.EncodeAsync(CancellationToken.None);
                     }
@@ -322,19 +322,20 @@ Operations (Mutually exclusive):
 
             /// <inheritdoc/>
             public async Task SendEventAsync(IEnumerable<byte[]> batch, string contentType,
-                string eventSchema, string contentEncoding) {
+                string eventSchema, string contentEncoding, CancellationToken ct) {
                 foreach (var item in batch) {
-                    await SendEventAsync(item, contentType, eventSchema, contentEncoding);
+                    await SendEventAsync(item, contentType, eventSchema, contentEncoding, ct);
                 }
             }
 
             /// <inheritdoc/>
-            public Task ReportAsync(string propertyId, VariantValue value) {
+            public Task ReportAsync(string propertyId, VariantValue value, CancellationToken ct) {
                 return Task.CompletedTask;
             }
 
             /// <inheritdoc/>
-            public Task ReportAsync(IEnumerable<KeyValuePair<string, VariantValue>> properties) {
+            public Task ReportAsync(IEnumerable<KeyValuePair<string, VariantValue>> properties,
+                CancellationToken ct) {
                 return Task.CompletedTask;
             }
 
@@ -361,7 +362,7 @@ Operations (Mutually exclusive):
                 IgnoreDefaultValues = true,
                 UseAdvancedEncoding = true
             })
-            using (var browser = new BrowseStreamEncoder(client, endpoint, encoder,
+            using (var browser = new BrowsedNodeStreamEncoder(client, endpoint, encoder,
                 null, logger.Logger, null)) {
                 await browser.EncodeAsync(CancellationToken.None);
             }
@@ -418,7 +419,7 @@ Operations (Mutually exclusive):
                             using (var zipped = zip ?
                                 new DeflateStream(stream, CompressionLevel.Optimal) :
                                 (Stream)new GZipStream(stream, CompressionLevel.Optimal))
-                            using (var browser = new BrowseStreamEncoder(client, endpoint, zipped,
+                            using (var browser = new BrowsedNodeStreamEncoder(client, endpoint, zipped,
                                 run.Value, null, logger.Logger, null)) {
                                 await browser.EncodeAsync(CancellationToken.None);
                             }
@@ -444,7 +445,7 @@ Operations (Mutually exclusive):
                         Console.WriteLine($"Reading into {filename}...");
                         using (var stream = new FileStream(filename, FileMode.Create)) {
                             using (var zipped = new DeflateStream(stream, CompressionLevel.Optimal))
-                            using (var browser = new BrowseStreamEncoder(client, endpoint, zipped,
+                            using (var browser = new BrowsedNodeStreamEncoder(client, endpoint, zipped,
                                 ContentMimeType.UaJson, null, logger.Logger, null)) {
                                 await browser.EncodeAsync(CancellationToken.None);
                             }
@@ -460,11 +461,11 @@ Operations (Mutually exclusive):
                     var sw = Stopwatch.StartNew();
                     using (var file = File.Open(filename, FileMode.OpenOrCreate)) {
                         using (var unzipped = new DeflateStream(file, CompressionMode.Decompress)) {
-                           // TODO
-                           // var writer = new SourceStreamImporter(new ItemContainerFactory(database),
-                           //     new VariantEncoderFactory(), logger.Logger);
-                           // await writer.ImportAsync(unzipped, Path.GetFullPath(filename + i),
-                           //     ContentMimeType.UaJson, null, CancellationToken.None);
+                            // TODO
+                            // var writer = new SourceStreamImporter(new ItemContainerFactory(database),
+                            //     new VariantEncoderFactory(), logger.Logger);
+                            // await writer.ImportAsync(unzipped, Path.GetFullPath(filename + i),
+                            //     ContentMimeType.UaJson, null, CancellationToken.None);
                         }
                     }
                     var elapsed = sw.Elapsed;
@@ -622,7 +623,7 @@ Operations (Mutually exclusive):
                 _cts = new CancellationTokenSource();
                 if (endpoint.Url == null) {
                     _server = RunSampleServerAsync(_cts.Token, logger.Logger);
-                    endpoint.Url = "opc.tcp://" + Utils.GetHostName() +
+                    endpoint.Url = "opc.tcp://" + Dns.GetHostName() +
                         ":51210/UA/SampleServer";
                 }
                 else {

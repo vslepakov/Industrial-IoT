@@ -56,7 +56,7 @@ namespace Microsoft.Azure.IIoT.Hub.Client {
         }
 
         /// <inheritdoc/>
-        public Task<DeviceTwinModel> CreateAsync(DeviceTwinModel twin, bool force,
+        public Task<DeviceTwinModel> CreateOrUpdateAsync(DeviceTwinModel twin, bool force,
             CancellationToken ct) {
             if (twin == null) {
                 throw new ArgumentNullException(nameof(twin));
@@ -257,6 +257,8 @@ namespace Microsoft.Azure.IIoT.Hub.Client {
             }
             var request = NewRequest("/devices/query");
             if (continuation != null) {
+                _serializer.DeserializeContinuationToken(continuation,
+                    out query, out continuation, out pageSize);
                 request.Headers.Add(HttpHeader.ContinuationToken, continuation);
             }
             if (pageSize != null) {
@@ -268,7 +270,8 @@ namespace Microsoft.Azure.IIoT.Hub.Client {
             var response = await _httpClient.PostAsync(request, ct);
             response.Validate();
             if (response.Headers.TryGetValues(HttpHeader.ContinuationToken, out var values)) {
-                continuation = values.First();
+                continuation = _serializer.SerializeContinuationToken(
+                    query, values.First(), pageSize);
             }
             else {
                 continuation = null;
@@ -307,6 +310,7 @@ namespace Microsoft.Azure.IIoT.Hub.Client {
                 Etag = (string)result["etag"],
                 Id = (string)result["deviceId"],
                 ModuleId = (string)result["moduleId"],
+                ConnectionState = (string)result["connectionState"],
                 Authentication = new DeviceAuthenticationModel {
                     PrimaryKey = (string)result["authentication"]["symmetricKey"]["primaryKey"],
                     SecondaryKey = (string)result["authentication"]["symmetricKey"]["secondaryKey"]

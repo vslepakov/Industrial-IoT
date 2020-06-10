@@ -29,6 +29,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             "application/x-discovery-message-v2-json";
 
         /// <summary>
+        /// Message contains writer state events
+        /// </summary>
+        public const string WriterGroupEvents =
+            "application/x-writergroup-event-v2-json";
+
+        /// <summary>
         /// Content is a nodeset
         /// </summary>
         public const string NodeSet =

@@ -5,10 +5,12 @@
 
 namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
     using Microsoft.Azure.IIoT.OpcUa.Core.Models;
+    using System;
     using System.Linq;
+    using System.Text;
 
     /// <summary>
-    /// Writer group Model extensions
+    /// Clone
     /// </summary>
     public static class WriterGroupModelEx {
 
@@ -28,6 +30,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
                     .ToList(),
                 HeaderLayoutUri = model.HeaderLayoutUri,
                 KeepAliveTime = model.KeepAliveTime,
+                GenerationId = model.GenerationId,
+                SiteId = model.SiteId,
                 LocaleIds = model.LocaleIds?.ToList(),
                 MaxNetworkMessageSize = model.MaxNetworkMessageSize,
                 MessageSettings = model.MessageSettings.Clone(),
@@ -41,6 +45,32 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
                     .ToList(),
                 SecurityMode = model.SecurityMode,
             };
+        }
+
+        /// <summary>
+        /// Create version hash from generations
+        /// </summary>
+        /// <returns></returns>
+        public static string CalculateVersionHash(this WriterGroupModel model) {
+            var sb = new StringBuilder();
+            sb.Append(model.GenerationId);
+            if (model.DataSetWriters != null) {
+                foreach (var writer in model.DataSetWriters) {
+                    sb.Append(writer.GenerationId);
+                    var dataset =
+                        writer.DataSet?.DataSetSource?.PublishedVariables?.PublishedData;
+                    if (dataset != null) {
+                        foreach (var item in dataset) {
+                            sb.Append(item.GenerationId);
+                        }
+                    }
+                    var events = writer.DataSet?.DataSetSource.PublishedEvents;
+                    if (events != null) {
+                        sb.Append(events.GenerationId);
+                    }
+                }
+            }
+            return sb.ToString().ToSha1Hash();
         }
     }
 }

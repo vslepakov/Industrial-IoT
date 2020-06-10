@@ -16,14 +16,24 @@ namespace Microsoft.Azure.IIoT.OpcUa.Protocol {
     public interface ISubscription : IDisposable {
 
         /// <summary>
-        /// Subscription change events
+        /// Subscription notification events
         /// </summary>
-        event EventHandler<SubscriptionNotificationModel> OnSubscriptionChange;
+        event EventHandler<SubscriptionNotificationModel> OnSubscriptionNotification;
 
         /// <summary>
-        /// Item change events
+        /// Item notification events
         /// </summary>
-        event EventHandler<SubscriptionNotificationModel> OnMonitoredItemChange;
+        event EventHandler<SubscriptionNotificationModel> OnMonitoredItemNotification;
+
+        /// <summary>
+        /// Subscription status change events
+        /// </summary>
+        event EventHandler<SubscriptionStatusModel> OnSubscriptionStatusChange;
+
+        /// <summary>
+        /// Item status change events
+        /// </summary>
+        event EventHandler<MonitoredItemStatusModel> OnMonitoredItemStatusChange;
 
         /// <summary>
         /// Identifier of the subscription
@@ -51,9 +61,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Protocol {
         /// </summary>
         /// <param name="monitoredItems"></param>
         /// <param name="configuration"></param>
+        /// <param name="enable"></param>
         /// <returns></returns>
         Task ApplyAsync(IEnumerable<MonitoredItemModel> monitoredItems,
-            SubscriptionConfigurationModel configuration);
+            SubscriptionConfigurationModel configuration, bool enable);
 
         /// <summary>
         /// Close and delete subscription

@@ -1263,5 +1263,286 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Models {
                 TimeStamp = model.TimeStamp
             };
         }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <param name="model"></param>
+        public static PublishedItemApiModel ToApiModel(
+            this PublishedItemModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishedItemApiModel {
+                NodeId = model.NodeId,
+                DisplayName = model.DisplayName,
+                HeartbeatInterval = model.HeartbeatInterval,
+                SamplingInterval = model.SamplingInterval,
+                PublishingInterval = model.PublishingInterval
+            };
+        }
+
+        /// <summary>
+        /// Create service model from api model
+        /// </summary>
+        public static PublishedItemModel ToServiceModel(
+            this PublishedItemApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishedItemModel {
+                NodeId = model.NodeId,
+                DisplayName = model.DisplayName,
+                HeartbeatInterval = model.HeartbeatInterval,
+                SamplingInterval = model.SamplingInterval,
+                PublishingInterval = model.PublishingInterval
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        public static PublishedItemListRequestApiModel ToApiModel(
+            this PublishedItemListRequestModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishedItemListRequestApiModel {
+                ContinuationToken = model.ContinuationToken
+            };
+        }
+
+        /// <summary>
+        /// Create service model from api model
+        /// </summary>
+        public static PublishedItemListRequestModel ToServiceModel(
+            this PublishedItemListRequestApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishedItemListRequestModel {
+                ContinuationToken = model.ContinuationToken
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <param name="model"></param>
+        public static PublishedItemListResponseApiModel ToApiModel(
+            this PublishedItemListResultModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishedItemListResponseApiModel {
+                ContinuationToken = model.ContinuationToken,
+                Items = model.Items?
+                    .Select(n => n.ToApiModel())
+                    .ToList()
+            };
+        }
+
+        /// <summary>
+        /// Create service model from api model
+        /// </summary>
+        /// <param name="model"></param>
+        public static PublishedItemListResultModel ToServiceModel(
+            this PublishedItemListResponseApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishedItemListResultModel {
+                ContinuationToken = model.ContinuationToken,
+                Items = model.Items?
+                    .Select(n => n.ToServiceModel())
+                    .ToList()
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        public static PublishStartRequestApiModel ToApiModel(
+            this PublishStartRequestModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishStartRequestApiModel {
+                Item = model.Item?.ToApiModel(),
+                Header = model.Header?.ToApiModel()
+            };
+        }
+
+        /// <summary>
+        /// Create service model from api model
+        /// </summary>
+        public static PublishStartRequestModel ToServiceModel(
+            this PublishStartRequestApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishStartRequestModel {
+                Item = model.Item?.ToServiceModel(),
+                Header = model.Header?.ToServiceModel()
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <param name="model"></param>
+        public static PublishStartResponseApiModel ToApiModel(
+            this PublishStartResultModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishStartResponseApiModel {
+                ErrorInfo = model.ErrorInfo.ToApiModel()
+            };
+        }
+
+        /// <summary>
+        /// Create service model from api model
+        /// </summary>
+        /// <param name="model"></param>
+        public static PublishStartResultModel ToServiceModel(
+            this PublishStartResponseApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishStartResultModel {
+                ErrorInfo = model.ErrorInfo.ToServiceModel()
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        public static PublishStopRequestApiModel ToApiModel(
+            this PublishStopRequestModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishStopRequestApiModel {
+                NodeId = model.NodeId,
+                Header = model.Header?.ToApiModel()
+            };
+        }
+
+        /// <summary>
+        /// Create service model from api model
+        /// </summary>
+        public static PublishStopRequestModel ToServiceModel(
+            this PublishStopRequestApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishStopRequestModel {
+                NodeId = model.NodeId,
+                Header = model.Header?.ToServiceModel()
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <param name="model"></param>
+        public static PublishStopResponseApiModel ToApiModel(
+            this PublishStopResultModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishStopResponseApiModel {
+                ErrorInfo = model.ErrorInfo.ToApiModel()
+            };
+        }
+
+        /// <summary>
+        /// Create service model from api model
+        /// </summary>
+        /// <param name="model"></param>
+        public static PublishStopResultModel ToServiceModel(
+            this PublishStopResponseApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishStopResultModel {
+                ErrorInfo = model.ErrorInfo.ToServiceModel()
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        public static PublishBulkRequestApiModel ToApiModel(
+            this PublishBulkRequestModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishBulkRequestApiModel {
+                NodesToAdd = model.NodesToAdd?
+                    .Select(n => n.ToApiModel())
+                    .ToList(),
+                NodesToRemove = model.NodesToRemove?
+                    .ToList(),
+                Header = model.Header?.ToApiModel()
+            };
+        }
+
+        /// <summary>
+        /// Create service model from api model
+        /// </summary>
+        public static PublishBulkRequestModel ToServiceModel(
+            this PublishBulkRequestApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishBulkRequestModel {
+                NodesToAdd = model.NodesToAdd?
+                    .Select(n => n.ToServiceModel())
+                    .ToList(),
+                NodesToRemove = model.NodesToRemove?
+                    .ToList(),
+                Header = model.Header?.ToServiceModel()
+            };
+        }
+
+        /// <summary>
+        /// Create api model from service model
+        /// </summary>
+        /// <param name="model"></param>
+        public static PublishBulkResponseApiModel ToApiModel(
+            this PublishBulkResultModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishBulkResponseApiModel {
+                NodesToAdd = model.NodesToAdd?
+                    .Select(n => n.ToApiModel())
+                    .ToList(),
+                NodesToRemove = model.NodesToRemove?
+                    .Select(n => n.ToApiModel())
+                    .ToList()
+            };
+        }
+
+        /// <summary>
+        /// Create service model from api model
+        /// </summary>
+        /// <param name="model"></param>
+        public static PublishBulkResultModel ToServiceModel(
+            this PublishBulkResponseApiModel model) {
+            if (model == null) {
+                return null;
+            }
+            return new PublishBulkResultModel {
+                NodesToAdd = model.NodesToAdd?
+                    .Select(n => n.ToServiceModel())
+                    .ToList(),
+                NodesToRemove = model.NodesToRemove?
+                    .Select(n => n.ToServiceModel())
+                    .ToList()
+            };
+        }
     }
 }

@@ -31,14 +31,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
         /// <param name="bulk"></param>
         /// <param name="broker"></param>
         /// <param name="logger"></param>
-        /// <param name="metrics"></param>
         public ApplicationRegistry(IApplicationRepository database,
             IApplicationEndpointRegistry endpoints, IEndpointBulkProcessor bulk,
             IRegistryEventBroker<IApplicationRegistryListener> broker,
-            ILogger logger, IMetricsLogger metrics) {
+            ILogger logger) {
 
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
             _broker = broker ?? throw new ArgumentNullException(nameof(broker));
             _database = database ?? throw new ArgumentNullException(nameof(database));
 
@@ -239,11 +237,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             var found = events.Select(ev => {
                 //
                 // Ensure we set the site id and discoverer id in the found applications
-                // to a consistent value.  This works around where the reported events
-                // do not contain what we were asked to process with.
+                // have correct values.  Also set application id even though it should
+                // automatically happen later
                 //
                 ev.Application.SiteId = siteId;
                 ev.Application.DiscovererId = discovererId;
+                ev.Application.ApplicationId = ApplicationInfoModelEx.CreateApplicationId(siteId,
+                    ev.Application.ApplicationUri, ev.Application.ApplicationType);
                 return ev.Application;
             });
 
@@ -254,10 +254,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                     .Select(ev => {
                         //
                         // Ensure the site id and discoverer id in the found endpoints
-                        // also set to a consistent value, same as applications earlier.
+                        // have correct values, same as applications earlier.
                         //
                         ev.Registration.SiteId = siteId;
                         ev.Registration.DiscovererId = discovererId;
+                        ev.Registration.SupervisorId = supervisorId;
                         return new EndpointInfoModel {
                             ApplicationId = group.Key,
                             Registration = ev.Registration
@@ -334,12 +335,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             foreach (var addition in add) {
                 try {
                     var application = addition.Clone();
-                    application.ApplicationId =
-                        ApplicationInfoModelEx.CreateApplicationId(application);
                     application.Created = context;
-                    application.NotSeenSince = null;
-                    application.DiscovererId = discovererId;
-                    application.SiteId = siteId;
 
                     var app = await _database.AddAsync(application, false);
 
@@ -349,8 +345,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
 
                     // Now - add all new endpoints
                     endpoints.TryGetValue(app.ApplicationId, out var epFound);
-                    await _bulk.ProcessDiscoveryEventsAsync(epFound, result,
-                        discovererId, supervisorId, null, false);
+                    await _bulk.ProcessDiscoveryEventsAsync(epFound, result, discovererId,
+                        supervisorId, siteId, null, false);
                     added++;
                 }
                 catch (ConflictingResourceException) {
@@ -402,8 +398,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                         endpoints.TryGetValue(app.ApplicationId, out var epFound);
 
                         // TODO: Handle case where we take ownership of all endpoints
-                        await _bulk.ProcessDiscoveryEventsAsync(epFound, result, discovererId,
-                            supervisorId, app.ApplicationId, false);
+                        await _bulk.ProcessDiscoveryEventsAsync(epFound, result, discovererId, supervisorId,
+                            siteId, app.ApplicationId, false);
 
                         await _broker.NotifyAllAsync(l => l.OnApplicationUpdatedAsync(context, app));
                     }
@@ -413,27 +409,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                     _logger.Error(ex, "Exception during update.");
                 }
             }
-
-            var log = added != 0 || removed != 0 || updated != 0;
-#if DEBUG
-            log = true;
-#endif
-            if (log) {
-                _logger.Information("... processed discovery results from {discovererId}: " +
-                    "{added} applications added, {updated} updated, {removed} disabled, and " +
-                    "{unchanged} unchanged.", discovererId, added, updated, removed, unchanged);
-                _metrics.TrackValue("applicationsAdded", added);
-                _metrics.TrackValue("applicationsUpdated", updated);
-                _metrics.TrackValue("applicationsUnchanged", unchanged);
-                kAppsAdded.Set(added);
-                kAppsUpdated.Set(updated);
-                kAppsUnchanged.Set(unchanged);
-            }
+            _logger.Information("... processed discovery results from {discovererId}: " +
+                "{added} applications added, {updated} updated, {removed} disabled, and " +
+                "{unchanged} unchanged.", discovererId, added, updated, removed, unchanged);
+            kAppsAdded.Set(added);
+            kAppsUpdated.Set(updated);
+            kAppsUnchanged.Set(unchanged);
         }
 
         private readonly IApplicationRepository _database;
         private readonly ILogger _logger;
-        private readonly IMetricsLogger _metrics;
         private readonly IEndpointBulkProcessor _bulk;
         private readonly IApplicationEndpointRegistry _endpoints;
         private readonly IRegistryEventBroker<IApplicationRegistryListener> _broker;

@@ -21,8 +21,38 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher {
         public const string Endpoints = "endpoints";
 
         /// <summary>
-        /// Discovery progress event targets
+        /// Writer group group
+        /// </summary>
+        public const string Groups = "groups";
+
+        /// <summary>
+        /// DataSet Writers group
+        /// </summary>
+        public const string Writers = "writers";
+
+        /// <summary>
+        /// Publisher sample target
         /// </summary>
         public const string PublisherSampleTarget = "PublisherMessage";
+
+        /// <summary>
+        /// Dataset message target
+        /// </summary>
+        public const string DataSetMessageTarget = "DataSetMessage";
+
+        /// <summary>
+        /// Dataset event targets
+        /// </summary>
+        public const string DataSetEventTarget = "DataSetEvent";
+
+        /// <summary>
+        /// Writer event targets
+        /// </summary>
+        public const string WriterEventTarget = "WriterEvent";
+
+        /// <summary>
+        /// Writer Group event targets
+        /// </summary>
+        public const string GroupEventTarget = "GroupEvent";
     }
 }

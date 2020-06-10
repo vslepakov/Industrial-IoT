@@ -6,8 +6,8 @@
 namespace Microsoft.Azure.IIoT.App.Services {
     using Microsoft.Azure.IIoT.App.Data;
     using Microsoft.Azure.IIoT.App.Models;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Publisher;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models;
+    using Microsoft.Azure.IIoT.OpcUa.Api.Twin;
+    using Microsoft.Azure.IIoT.OpcUa.Api.Twin.Models;
     using Microsoft.Azure.IIoT.OpcUa.Api.Core.Models;
     using Microsoft.Azure.IIoT.Serializers;
     using System;
@@ -25,9 +25,9 @@ namespace Microsoft.Azure.IIoT.App.Services {
         /// <param name="publisherService"></param>
         /// <param name="serializer"></param>
         /// <param name="logger"></param>
-        public Publisher(IPublisherServiceApi publisherService, IJsonSerializer serializer, ILogger logger) {
+        public Publisher(ITwinServiceApi publisherService, IJsonSerializer serializer, ILogger logger) {
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
-            _publisherService = publisherService ?? throw new ArgumentNullException(nameof(publisherService));
+            _twin = publisherService ?? throw new ArgumentNullException(nameof(publisherService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -41,7 +41,7 @@ namespace Microsoft.Azure.IIoT.App.Services {
             try {
                 var continuationToken = string.Empty;
                 do {
-                    var result = await _publisherService.NodePublishListAsync(endpointId, continuationToken);
+                    var result = await _twin.NodePublishListAsync(endpointId, continuationToken);
                     continuationToken = result.ContinuationToken;
 
                     if (result.Items != null) {
@@ -76,21 +76,22 @@ namespace Microsoft.Azure.IIoT.App.Services {
         /// <param name="publishingInterval"></param>
         /// <returns>ErrorStatus</returns>
         public async Task<bool> StartPublishingAsync(string endpointId, string nodeId, string displayName,
-            int samplingInterval, int publishingInterval, CredentialModel credential = null) {
+            TimeSpan? samplingInterval, TimeSpan? publishingInterval, TimeSpan? heartBeatInterval, CredentialModel credential = null) {
 
             try {
                 var requestApiModel = new PublishStartRequestApiModel() {
                     Item = new PublishedItemApiModel() {
                         NodeId = nodeId,
                         DisplayName = displayName,
-                        SamplingInterval = TimeSpan.FromMilliseconds(samplingInterval),
-                        PublishingInterval = TimeSpan.FromMilliseconds(publishingInterval)
+                        SamplingInterval = samplingInterval,
+                        PublishingInterval = publishingInterval,
+                        HeartbeatInterval = heartBeatInterval
                     }
                 };
 
                 requestApiModel.Header = Elevate(new RequestHeaderApiModel(), credential);
 
-                var resultApiModel = await _publisherService.NodePublishStartAsync(endpointId, requestApiModel);
+                var resultApiModel = await _twin.NodePublishStartAsync(endpointId, requestApiModel);
                 return resultApiModel.ErrorInfo == null;
             }
             catch (Exception e) {
@@ -112,7 +113,7 @@ namespace Microsoft.Azure.IIoT.App.Services {
                 };
                 requestApiModel.Header = Elevate(new RequestHeaderApiModel(), credential);
 
-                var resultApiModel = await _publisherService.NodePublishStopAsync(endpointId, requestApiModel);
+                var resultApiModel = await _twin.NodePublishStopAsync(endpointId, requestApiModel);
                 return resultApiModel.ErrorInfo == null;
             }
             catch (Exception e) {
@@ -143,7 +144,7 @@ namespace Microsoft.Azure.IIoT.App.Services {
         }
 
         private readonly IJsonSerializer _serializer;
-        private readonly IPublisherServiceApi _publisherService;
+        private readonly ITwinServiceApi _twin;
         private readonly ILogger _logger;
     }
 }

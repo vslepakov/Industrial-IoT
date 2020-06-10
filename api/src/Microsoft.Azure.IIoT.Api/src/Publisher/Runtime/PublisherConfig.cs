@@ -16,7 +16,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Runtime {
         /// Publisher configuration
         /// </summary>
         private const string kOpcUaPublisherServiceUrlKey = "OpcPublisherServiceUrl";
-        private const string kOpcUaPublisherServiceIdKey = "OpcPublisherServiceResourceId";
 
         /// <summary>OPC publisher service endpoint url</summary>
         public string OpcUaPublisherServiceUrl => GetStringOrDefault(

@@ -4,10 +4,10 @@
 // ------------------------------------------------------------
 
 namespace Autofac {
-    using Serilog;
     using Autofac.Core.Registration;
     using Microsoft.Azure.IIoT.Diagnostics;
     using System;
+    using Serilog;
 
     /// <summary>
     /// Register console logger

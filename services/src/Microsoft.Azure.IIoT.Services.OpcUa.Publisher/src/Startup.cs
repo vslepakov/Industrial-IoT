@@ -10,15 +10,10 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher {
     using Microsoft.Azure.IIoT.AspNetCore.Auth.Clients;
     using Microsoft.Azure.IIoT.AspNetCore.Cors;
     using Microsoft.Azure.IIoT.AspNetCore.Correlation;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Registry;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Registry.Clients;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Twin;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients;
+    using Microsoft.Azure.IIoT.Diagnostics.Runtime;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Deploy;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Services;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Database;
+    using Microsoft.Azure.IIoT.OpcUa.Api.Registry.Clients;
     using Microsoft.Azure.IIoT.Storage.CosmosDb.Services;
     using Microsoft.Azure.IIoT.Http.Ssl;
     using Microsoft.Azure.IIoT.Http.Default;
@@ -115,7 +110,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher {
 
             // Add controllers as services so they'll be resolved.
             services.AddControllers().AddSerializers();
-            services.AddSwagger(Config, ServiceInfo.Name, ServiceInfo.Description);
+            services.AddSwagger(ServiceInfo.Name, ServiceInfo.Description);
         }
 
         /// <summary>
@@ -132,6 +127,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher {
             app.UseHeaderForwarding();
 
             app.UseRouting();
+            app.UseHttpMetrics();
             app.EnableCors();
 
             app.UseJwtBearerAuthentication();
@@ -140,8 +136,9 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher {
 
             app.UseCorrelation();
             app.UseSwagger();
-            app.UseMetricServer();
+
             app.UseEndpoints(endpoints => {
+                endpoints.MapMetrics();
                 endpoints.MapControllers();
                 endpoints.MapHealthChecks("/healthz");
             });
@@ -189,43 +186,22 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher {
             builder.RegisterType<CorsSetup>()
                 .AsImplementedInterfaces();
 
-            // Registry services to lookup endpoints.
+            // ... Publisher services
+            builder.RegisterModule<PublisherServices>();
+            builder.RegisterType<CosmosDbServiceClient>()
+                .AsImplementedInterfaces();
+
+            // Registry services are required to lookup endpoints.
             builder.RegisterType<RegistryServicesApiAdapter>()
                 .AsImplementedInterfaces();
             builder.RegisterType<RegistryServiceClient>()
                 .AsImplementedInterfaces();
-            // Twin services for browsing and model transfer ...
-            builder.RegisterType<TwinServicesApiAdapter>()
-                .AsImplementedInterfaces();
-            builder.RegisterType<TwinServiceClient>()
-                .AsImplementedInterfaces();
 
-            // Create Publish jobs using ...
-            builder.RegisterType<PublisherJobService>()
-                .AsImplementedInterfaces();
-            builder.RegisterType<PublisherJobSerializer>()
-                .AsImplementedInterfaces();
-            builder.RegisterType<BulkPublishService<string>>()
-                .AsImplementedInterfaces();
-
-            // ... job services and dependencies
-            builder.RegisterType<DefaultJobService>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<JobDatabase>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<WorkerDatabase>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<CosmosDbServiceClient>()
-                .AsImplementedInterfaces();
-            builder.RegisterType<DefaultJobService>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<IoTHubJobConfigurationHandler>()
-                .AsImplementedInterfaces();
-            builder.RegisterType<IoTHubServiceHttpClient>()
-                .AsImplementedInterfaces();
-
+            // Auto Deploy publisher module
             builder.RegisterType<IoTHubConfigurationClient>()
                 .AsImplementedInterfaces();
+            builder.RegisterType<LogAnalyticsConfig>()
+                .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<IoTHubPublisherDeployment>()
                 .AsImplementedInterfaces().SingleInstance();
 

@@ -16,11 +16,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         public string Id { get; set; }
 
         /// <summary>
-        /// Site of the supervisor
-        /// </summary>
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Current log level
         /// </summary>
         public TraceLogLevel? LogLevel { get; set; }
@@ -35,5 +30,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
         /// Whether supervisor is connected
         /// </summary>
         public bool? Connected { get; set; }
+
+        /// <summary>
+        /// The reported version of the supervisor
+        /// </summary>
+        public string Version { get; set; }
     }
 }

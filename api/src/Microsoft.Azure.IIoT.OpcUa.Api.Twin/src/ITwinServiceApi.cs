@@ -111,6 +111,46 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin {
             WriteRequestApiModel request, CancellationToken ct = default);
 
         /// <summary>
+        /// Start publishing node values
+        /// </summary>
+        /// <param name="endpointId"></param>
+        /// <param name="request"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        Task<PublishStartResponseApiModel> NodePublishStartAsync(string endpointId,
+            PublishStartRequestApiModel request, CancellationToken ct = default);
+
+        /// <summary>
+        /// Start publishing node values
+        /// </summary>
+        /// <param name="endpointId"></param>
+        /// <param name="request"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        Task<PublishStopResponseApiModel> NodePublishStopAsync(string endpointId,
+            PublishStopRequestApiModel request, CancellationToken ct = default);
+
+        /// <summary>
+        /// Add or remove published node from endpoint in bulk
+        /// </summary>
+        /// <param name="endpointId"></param>
+        /// <param name="request"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        Task<PublishBulkResponseApiModel> NodePublishBulkAsync(string endpointId,
+            PublishBulkRequestApiModel request, CancellationToken ct = default);
+
+        /// <summary>
+        /// Get all published nodes for endpoint.
+        /// </summary>
+        /// <param name="endpointId"></param>
+        /// <param name="request"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        Task<PublishedItemListResponseApiModel> NodePublishListAsync(string endpointId,
+            PublishedItemListRequestApiModel request, CancellationToken ct = default);
+
+        /// <summary>
         /// Start model upload
         /// </summary>
         /// <param name="endpointId"></param>

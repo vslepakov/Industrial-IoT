@@ -18,7 +18,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Runtime {
     using Microsoft.Azure.IIoT.OpcUa.Api.Registry;
     using Microsoft.Azure.IIoT.Storage.CosmosDb;
     using Microsoft.Azure.IIoT.Storage.CosmosDb.Runtime;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Database;
+    using Microsoft.Azure.IIoT.Storage;
     using Microsoft.Azure.IIoT.Auth.Runtime;
     using Microsoft.Azure.IIoT.Deploy;
     using Microsoft.Azure.IIoT.Deploy.Runtime;
@@ -31,7 +31,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Runtime {
     /// </summary>
     public class Config : DiagnosticsConfig, IWebHostConfig, IIoTHubConfig,
         ICorsConfig, IOpenApiConfig, IRoleConfig,
-        ICosmosDbConfig, IJobDatabaseConfig, IRegistryConfig, ITwinConfig,
+        ICosmosDbConfig, IItemContainerConfig, IRegistryConfig, ITwinConfig,
         IForwardedHeadersConfig, IContainerRegistryConfig {
 
         /// <inheritdoc/>
@@ -52,7 +52,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Runtime {
             PcsVariable.PCS_PUBLISHER_SERVICE_PATH_BASE,
             () => _host.ServicePathBase);
 
-
         /// <inheritdoc/>
         public bool UIEnabled => _openApi.UIEnabled;
         /// <inheritdoc/>
@@ -61,6 +60,8 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Runtime {
         public string OpenApiAppId => _openApi.OpenApiAppId;
         /// <inheritdoc/>
         public string OpenApiAppSecret => _openApi.OpenApiAppSecret;
+        /// <inheritdoc/>
+        public string OpenApiAuthorizationUrl => _openApi.OpenApiAuthorizationUrl;
         /// <inheritdoc/>
         public bool UseV2 => _openApi.UseV2;
         /// <inheritdoc/>

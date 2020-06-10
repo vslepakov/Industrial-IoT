@@ -110,7 +110,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.History {
 
             // Add controllers as services so they'll be resolved.
             services.AddControllers().AddSerializers();
-            services.AddSwagger(Config, ServiceInfo.Name, ServiceInfo.Description);
+            services.AddSwagger(ServiceInfo.Name, ServiceInfo.Description);
         }
 
 
@@ -128,6 +128,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.History {
             app.UseHeaderForwarding();
 
             app.UseRouting();
+            app.UseHttpMetrics();
             app.EnableCors();
 
             app.UseJwtBearerAuthentication();
@@ -136,8 +137,9 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.History {
 
             app.UseCorrelation();
             app.UseSwagger();
-            app.UseMetricServer();
+
             app.UseEndpoints(endpoints => {
+                endpoints.MapMetrics();
                 endpoints.MapControllers();
                 endpoints.MapHealthChecks("/healthz");
             });

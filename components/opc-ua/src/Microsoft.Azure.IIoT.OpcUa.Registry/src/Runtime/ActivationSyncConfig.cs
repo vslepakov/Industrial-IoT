@@ -19,8 +19,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Runtime {
         private const string kUpdateIntervalKey = "SyncInterval";
 
         /// <inheritdoc/>
-        public TimeSpan SyncInterval =>
-            GetDurationOrDefault(kUpdateIntervalKey, () => TimeSpan.FromMinutes(2));
+        public TimeSpan? ActivationSyncInterval => GetDurationOrNull(kUpdateIntervalKey);
 
         /// <summary>
         /// Create config

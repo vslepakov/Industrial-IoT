@@ -6,12 +6,12 @@
 namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.History {
     using Microsoft.Azure.IIoT.Services.OpcUa.Twin.History.Runtime;
     using Microsoft.Azure.IIoT.OpcUa.Core.Models;
-    using Microsoft.Azure.IIoT.OpcUa.Edge.Control.Services;
-    using Microsoft.Azure.IIoT.OpcUa.Edge.Export;
+    using Microsoft.Azure.IIoT.OpcUa.Edge.Twin.Services;
+    using Microsoft.Azure.IIoT.OpcUa.Edge.Twin;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Services;
+    using Microsoft.Azure.IIoT.OpcUa.Testing.Runtime;
     using Microsoft.Azure.IIoT.Hub.Client;
     using Microsoft.Azure.IIoT.Auth;
-    using Microsoft.Azure.IIoT.Auth.Models;
     using Microsoft.Azure.IIoT.Utils;
     using Microsoft.Extensions.Hosting;
     using Microsoft.AspNetCore.Hosting;
@@ -19,10 +19,9 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.History {
     using Autofac;
     using Autofac.Extensions.Hosting;
     using System;
+    using System.Collections.Generic;
     using System.Net.Http;
     using System.Text;
-    using System.Threading.Tasks;
-    using System.Collections.Generic;
 
     /// <summary>
     /// Startup class for tests
@@ -44,14 +43,18 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.History {
                 .AsImplementedInterfaces();
             builder.RegisterType<TestModule>()
                 .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<TestIdentity>()
+                .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<ClientServices>()
+                .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<TestClientServicesConfig>()
                 .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<AddressSpaceServices>()
                 .AsImplementedInterfaces();
             builder.RegisterType<TransferServicesStub<EndpointModel>>()
                 .AsImplementedInterfaces();
             builder.RegisterType<VariantEncoderFactory>()
-                .AsImplementedInterfaces().SingleInstance();
+                .AsImplementedInterfaces();
 
             builder.RegisterType<TestAuthConfig>()
                 .AsImplementedInterfaces();
@@ -75,7 +78,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Twin.History {
 
         /// <inheritdoc/>
         protected override IHostBuilder CreateHostBuilder() {
-            return Host.CreateDefaultBuilder();
+            return Extensions.Hosting.Host.CreateDefaultBuilder();
         }
 
         /// <inheritdoc/>

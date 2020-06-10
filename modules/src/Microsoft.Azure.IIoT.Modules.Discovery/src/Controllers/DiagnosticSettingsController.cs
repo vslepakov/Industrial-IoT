@@ -15,7 +15,7 @@ namespace Microsoft.Azure.IIoT.Modules.Discovery.Controllers {
     /// </summary>
     [Version(1)]
     [Version(2)]
-    public class DiagnosticSettingsController : ISettingsController {
+    public class DiagnosticSettingsController : ISettingsController, ILogAnalyticsConfig {
 
         /// <summary>
         /// Called based on the reported connected property.
@@ -46,6 +46,13 @@ namespace Microsoft.Azure.IIoT.Modules.Discovery.Controllers {
             // The enum values are the same as in serilog
             get => LogControl.Level.MinimumLevel.ToString();
         }
+
+        /// <inheritdoc/>
+        public string LogWorkspaceId { get; set; }
+        /// <inheritdoc/>
+        public string LogWorkspaceKey { get; set; }
+        /// <inheritdoc/>
+        public string LogType { get; set; }
 
         /// <summary>
         /// Create controller with service

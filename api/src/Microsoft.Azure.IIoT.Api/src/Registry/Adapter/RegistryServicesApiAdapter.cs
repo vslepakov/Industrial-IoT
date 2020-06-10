@@ -3,7 +3,7 @@
 //  Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
-namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry {
+namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Clients {
     using Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models;
     using Microsoft.Azure.IIoT.OpcUa.Registry;
     using Microsoft.Azure.IIoT.OpcUa.Registry.Models;
@@ -17,7 +17,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry {
     /// </summary>
     public sealed class RegistryServicesApiAdapter : IEndpointRegistry, ISupervisorRegistry,
         IApplicationRegistry, IPublisherRegistry, IDiscoveryServices, ISupervisorDiagnostics,
-        IEndpointActivation {
+        IPublisherDiagnostics, IEndpointActivation {
 
         /// <summary>
         /// Create registry services
@@ -134,6 +134,18 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry {
             bool onlyServerState, CancellationToken ct) {
             var result = await _client.GetPublisherAsync(id, onlyServerState, ct);
             return result.ToServiceModel();
+        }
+
+        /// <inheritdoc/>
+        public async Task<SupervisorStatusModel> GetPublisherStatusAsync(string id,
+            CancellationToken ct) {
+            var result = await _client.GetPublisherStatusAsync(id, ct);
+            return result.ToServiceModel();
+        }
+
+        /// <inheritdoc/>
+        public Task ResetPublisherAsync(string id, CancellationToken ct) {
+            return _client.ResetPublisherAsync(id, ct);
         }
 
         /// <inheritdoc/>

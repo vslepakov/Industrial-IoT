@@ -111,7 +111,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             }
             if (model?.SiteOrGatewayId != null) {
                 // If site or gateway id search provided, include it in search
-                query += $"AND tags.{nameof(EntityRegistration.SiteOrGatewayId)} = " +
+                query += $"AND tags.{nameof(ApplicationRegistration.SiteOrGatewayId)} = " +
                     $"'{model.SiteOrGatewayId}' ";
             }
 
@@ -128,7 +128,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
         /// <inheritdoc/>
         public async Task<ApplicationSiteListModel> ListSitesAsync(
             string continuation, int? pageSize, CancellationToken ct) {
-            var tag = nameof(EntityRegistration.SiteOrGatewayId);
+            var tag = nameof(ApplicationRegistration.SiteOrGatewayId);
             var query = $"SELECT tags.{tag}, COUNT() FROM devices WHERE " +
                 $"tags.{nameof(EntityRegistration.DeviceType)} = '{IdentityType.Application}' " +
                 $"GROUP BY tags.{tag}";
@@ -206,7 +206,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
         public async Task<ApplicationInfoModel> AddAsync(
             ApplicationInfoModel application, bool? disabled, CancellationToken ct) {
             var registration = application.ToApplicationRegistration(disabled);
-            var twin = await _iothub.CreateAsync(registration.ToDeviceTwin(_serializer), false, ct);
+            var twin = await _iothub.CreateOrUpdateAsync(registration.ToDeviceTwin(_serializer), false, ct);
             var result = twin.ToApplicationRegistration().ToServiceModel();
             return result;
         }

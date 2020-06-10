@@ -17,6 +17,7 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
     using System.Text;
     using System.Threading.Tasks;
     using Xunit;
+    using Microsoft.Azure.IIoT.Diagnostics;
 
     public class ModuleHostHarness {
 
@@ -36,7 +37,7 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
                 var services = hubContainer.Resolve<IIoTHubTwinServices>();
 
                 // Create module
-                var twin = await services.CreateAsync(new DeviceTwinModel {
+                var twin = await services.CreateOrUpdateAsync(new DeviceTwinModel {
                     Id = "TestDevice",
                     ModuleId = "TestModule"
                 });
@@ -49,36 +50,29 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
                     var edge = moduleContainer.Resolve<IModuleHost>();
 
                     // Act
-                    await edge.StartAsync("testType", "TestSite", "MS", null);
+                    await edge.StartAsync("testType", "MS", "1.2.3", null);
                     twin = await services.GetAsync(deviceId, moduleId);
 
                     // Assert
                     Assert.NotEqual(etag, twin.Etag);
-                    Assert.Equal("connected", twin.ConnectionState);
+                    Assert.Equal("Connected", twin.ConnectionState);
                     Assert.Equal("testType", twin.Properties.Reported[TwinProperty.Type]);
-                    Assert.Equal("TestSite", twin.Properties.Reported[TwinProperty.SiteId]);
                     etag = twin.Etag;
 
                     await test(deviceId, moduleId, hubContainer);
 
                     twin = await services.GetAsync(deviceId, moduleId);
                     Assert.True(twin.Properties.Reported[TwinProperty.Type] == "testType");
-                    Assert.True("TestSite" == twin.Properties.Reported[TwinProperty.SiteId]);
                     etag = twin.Etag;
 
                     // Act
                     await edge.StopAsync();
                     twin = await services.GetAsync(deviceId, moduleId);
 
-                    // Assert
-                    Assert.False((bool)twin.Properties.Reported[TwinProperty.Connected]);
-
                     // TODO : Fix cleanup!!!
 
                     // TODO :Assert.True("testType" != twin.Properties.Reported[TwinProperty.kType]);
-                    // TODO :Assert.True("TestSite" != twin.Properties.Reported[TwinProperty.kSiteId]);
-                    // TODO :Assert.Equal("disconnected", twin.ConnectionState);
-                    Assert.NotEqual(etag, twin.Etag);
+                    Assert.Equal("Disconnected", twin.ConnectionState);
                 }
             }
         }
@@ -90,7 +84,7 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
                         Encoding.UTF8.GetBytes(Guid.NewGuid().ToString()))).ToString();
         }
 
-        public class TestModuleConfig : IModuleConfig {
+        public class TestModuleConfig : IModuleConfig, IDiagnosticsConfig {
 
             public TestModuleConfig(DeviceModel device) {
                 _device = device;
@@ -104,7 +98,11 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
 
             public TransportOption Transport => TransportOption.Any;
 
-            public bool EnableMetrics => false;
+            public DiagnosticsLevel DiagnosticsLevel => DiagnosticsLevel.Disabled;
+
+            public TimeSpan? MetricsCollectionInterval => null;
+
+            public string InstrumentationKey => null;
 
             private readonly DeviceModel _device;
         }

@@ -44,5 +44,15 @@ namespace Microsoft.Azure.IIoT.Hub {
         /// Application identity
         /// </summary>
         public const string Application = "Application";
+
+        /// <summary>
+        /// Writer group identity
+        /// </summary>
+        public const string WriterGroup = "WriterGroup";
+
+        /// <summary>
+        /// Dataset identity
+        /// </summary>
+        public const string DataSet = "DataSet";
     }
 }

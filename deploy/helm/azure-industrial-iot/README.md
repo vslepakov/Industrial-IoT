@@ -1,9 +1,9 @@
-# Azure Industrial IoT
+# Azure Industrial IoT <!-- omit in toc -->
 
 [Azure Industrial IoT](https://github.com/Azure/Industrial-IoT) allows users to discover OPC UA
 enabled servers in a factory network, register them in Azure IoT Hub and start collecting data from them.
 
-## Table Of Contents
+## Table Of Contents <!-- omit in toc -->
 
 * [Introduction](#introduction)
 * [Prerequisites](#prerequisites)
@@ -12,19 +12,25 @@ enabled servers in a factory network, register them in Azure IoT Hub and start c
     * [Azure IoT Hub](#azure-iot-hub)
     * [Azure Cosmos DB Account](#azure-cosmos-db-account)
     * [Azure Storage Account](#azure-storage-account)
+      * [Data Protection Container (Optional)](#data-protection-container-optional)
     * [Azure Event Hub Namespace](#azure-event-hub-namespace)
+      * [Azure Event Hub](#azure-event-hub)
+      * [Azure Event Hub Consumer Groups](#azure-event-hub-consumer-groups)
     * [Azure Service Bus Namespace](#azure-service-bus-namespace)
     * [Azure Key Vault](#azure-key-vault)
+      * [Data Protection Key (Optional)](#data-protection-key-optional)
     * [Azure SignalR](#azure-signalr)
   * [Recommended Azure Resources](#recommended-azure-resources)
     * [Azure AAD App Registration](#azure-aad-app-registration)
   * [Optional Azure Resources](#optional-azure-resources)
     * [Azure Application Insights](#azure-application-insights)
+    * [Azure Log Analytics Workspace](#azure-log-analytics-workspace)
     * [Azure Data Lake Storage Gen2](#azure-data-lake-storage-gen2)
 * [Installing the Chart](#installing-the-chart)
 * [Configuration](#configuration)
   * [Image](#image)
   * [Azure Resources](#azure-resources)
+  * [Load Configuration From Azure Key Vault](#load-configuration-from-azure-key-vault)
   * [External Service URL](#external-service-url)
   * [RBAC](#rbac)
   * [Service Account](#service-account)
@@ -33,13 +39,18 @@ enabled servers in a factory network, register them in Azure IoT Hub and start c
     * [Deployment Resource Configuration](#deployment-resource-configuration)
     * [Service Resource Configuration](#service-resource-configuration)
     * [Ingress Resource Configuration](#ingress-resource-configuration)
+  * [Prometheus](#prometheus)
   * [Minimal Configuration](#minimal-configuration)
 * [Special Notes](#special-notes)
   * [Resource Requests And Limits](#resource-requests-and-limits)
   * [Data Protection](#data-protection)
+    * [Azure Storage Account Container](#azure-storage-account-container)
+    * [Azure Key Vault Key](#azure-key-vault-key)
   * [Common Data Model](#common-data-model)
   * [Swagger](#swagger)
   * [NGINX Ingress Controller](#nginx-ingress-controller)
+    * [Controller configuration](#controller-configuration)
+    * [Ingress Annotations](#ingress-annotations)
 
 ## Introduction
 
@@ -87,14 +98,25 @@ The following details of the Azure IoT Hub would be required:
     "sb://iothub-ns-XXXXXX-XXX-XXXXXXX-XXXXXXXXXX.servicebus.windows.net/"
     ```
 
-  * Two consumer groups. Please create two new consumer groups for components of Azure Industrial IoT.
-    You can call them `events` and `telemetry`, for example. These can be created with the following commands:
+  * Four consumer groups. Please create new consumer groups for components of Azure Industrial IoT.
+    The consumer groups can be created with the following commands:
 
     ```bash
     $ az iot hub consumer-group create --hub-name MyIotHub --name events
 
     $ az iot hub consumer-group create --hub-name MyIotHub --name telemetry
+
+    $ az iot hub consumer-group create --hub-name MyIotHub --name tunnel
+
+    $ az iot hub consumer-group create --hub-name MyIotHub --name onboarding
     ```
+
+    Here are our recommended names for them:
+  
+    * `events`: will be used by `eventsProcessor` microservices
+    * `telemetry`: will be used by `telemetryProcessor` microservices
+    * `tunnel`: will be used by `tunnelProcessor` microservices
+    * `onboarding`: will be used by `onboarding` microservices
 
 * Connection string of `iothubowner` policy for the Azure IoT Hub.
   This can be obtained with the following command:
@@ -130,6 +152,10 @@ The following details of the Azure Cosmos DB account would be required:
 
 You would need to have an existing Azure Storage account. Here are the steps to
 [create an Azure Storage account](https://docs.microsoft.com/azure/storage/common/storage-account-create).
+When creating it please make sure to:
+
+* Set `Account kind` to `StorageV2 (general-purpose v2)`, step 7
+* Set `Hierarchical namespace` to `Disabled`, step 8
 
 The following details of the Azure Storage account would be required:
 
@@ -257,11 +283,12 @@ Configuration parameter for data protection key in Azure Key Vault is `azure.key
 
 You would need to have an existing Azure SignalR instance. Here are the steps to
 [create an Azure SignalR Service instance](https://docs.microsoft.com/azure/azure-signalr/signalr-quickstart-azure-functions-csharp#create-an-azure-signalr-service-instance).
+When creating Azure SignalR instance please set `Service mode` to `Default` in step 3.
 
 You can also create an Azure SignalR service using [Azure CLI](https://docs.microsoft.com/cli/azure/signalr?view=azure-cli-latest#az-signalr-create):
 
 ```bash
-$ az signalr create --name MySignalR --resource-group MyResourceGroup --sku Standard_S1 --unit-count 1
+$ az signalr create --name MySignalR --resource-group MyResourceGroup --sku Standard_S1 --unit-count 1 --service-mode Default
 ```
 
 The following details of Azure SignalR service would be required:
@@ -272,6 +299,8 @@ The following details of Azure SignalR service would be required:
   $ az signalr key list --name MySignalR --resource-group MyResourceGroup --query "primaryConnectionString"
   "Endpoint=https://mysignalr.service.signalr.net;AccessKey=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX;Version=1.0;"
   ```
+
+* Service Mode. Use the value that you set when creating Azure SignalR instance.
 
 ### Recommended Azure Resources
 
@@ -292,7 +321,7 @@ we require two apps to be registered in your AAD:
 * One for web clients accessing web interfaces of Azure Industrial IoT components, we refer to this as
   **ClientsApp**.
 
-Here are the steps to [create AAD App Registrations](https://github.com/Azure/Industrial-IoT/blob/master/docs/deploy/howto-register-aad-applications.md).
+Here are the steps to [create AAD App Registrations](../../../docs/deploy/howto-register-aad-applications.md).
 
 > **NOTE:** For any production deployment of Azure Industrial IoT solution it is required that those AAD
 App Registrations are created and details are provided to the chart. And we strongly recommend having those
@@ -402,6 +431,37 @@ The following details of the Azure Application Insights would be required:
   "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
   ```
 
+#### Azure Log Analytics Workspace
+
+You can use Azure Log Analytics Workspace to collect metrics and logs from IoT Edge modules of Azure
+Industrial IoT solution. Metrics and log collection and delivery to Azure Log Analytics Workspace will be
+performed by `metricscollector` module.
+
+Please follow these steps to [create a workspace](https://docs.microsoft.com/azure/azure-monitor/learn/quick-create-workspace#create-a-workspace).
+
+The following details of the Azure Log Analytics Workspace would be required:
+
+* Workspace Id. This can be obtained with the following command:
+
+  ```bash
+  $ az monitor log-analytics workspace show --resource-group MyResourceGroup --workspace-name MyWorkspace --query "customerId"
+  This command group is in preview. It may be changed/removed in a future release.
+  "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+  ```
+
+* Shared key for the workspace. This can be obtained with the following command:
+
+  ```bash
+  az monitor log-analytics workspace get-shared-keys --resource-group MyResourceGroup --workspace-name MyWorkspace
+  This command group is in preview. It may be changed/removed in a future release.
+  {
+    "primarySharedKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "secondarySharedKey": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  }
+  ```
+
+  Either one of the keys would work.
+
 #### Azure Data Lake Storage Gen2
 
 Required for:
@@ -447,7 +507,7 @@ The following details of the Azure Storage account would be required:
 
 ## Installing the Chart
 
-This chart installs `2.7.22` version of components by default.
+This chart installs `2.7.105` version of components by default.
 
 To install the chart first ensure that you have added `azure-iiot` repository:
 
@@ -477,6 +537,8 @@ $ helm install azure-iiot azure-iiot/azure-industrial-iot --namespace azure-iiot
   --set azure.iotHub.eventHub.endpoint=<IoTHubEventHubEndpoint> \
   --set azure.iotHub.eventHub.consumerGroup.events=<IoTHubEventHubEventsConsumerGroup> \
   --set azure.iotHub.eventHub.consumerGroup.telemetry=<IoTHubEventHubTelemetryConsumerGroup> \
+  --set azure.iotHub.eventHub.consumerGroup.tunnel=<IoTHubEventHubTunnelConsumerGroup> \
+  --set azure.iotHub.eventHub.consumerGroup.onboarding=<IoTHubEventHubOnboardingConsumerGroup> \
   --set azure.iotHub.sharedAccessPolicies.iothubowner.connectionString=<IoTHubConnectionString> \
   --set azure.cosmosDB.connectionString=<CosmosDBConnectionString> \
   --set azure.storageAccount.connectionString=<StorageAccountConnectionString> \
@@ -487,6 +549,7 @@ $ helm install azure-iiot azure-iiot/azure-industrial-iot --namespace azure-iiot
   --set azure.serviceBusNamespace.sharedAccessPolicies.rootManageSharedAccessKey.connectionString=<ServiceBusNamespaceConnectionString> \
   --set azure.keyVault.uri=<KeyVaultURI> \
   --set azure.signalR.connectionString=<SignalRConnectionString> \
+  --set azure.signalR.serviceMode=<SignalRServiceMode> \
   --set azure.auth.required=false
 ```
 
@@ -510,7 +573,7 @@ values.
 | Parameter           | Description                              | Default             |
 |---------------------|------------------------------------------|---------------------|
 | `image.registry`    | URL of Docker Image Registry             | `mcr.microsoft.com` |
-| `image.tag`         | Image tag                                | `2.7.22`           |
+| `image.tag`         | Image tag                                | `2.7.105`           |
 | `image.pullPolicy`  | Image pull policy                        | `IfNotPresent`      |
 | `image.pullSecrets` | docker-registry secret names as an array | `[]`                |
 
@@ -522,6 +585,8 @@ values.
 | `azure.iotHub.eventHub.endpoint`                                                            | Event Hub-compatible endpoint of built-in EventHub of IoT Hub                                    | `null`                               |
 | `azure.iotHub.eventHub.consumerGroup.events`                                                | Consumer group of built-in EventHub of IoT Hub for `eventsProcessor`                             | `null`                               |
 | `azure.iotHub.eventHub.consumerGroup.telemetry`                                             | Consumer group of built-in EventHub of IoT Hub for `telemetryProcessor`                          | `null`                               |
+| `azure.iotHub.eventHub.consumerGroup.tunnel`                                                | Consumer group of built-in EventHub of IoT Hub for `tunnelProcessor`                             | `null`                               |
+| `azure.iotHub.eventHub.consumerGroup.onboarding`                                            | Consumer group of built-in EventHub of IoT Hub for `onboarding`                                  | `null`                               |
 | `azure.iotHub.sharedAccessPolicies.iothubowner.connectionString`                            | Connection string of `iothubowner` policy of IoT Hub                                             | `null`                               |
 | `azure.cosmosDB.connectionString`                                                           | Cosmos DB connection string with read-write permissions                                          | `null`                               |
 | `azure.storageAccount.connectionString`                                                     | Storage account connection string                                                                | `null`                               |
@@ -537,7 +602,10 @@ values.
 | `azure.keyVault.uri`                                                                        | Key Vault URI, also referred as DNS Name                                                         | `null`                               |
 | `azure.keyVault.key.dataProtection`                                                         | Key in Key Vault that should be used for [data protection](#data-protection-key-(optional))      | `dataprotection`                     |
 | `azure.applicationInsights.instrumentationKey`                                              | Instrumentation key of Application Insights instance                                             | `null`                               |
+| `azure.logAnalyticsWorkspace.id`                                                            | Workspace id of Log Analytics Workspace instance                                                 | `null`                               |
+| `azure.logAnalyticsWorkspace.key`                                                           | Shared key for connecting a device to Log Analytics Workspace instance                           | `null`                               |
 | `azure.signalR.connectionString`                                                            | SignalR connection string                                                                        | `null`                               |
+| `azure.signalR.serviceMode`                                                                 | Service mode of SignalR instance                                                                 | `null`                               |
 | `azure.auth.required`                                                                       | If true, authentication will be required for all exposed web APIs                                | `true`                               |
 | `azure.auth.corsWhitelist`                                                                  | Cross-origin resource sharing whitelist for all web APIs                                         | `*`                                  |
 | `azure.auth.authority`                                                                      | Authority that should authenticate users and provide Access Tokens                               | `https://login.microsoftonline.com/` |
@@ -547,6 +615,55 @@ values.
 | `azure.auth.clientsApp.appId`                                                               | Application (client) ID of AAD App Registration for **ClientsApp**, also referred to as `AppId`  | `null`                               |
 | `azure.auth.clientsApp.secret`                                                              | Client secret (password) of AAD App Registration for **ClientsApp**                              | `null`                               |
 
+### Load Configuration From Azure Key Vault
+
+If you are deploying this chart to an Azure environment that has been created by either `deploy.ps1` script
+or `Microsoft.Azure.IIoT.Deployment` application then you can use the fact that both of those methods push
+secrets to Azure Key Vault describing Azure resources IDs and connection details. Those secrets can be
+consumed by components of Azure Industrial IoT solution as configuration parameters similar to configuration
+environment variables that are injected to the Pods. To facilitate this method of configuration management
+through Azure Key Vault the chart provides `loadConfFromKeyVault` parameters. If it is set to `true` then a
+configuration provider that reads application configuration parameters from Azure Key Vault would be enabled.
+In this case the chart will loosen requirement on provided values and only values necessary to connect to
+Azure Key Vault will be required.
+
+When `loadConfFromKeyVault` is set to `true`, our microservices will try to read configuration secrets from
+your Azure Key Vault instance. So you would have to make sure that `servicesApp` has enough permissions to
+access the Azure Key Vault. We require the following Access Policies to be set for service principal of
+`servicesApp` so that microservices can function properly:
+
+* Key Permissions: `get`, `list`, `sign`, `unwrapKey`, `wrapKey`, `create`
+* Secret Permissions: `get`, `list`, `set`, `delete`
+* Certificate Permissions: `get`, `list`, `update`, `create`, `import`
+
+When `loadConfFromKeyVault` is set to `true`, then only the following parameters of `azure.*` parameter group
+are required:
+
+* `azure.tenantId`
+* `azure.keyVault.uri`
+* `azure.auth.servicesApp.appId`
+* `azure.auth.servicesApp.secret`
+
+A few notes about `loadConfFromKeyVault`:
+
+* Any additional parameters provided to the chart will also be applied. They will act as overrides to the
+  values coming from Azure Key Vault.
+* Values defining Kubernetes resources or deployment logic will not be affected by `loadConfFromKeyVault`
+  parameter and should be set independent of it.
+* We recommend setting `externalServiceUrl` regardless of the value of `loadConfFromKeyVault` so that correct
+  URL for jobs orchestrator service (`edgeJobs`) is generated.
+* Setting `loadConfFromKeyVault` to `true` in conjunction with setting `azure.auth.required` to `false` will
+  result in an error. This is because for loading configuration from Azure Key Vault we require both
+  `azure.auth.servicesApp.appId` and `azure.auth.servicesApp.secret`.
+* You should use `loadConfFromKeyVault` only when Azure environment has been created for the same version
+  (major and minor) of Azure Industrial IoT components. That is, you should use it to install the chart that
+  deploys `2.7.x` version of components to the environment that has been created for `2.6.x` version of
+  components.
+
+| Parameter              | Description                                                                                          | Default |
+|------------------------|------------------------------------------------------------------------------------------------------|---------|
+| `loadConfFromKeyVault` | Determines whether components of Azure Industrial IoT should load configuration from Azure Key Vault | `false` |
+
 ### External Service URL
 
 External Service URL is URL on which components of Azure Industrial IoT solution will be available externally.
@@ -555,7 +672,7 @@ This parameter is required so that Publisher Edge Module can communicate with jo
 Edge Module will be presented with a Kubernetes internal URL, which will be accessible only from within
 Kubernetes cluster. Format of Kubernetes internal URL is `http://<service_name>.<namespace>:<service_port>`.
 
-**Documentation**: [Publisher Edge Module](https://github.com/Azure/Industrial-IoT/blob/master/docs/modules/publisher.md)
+**Documentation**: [Publisher Edge Module](../../../docs/modules/publisher.md)
 
 | Parameter            | Description                                                                | Default |
 |----------------------|----------------------------------------------------------------------------|---------|
@@ -615,12 +732,12 @@ following aspects of application runtime for microservices:
 
 ### Deployed Components
 
-**Documentation**: [Azure Industrial IoT Platform Components](https://github.com/Azure/Industrial-IoT/blob/master/docs/services/readme.md)
+**Documentation**: [Azure Industrial IoT Platform Components](../../../docs/services/readme.md)
 
-Azure Industrial IoT comprises of twenty two micro-services that this chart will deploy as
-[Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) resources. Eleven of them
-expose web APIs, and one has a UI. And for those twelve the chart will also create [Service](https://kubernetes.io/docs/concepts/services-networking/service/)
-resources. For those twelve we also provide one [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)
+Azure Industrial IoT comprises of fifteen micro-services that this chart will deploy as
+[Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) resources. Eight of them
+expose web APIs, and one has a UI. And for those nine the chart will also create [Service](https://kubernetes.io/docs/concepts/services-networking/service/)
+resources. For those nine we also provide one [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)
 that can be enabled.
 
 All micro-services have the same configuration parameters in `values.yaml`, so we will list them only for
@@ -632,23 +749,23 @@ parameters.
 Here is the list of all Azure Industrial IoT components that are deployed by this chart. Currently only
 `engineeringTool` and `telemetryCdmProcessor` are disabled by default.
 
-| Name in `values.yaml`     | Description                                                                                                           | Enabled by Default |
-|---------------------------|-----------------------------------------------------------------------------------------------------------------------|--------------------|
-| `registry`                | [Registry Microservice](https://github.com/Azure/Industrial-IoT/blob/master/docs/services/registry.md)                | `true`             |
-| `sync`                    | [Registry Synchronization Agent](https://github.com/Azure/Industrial-IoT/blob/master/docs/services/registry-sync.md)  | `true`             |
-| `twin`                    | [OPC Twin Microservice](https://github.com/Azure/Industrial-IoT/blob/master/docs/services/twin.md)                    | `true`             |
-| `history`                 | [OPC Historian Access Microservice](https://github.com/Azure/Industrial-IoT/blob/master/docs/services/twin-history.md)| `true`             |
-| `gateway`                 | [OPC Gateway Microservice](https://github.com/Azure/Industrial-IoT/blob/master/docs/services/twin-gateway.md)         | `true`             |
-| `vault`                   | [OPC Vault Microservice](https://github.com/Azure/Industrial-IoT/blob/master/docs/services/vault.md)                  | `true`             |
-| `publisher`               | [OPC Publisher Service](https://github.com/Azure/Industrial-IoT/blob/master/docs/services/publisher.md)               | `true`             |
-| `events`                  | [Events Service](https://github.com/Azure/Industrial-IoT/blob/master/docs/services/events.md)                         | `true`             |
-| `edgeJobs`                | [Publisher jobs orchestrator service](https://github.com/Azure/Industrial-IoT/blob/master/docs/services/publisher.md) | `true`             |
-| `onboarding`              | [Onboarding Processor](https://github.com/Azure/Industrial-IoT/blob/master/docs/services/processor-onboarding.md)     | `true`             |
-| `eventsProcessor`         | [Edge Event Processor](https://github.com/Azure/Industrial-IoT/blob/master/docs/services/processor-events.md)         | `true`             |
-| `telemetryCdmProcessor`   | [Datalake export](https://github.com/Azure/Industrial-IoT/blob/master/docs/services/processor-telemetry-cdm.md)       | `false`            |
-| `telemetryProcessor`      | [Edge Telemetry processor](https://github.com/Azure/Industrial-IoT/blob/master/docs/services/processor-telemetry.md)  | `true`             |
-| `tunnelProcessor`         | [Http Tunnel processor](https://github.com/Azure/Industrial-IoT/blob/master/docs/services/processor-tunnel.md)        | `true`             |
-| `engineeringTool`         | [Engineering Tool](https://github.com/Azure/Industrial-IoT/blob/master/docs/services/engineeringtool.md)              | `false`            |
+| Name in `values.yaml`   | Description                                                                 | Enabled by Default |
+|-------------------------|-----------------------------------------------------------------------------|--------------------|
+| `registry`              | [Registry Microservice](../../../docs/services/registry.md)                 | `true`             |
+| `sync`                  | [Registry Synchronization Agent](../../../docs/services/registry-sync.md)   | `true`             |
+| `twin`                  | [OPC Twin Microservice](../../../docs/services/twin.md)                     | `true`             |
+| `history`               | [OPC Historian Access Microservice](../../../docs/services/twin-history.md) | `true`             |
+| `gateway`               | [OPC Gateway Microservice](../../../docs/services/twin-gateway.md)          | `true`             |
+| `vault`                 | [OPC Vault Microservice](../../../docs/services/vault.md)                   | `true`             |
+| `publisher`             | [OPC Publisher Service](../../../docs/services/publisher.md)                | `true`             |
+| `events`                | [Events Service](../../../docs/services/events.md)                          | `true`             |
+| `edgeJobs`              | [Publisher jobs orchestrator service](../../../docs/services/publisher.md)  | `true`             |
+| `onboarding`            | [Onboarding Processor](../../../docs/services/processor-onboarding.md)      | `true`             |
+| `eventsProcessor`       | [Edge Event Processor](../../../docs/services/processor-events.md)          | `true`             |
+| `telemetryCdmProcessor` | [Datalake export](../../../docs/services/processor-telemetry-cdm.md)        | `false`            |
+| `telemetryProcessor`    | [Edge Telemetry processor](../../../docs/services/processor-telemetry.md)   | `true`             |
+| `tunnelProcessor`       | [Http Tunnel processor](../../../docs/services/processor-tunnel.md)         | `true`             |
+| `engineeringTool`       | [Engineering Tool](../../../docs/services/engineeringtool.md)               | `false`            |
 
 #### Deployment Resource Configuration
 
@@ -771,6 +888,23 @@ deployment:
       nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
 ```
 
+### Prometheus
+
+The following value determines whether the chart adds Pod annotations for Prometheus metrics scraping or not.
+By default metrics scraping is enabled.
+
+| Parameter           | Description                                                            | Default |
+|---------------------|------------------------------------------------------------------------|---------|
+| `prometheus.scrape` | If true, Pod annotations will be added for Prometheus metrics scraping | `true`  |
+
+If enabled, here are Pod annotations that the chart will add (those are for `registry` component):
+
+```yaml
+prometheus.io/scrape: "true"
+prometheus.io/path: "/metrics"
+prometheus.io/port: "9042"
+```
+
 ### Minimal Configuration
 
 Below is a reference of minimal `values.yaml` to provide to the chart. You have to **change all value
@@ -791,6 +925,8 @@ azure:
       consumerGroup:
         events: <IoTHubEventHubEventsConsumerGroup>
         telemetry: <IoTHubEventHubTelemetryConsumerGroup>
+        tunnel: <IoTHubEventHubTunnelConsumerGroup>
+        onboarding: <IoTHubEventHubOnboardingConsumerGroup>
 
     sharedAccessPolicies:
       iothubowner:
@@ -823,6 +959,7 @@ azure:
 
   signalR:
     connectionString: <SignalRConnectionString>
+    serviceMode: <SignalRServiceMode>
 
   auth:
     required: false
@@ -885,7 +1022,7 @@ permission on `Azure Storage`. Please follow these steps to
 [add API permissions](https://docs.microsoft.com/graph/notifications-integration-app-registration#api-permissions).
 
 Here is a tutorial on
-[how to connect Power BI with Azure Data Lake Storage Gen2 and visualize publisher telemetry](https://github.com/Azure/Industrial-IoT/blob/master/docs/tutorials/tut-power-bi-cdm.md).
+[how to connect Power BI with Azure Data Lake Storage Gen2 and visualize publisher telemetry](../../../docs/tutorials/tut-power-bi-cdm.md).
 
 ### Swagger
 
@@ -940,9 +1077,9 @@ Here is the full list of components with Swagger UIs:
 We tested Azure Industrial IoT solution with NGINX Ingress Controller. And it required a few configuration
 tweaks to make Ingress work smoothly.
 
-#### ConfigMap
+#### Controller configuration
 
-The following values need to be added to NGINX Ingress Controller
+The following values need to be added to NGINX Ingress Controller configuration
 [ConfigMap](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/).
 
 ```json

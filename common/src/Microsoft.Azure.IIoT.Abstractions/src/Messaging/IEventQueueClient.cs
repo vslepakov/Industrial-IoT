@@ -6,6 +6,7 @@
 namespace Microsoft.Azure.IIoT.Messaging {
     using System;
     using System.Collections.Generic;
+    using System.Threading;
     using System.Threading.Tasks;
 
     /// <summary>
@@ -19,9 +20,10 @@ namespace Microsoft.Azure.IIoT.Messaging {
         /// <param name="payload"></param>
         /// <param name="properties"></param>
         /// <param name="partitionKey"></param>
+        /// <param name="ct"></param>
         /// <returns></returns>
         Task SendAsync(byte[] payload, IDictionary<string, string> properties = null,
-            string partitionKey = null);
+            string partitionKey = null, CancellationToken ct = default);
 
         /// <summary>
         /// Close client

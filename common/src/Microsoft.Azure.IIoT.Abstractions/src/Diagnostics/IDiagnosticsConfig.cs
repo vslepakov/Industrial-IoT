@@ -4,6 +4,7 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.Diagnostics {
+    using System;
 
     /// <summary>
     /// Diagnostic configuration
@@ -11,7 +12,17 @@ namespace Microsoft.Azure.IIoT.Diagnostics {
     public interface IDiagnosticsConfig {
 
         /// <summary>
-        /// Instrumentation key if exists
+        /// Level of diagnostics
+        /// </summary>
+        DiagnosticsLevel DiagnosticsLevel { get; }
+
+        /// <summary>
+        /// Metrics collection interval if configured
+        /// </summary>
+        TimeSpan? MetricsCollectionInterval { get; }
+
+        /// <summary>
+        /// Instrumentation key if it exists
         /// </summary>
         string InstrumentationKey { get; }
     }

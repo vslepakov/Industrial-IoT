@@ -102,8 +102,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 return false;
             }
             return
-                model.ActivationState == EndpointActivationState.Activated ||
-                model.ActivationState == EndpointActivationState.ActivatedAndConnected;
+                model.ActivationState == EntityActivationState.Activated ||
+                model.ActivationState == EntityActivationState.ActivatedAndConnected;
         }
 
         /// <summary>
@@ -116,7 +116,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 return false;
             }
             return
-                model.ActivationState == EndpointActivationState.ActivatedAndConnected;
+                model.ActivationState == EntityActivationState.ActivatedAndConnected;
         }
 
         /// <summary>

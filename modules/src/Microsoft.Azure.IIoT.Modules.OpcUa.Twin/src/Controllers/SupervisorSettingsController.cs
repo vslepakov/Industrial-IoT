@@ -20,12 +20,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
     /// </summary>
     [Version(1)]
     [Version(2)]
-    public class SupervisorSettingsController : ISettingsController {
-
-        /// <summary>
-        /// Called based on the reported connected property.
-        /// </summary>
-        public bool Connected { get; set; }
+    public class SupervisorSettingsController : ISettingsController, ILogAnalyticsConfig {
 
         /// <summary>
         /// Set and get the log level
@@ -52,6 +47,13 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
             get => LogControl.Level.MinimumLevel.ToString();
         }
 
+        /// <inheritdoc/>
+        public string LogWorkspaceId { get; set; }
+        /// <inheritdoc/>
+        public string LogWorkspaceKey { get; set; }
+        /// <inheritdoc/>
+        public string LogType { get; set; }
+
         /// <summary>
         /// Called to start or remove twins
         /// </summary>
@@ -63,8 +65,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
                     _endpoints.AddOrUpdate(endpointId, null);
                     return;
                 }
-                if (!value.IsString ||
-                    !value.ToString().IsBase64()) {
+                if (!value.IsString || !((string)value).IsBase64()) {
                     return;
                 }
                 _endpoints.AddOrUpdate(endpointId, value);
@@ -91,7 +92,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
 
         /// <returns></returns>
         public IEnumerable<string> GetPropertyNames() {
-            return _supervisor.GetStatusAsync().Result.Endpoints.Select(e => e.Id);
+            return _supervisor.GetStatusAsync().Result.Entities.Select(e => e.Id);
         }
 
         /// <summary>
@@ -102,7 +103,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
             foreach (var item in _endpoints.ToList()) {
                 if (string.IsNullOrEmpty((string)item.Value)) {
                     try {
-                        await _supervisor.DetachEndpointAsync(item.Key);
+                        await _supervisor.DetachAsync(item.Key);
                     }
                     catch (Exception ex) {
                         _logger.Error(ex, "Error detaching twin {Key}", item.Key);
@@ -110,7 +111,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
                 }
                 else {
                     try {
-                        await _supervisor.AttachEndpointAsync(item.Key, (string)item.Value);
+                        await _supervisor.AttachAsync(item.Key, (string)item.Value);
                     }
                     catch (Exception ex) {
                         _logger.Error(ex, "Error attaching twin {Key}", item.Key);

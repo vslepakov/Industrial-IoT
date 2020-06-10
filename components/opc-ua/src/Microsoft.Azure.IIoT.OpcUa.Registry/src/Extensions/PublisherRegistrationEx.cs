@@ -9,8 +9,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
     using Microsoft.Azure.IIoT.Serializers;
     using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading;
 
     /// <summary>
     /// Publisher registration extensions
@@ -54,52 +52,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                     DateTime.UtcNow : (DateTime?)null);
             }
 
-            if (update?.SiteOrGatewayId != existing?.SiteOrGatewayId) {
-                twin.Tags.Add(nameof(PublisherRegistration.SiteOrGatewayId),
-                    update?.SiteOrGatewayId);
-            }
-
-
             // Settings
 
-            var capsUpdate = update?.Capabilities.SetEqualsSafe(
-                existing?.Capabilities, (x, y) => x.Key == y.Key && y.Value == x.Value);
-            if (!(capsUpdate ?? true)) {
-                twin.Properties.Desired.Add(nameof(PublisherRegistration.Capabilities),
-                    update?.Capabilities == null ?
-                    null : serializer.FromObject(update.Capabilities));
-            }
-
-            if (update?.JobOrchestratorUrl != existing?.JobOrchestratorUrl) {
-                twin.Properties.Desired.Add(nameof(PublisherRegistration.JobOrchestratorUrl),
-                    update?.JobOrchestratorUrl);
-            }
             if (update?.LogLevel != existing?.LogLevel) {
                 twin.Properties.Desired.Add(nameof(PublisherRegistration.LogLevel),
                     update?.LogLevel == null ?
                     null : serializer.FromObject(update.LogLevel.ToString()));
-            }
-
-
-            if ((update?.JobCheckInterval ?? Timeout.InfiniteTimeSpan) !=
-                (existing?.JobCheckInterval ?? Timeout.InfiniteTimeSpan)) {
-                twin.Properties.Desired.Add(nameof(PublisherRegistration.JobCheckInterval),
-                    update?.JobCheckInterval);
-            }
-
-            if ((update?.MaxWorkers ?? 1) != (existing?.MaxWorkers ?? 1)) {
-                twin.Properties.Desired.Add(nameof(PublisherRegistration.MaxWorkers),
-                    update?.MaxWorkers);
-            }
-
-            if ((update?.HeartbeatInterval ?? Timeout.InfiniteTimeSpan) !=
-                (existing?.HeartbeatInterval ?? Timeout.InfiniteTimeSpan)) {
-                twin.Properties.Desired.Add(nameof(PublisherRegistration.HeartbeatInterval),
-                    update?.HeartbeatInterval);
-            }
-
-            if (update?.SiteId != existing?.SiteId) {
-                twin.Properties.Desired.Add(TwinProperty.SiteId, update?.SiteId);
             }
 
             twin.Tags.Add(nameof(PublisherRegistration.DeviceType), update?.DeviceType);
@@ -121,7 +79,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             }
 
             var tags = twin.Tags ?? new Dictionary<string, VariantValue>();
-            var connected = twin.IsConnected();
 
             var registration = new PublisherRegistration {
                 // Device
@@ -129,6 +86,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 DeviceId = twin.Id,
                 ModuleId = twin.ModuleId,
                 Etag = twin.Etag,
+                Connected = twin.IsConnected() ?? false,
 
                 // Tags
 
@@ -141,21 +99,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
 
                 LogLevel =
                     properties.GetValueOrDefault<TraceLogLevel>(nameof(PublisherRegistration.LogLevel), null),
-                JobOrchestratorUrl =
-                    properties.GetValueOrDefault<string>(nameof(PublisherRegistration.JobOrchestratorUrl), null),
-                JobCheckInterval =
-                    properties.GetValueOrDefault<TimeSpan>(nameof(PublisherRegistration.JobCheckInterval), null),
-                MaxWorkers =
-                    properties.GetValueOrDefault<int>(nameof(PublisherRegistration.MaxWorkers), null),
-                HeartbeatInterval =
-                    properties.GetValueOrDefault<TimeSpan>(nameof(PublisherRegistration.HeartbeatInterval), null),
-                Capabilities =
-                    properties.GetValueOrDefault<Dictionary<string, string>>(nameof(PublisherRegistration.Capabilities), null),
 
-                SiteId =
-                    properties.GetValueOrDefault<string>(TwinProperty.SiteId, null),
-                Connected = connected ??
-                    properties.GetValueOrDefault(TwinProperty.Connected, false),
+                Version =
+                    properties.GetValueOrDefault<string>(TwinProperty.Version, null),
                 Type =
                     properties.GetValueOrDefault<string>(TwinProperty.Type, null)
             };
@@ -204,14 +150,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             connected = consolidated.Connected;
             if (desired != null) {
                 desired.Connected = connected;
-                if (desired.SiteId == null && consolidated.SiteId != null) {
-                    // Not set by user, but by config, so fake user desiring it.
-                    desired.SiteId = consolidated.SiteId;
-                }
                 if (desired.LogLevel == null && consolidated.LogLevel != null) {
                     // Not set by user, but reported, so set as desired
                     desired.LogLevel = consolidated.LogLevel;
                 }
+                desired.Version = consolidated.Version;
             }
 
             if (!onlyServerState) {
@@ -241,14 +184,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 DeviceId = deviceId,
                 ModuleId = moduleId,
                 LogLevel = model.LogLevel,
-                JobOrchestratorUrl = model.Configuration?.JobOrchestratorUrl,
-                JobCheckInterval = model.Configuration?.JobCheckInterval,
-                MaxWorkers = model.Configuration?.MaxWorkers,
-                HeartbeatInterval = model.Configuration?.HeartbeatInterval,
-                Capabilities = model.Configuration?.Capabilities?
-                    .ToDictionary(k => k.Key, v => v.Value),
                 Connected = model.Connected ?? false,
-                SiteId = model.SiteId,
+                Version = null
             };
         }
 
@@ -263,49 +200,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             }
             return new PublisherModel {
                 Id = PublisherModelEx.CreatePublisherId(registration.DeviceId, registration.ModuleId),
-                SiteId = registration.SiteId,
                 LogLevel = registration.LogLevel,
-                Configuration = registration.ToConfigModel(),
+                Version = registration.Version,
                 Connected = registration.IsConnected() ? true : (bool?)null,
                 OutOfSync = registration.IsConnected() && !registration._isInSync ? true : (bool?)null
-            };
-        }
-
-
-        /// <summary>
-        /// Returns if no discovery config specified
-        /// </summary>
-        /// <param name="registration"></param>
-        /// <returns></returns>
-        private static bool IsNullConfig(this PublisherRegistration registration) {
-            if (string.IsNullOrEmpty(registration.JobOrchestratorUrl) &&
-                (registration.MaxWorkers == null || registration.MaxWorkers == 1) &&
-                (registration.JobCheckInterval == null ||
-                    registration.JobCheckInterval == Timeout.InfiniteTimeSpan) &&
-                (registration.Capabilities == null ||
-                    registration.Capabilities.Count == 0) &&
-                (registration.HeartbeatInterval == null ||
-                    registration.HeartbeatInterval == Timeout.InfiniteTimeSpan)) {
-                return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Returns config model
-        /// </summary>
-        /// <param name="registration"></param>
-        /// <returns></returns>
-        private static PublisherConfigModel ToConfigModel(this PublisherRegistration registration) {
-            return registration.IsNullConfig() ? null : new PublisherConfigModel {
-                JobOrchestratorUrl = registration.JobOrchestratorUrl,
-                MaxWorkers = registration.MaxWorkers == 1 ? null : registration.MaxWorkers,
-                JobCheckInterval = registration.JobCheckInterval == Timeout.InfiniteTimeSpan ?
-                    null : registration.JobCheckInterval,
-                HeartbeatInterval = registration.HeartbeatInterval == Timeout.InfiniteTimeSpan ?
-                    null : registration.HeartbeatInterval,
-                Capabilities = registration.Capabilities?
-                    .ToDictionary(k => k.Key, v => v.Value)
             };
         }
 
@@ -321,16 +219,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             }
             return
                 other != null &&
-                registration.SiteId == other.SiteId &&
-                registration.LogLevel == other.LogLevel &&
-                registration.JobOrchestratorUrl == other.JobOrchestratorUrl &&
-                (registration.MaxWorkers ?? 1) == (other.MaxWorkers ?? 1)&&
-                (registration.JobCheckInterval ?? Timeout.InfiniteTimeSpan) ==
-                    (other.JobCheckInterval ?? Timeout.InfiniteTimeSpan) &&
-                (registration.HeartbeatInterval ?? Timeout.InfiniteTimeSpan) ==
-                    (other.HeartbeatInterval ?? Timeout.InfiniteTimeSpan) &&
-                registration.Capabilities.SetEqualsSafe(
-                    other.Capabilities, (x, y) => x.Key == y.Key && y.Value == x.Value);
+                registration.LogLevel == other.LogLevel;
         }
     }
 }

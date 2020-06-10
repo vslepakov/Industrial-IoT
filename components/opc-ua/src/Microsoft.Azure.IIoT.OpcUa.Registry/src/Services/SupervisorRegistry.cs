@@ -84,11 +84,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                     // Update registration from update request
                     var patched = registration.ToServiceModel();
 
-                    if (request.SiteId != null) {
-                        patched.SiteId = string.IsNullOrEmpty(request.SiteId) ?
-                            null : request.SiteId;
-                    }
-
                     if (request.LogLevel != null) {
                         patched.LogLevel = request.LogLevel == TraceLogLevel.Information ?
                             null : request.LogLevel;
@@ -134,13 +129,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             var query = "SELECT * FROM devices.modules WHERE " +
                 $"properties.reported.{TwinProperty.Type} = '{IdentityType.Supervisor}'";
 
-            if (model?.SiteId != null) {
-                // If site id provided, include it in search
-                query += $"AND (properties.reported.{TwinProperty.SiteId} = " +
-                    $"'{model.SiteId}' OR properties.desired.{TwinProperty.SiteId} = " +
-                    $"'{model.SiteId}' OR deviceId = '{model.SiteId}') ";
-            }
-
             if (EndpointInfoModelEx.IsEndpointId(model?.EndpointId)) {
                 // If endpoint id provided include in search
                 query += $"AND IS_DEFINED(properties.desired.{model.EndpointId}) ";
@@ -150,11 +138,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                 // If flag provided, include it in search
                 if (model.Connected.Value) {
                     query += $"AND connectionState = 'Connected' ";
-                    // Do not use connected property as module might have exited before updating.
                 }
                 else {
-                    query += $"AND (connectionState = 'Disconnected' " +
-                        $"OR properties.reported.{TwinProperty.Connected} != true) ";
+                    query += $"AND connectionState != 'Connected' ";
                 }
             }
 

@@ -12,6 +12,9 @@ namespace Microsoft.Azure.IIoT.Services.Processor.Events.Runtime {
     using Microsoft.Azure.IIoT.Messaging.EventHub;
     using Microsoft.Azure.IIoT.Messaging.ServiceBus;
     using Microsoft.Azure.IIoT.Messaging.ServiceBus.Runtime;
+    using Microsoft.Azure.IIoT.Storage.CosmosDb;
+    using Microsoft.Azure.IIoT.Storage.CosmosDb.Runtime;
+    using Microsoft.Azure.IIoT.Storage;
     using Microsoft.Extensions.Configuration;
     using System;
 
@@ -20,7 +23,7 @@ namespace Microsoft.Azure.IIoT.Services.Processor.Events.Runtime {
     /// </summary>
     public class Config : DiagnosticsConfig, IEventProcessorHostConfig,
         IEventHubConsumerConfig, IServiceBusConfig, IIoTHubConfig,
-        IEventProcessorConfig {
+        IEventProcessorConfig, ICosmosDbConfig, IItemContainerConfig {
 
         /// <inheritdoc/>
         public string ConsumerGroup => GetStringOrDefault(
@@ -59,6 +62,15 @@ namespace Microsoft.Azure.IIoT.Services.Processor.Events.Runtime {
         /// <inheritdoc/>
         public string IoTHubConnString => _hub.IoTHubConnString;
 
+        /// <inheritdoc/>
+        public string DbConnectionString => _cosmos.DbConnectionString;
+        /// <inheritdoc/>
+        public int? ThroughputUnits => _cosmos.ThroughputUnits;
+        /// <inheritdoc/>
+        public string ContainerName => "iiot_opc";
+        /// <inheritdoc/>
+        public string DatabaseName => "iiot_opc";
+
         /// <summary>
         /// Configuration constructor
         /// </summary>
@@ -68,11 +80,13 @@ namespace Microsoft.Azure.IIoT.Services.Processor.Events.Runtime {
             _eh = new IoTHubEventConfig(configuration);
             _sb = new ServiceBusConfig(configuration);
             _hub = new IoTHubConfig(configuration);
+            _cosmos = new CosmosDbConfig(configuration);
         }
 
         private readonly EventProcessorConfig _ep;
         private readonly IoTHubEventConfig _eh;
         private readonly ServiceBusConfig _sb;
         private readonly IoTHubConfig _hub;
+        private readonly CosmosDbConfig _cosmos;
     }
 }

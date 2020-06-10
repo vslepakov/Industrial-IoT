@@ -13,7 +13,6 @@
     <ProjectReference Include="..\..\Microsoft.Azure.IIoT.OpcUa.Api.Publisher\src\Microsoft.Azure.IIoT.OpcUa.Api.Publisher.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\components\opc-ua\src\Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs\src\Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs.csproj" />
     <ProjectReference Include="..\..\..\..\components\opc-ua\src\Microsoft.Azure.IIoT.OpcUa\src\Microsoft.Azure.IIoT.OpcUa.csproj" />
   </ItemGroup>
 </Project>

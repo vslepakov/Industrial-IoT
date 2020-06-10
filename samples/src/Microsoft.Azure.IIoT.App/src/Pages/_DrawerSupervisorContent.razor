@@ -26,17 +26,12 @@
                 ModuleId:
                 <div class="body">@ModuleId</div>
             </div>
-            string SiteId = SupervisorStatus.SiteId == null ? CommonHelper.None : SupervisorStatus.SiteId;
-            <div class="label">
-                SiteId:
-                <div class="body">@SiteId</div>
-            </div>
             <div class="label">
                 Endpoints:
                 @{
-                    if (SupervisorStatus.Endpoints != null)
+                    if (SupervisorStatus.Entities != null)
                     {
-                        foreach (var endpoint in SupervisorStatus.Endpoints)
+                        foreach (var endpoint in SupervisorStatus.Entities)
                         {
                             string Id = endpoint.Id == null ? CommonHelper.None : endpoint.Id;
                             <div class="label">

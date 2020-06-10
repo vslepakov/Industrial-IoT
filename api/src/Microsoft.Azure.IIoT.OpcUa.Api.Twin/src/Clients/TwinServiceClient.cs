@@ -37,8 +37,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
         /// <param name="serializer"></param>
         public TwinServiceClient(IHttpClient httpClient, string serviceUri,
             ISerializer serializer = null) {
-            _serviceUri = serviceUri ?? throw new ArgumentNullException(nameof(serviceUri),
+            if (string.IsNullOrWhiteSpace(serviceUri)) {
+                throw new ArgumentNullException(nameof(serviceUri),
                     "Please configure the Url of the endpoint micro service.");
+            }
+            _serviceUri = serviceUri.TrimEnd('/');
             _serializer = serializer ?? new NewtonSoftJsonSerializer();
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         }
@@ -238,6 +241,74 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
             var response = await _httpClient.PostAsync(request, ct).ConfigureAwait(false);
             response.Validate();
             return _serializer.DeserializeResponse<ModelUploadStartResponseApiModel>(response);
+        }
+
+        /// <inheritdoc/>
+        public async Task<PublishStartResponseApiModel> NodePublishStartAsync(string endpointId,
+            PublishStartRequestApiModel content, CancellationToken ct) {
+            if (string.IsNullOrEmpty(endpointId)) {
+                throw new ArgumentNullException(nameof(endpointId));
+            }
+            if (content == null) {
+                throw new ArgumentNullException(nameof(content));
+            }
+            if (content.Item == null) {
+                throw new ArgumentNullException(nameof(content.Item));
+            }
+            var request = _httpClient.NewRequest($"{_serviceUri}/v2/publish/{endpointId}/start",
+                Resource.Platform);
+            _serializer.SerializeToRequest(request, content);
+            var response = await _httpClient.PostAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<PublishStartResponseApiModel>(response);
+        }
+
+        /// <inheritdoc/>
+        public async Task<PublishBulkResponseApiModel> NodePublishBulkAsync(string endpointId,
+            PublishBulkRequestApiModel content, CancellationToken ct = default) {
+            if (string.IsNullOrEmpty(endpointId)) {
+                throw new ArgumentNullException(nameof(endpointId));
+            }
+            if (content == null) {
+                throw new ArgumentNullException(nameof(content));
+            }
+            var request = _httpClient.NewRequest($"{_serviceUri}/v2/publish/{endpointId}/bulk",
+                Resource.Platform);
+            _serializer.SerializeToRequest(request, content);
+            var response = await _httpClient.PostAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<PublishBulkResponseApiModel>(response);
+        }
+
+        /// <inheritdoc/>
+        public async Task<PublishedItemListResponseApiModel> NodePublishListAsync(
+            string endpointId, PublishedItemListRequestApiModel content, CancellationToken ct) {
+            if (string.IsNullOrEmpty(endpointId)) {
+                throw new ArgumentNullException(nameof(endpointId));
+            }
+            var request = _httpClient.NewRequest($"{_serviceUri}/v2/publish/{endpointId}",
+                Resource.Platform);
+            _serializer.SerializeToRequest(request, content);
+            var response = await _httpClient.PostAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<PublishedItemListResponseApiModel>(response);
+        }
+
+        /// <inheritdoc/>
+        public async Task<PublishStopResponseApiModel> NodePublishStopAsync(string endpointId,
+            PublishStopRequestApiModel content, CancellationToken ct) {
+            if (string.IsNullOrEmpty(endpointId)) {
+                throw new ArgumentNullException(nameof(endpointId));
+            }
+            if (content == null) {
+                throw new ArgumentNullException(nameof(content));
+            }
+            var request = _httpClient.NewRequest($"{_serviceUri}/v2/publish/{endpointId}/stop",
+                Resource.Platform);
+            _serializer.SerializeToRequest(request, content);
+            var response = await _httpClient.PostAsync(request, ct).ConfigureAwait(false);
+            response.Validate();
+            return _serializer.DeserializeResponse<PublishStopResponseApiModel>(response);
         }
 
         private readonly IHttpClient _httpClient;

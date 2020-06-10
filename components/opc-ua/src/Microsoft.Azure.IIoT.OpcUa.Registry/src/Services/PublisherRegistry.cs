@@ -7,7 +7,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
     using Microsoft.Azure.IIoT.OpcUa.Registry.Models;
     using Microsoft.Azure.IIoT.OpcUa.Registry;
     using Microsoft.Azure.IIoT.OpcUa.Core.Models;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher;
     using Microsoft.Azure.IIoT.Exceptions;
+    using Microsoft.Azure.IIoT.Hub.Models;
     using Microsoft.Azure.IIoT.Hub;
     using Microsoft.Azure.IIoT.Serializers;
     using Serilog;
@@ -15,12 +18,14 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
     using System.Linq;
     using System.Threading.Tasks;
     using System.Threading;
+    using System.Collections.Generic;
 
     /// <summary>
-    /// Publisher registry which uses the IoT Hub twin services for supervisor
-    /// identity management.
+    /// Publisher registry which uses the IoT Hub twin services for publisher
+    /// and writer group identity management.
     /// </summary>
-    public sealed class PublisherRegistry : IPublisherRegistry, IPublisherEndpointQuery {
+    public sealed class PublisherRegistry : IPublisherRegistry, IPublisherOrchestration,
+        IWriterGroupRegistryListener, IDataSetWriterRegistryListener, IWriterGroupStatus {
 
         /// <summary>
         /// Create registry services
@@ -28,50 +33,18 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
         /// <param name="iothub"></param>
         /// <param name="broker"></param>
         /// <param name="serializer"></param>
+        /// <param name="gateways"></param>
+        /// <param name="activation"></param>
         /// <param name="logger"></param>
         public PublisherRegistry(IIoTHubTwinServices iothub, IJsonSerializer serializer,
+            IGatewayRegistry gateways, IActivationServices<WriterGroupPlacementModel> activation,
             IRegistryEventBroker<IPublisherRegistryListener> broker, ILogger logger) {
             _iothub = iothub ?? throw new ArgumentNullException(nameof(iothub));
             _broker = broker ?? throw new ArgumentNullException(nameof(broker));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _activation = activation ?? throw new ArgumentNullException(nameof(activation));
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
-        }
-
-        /// <inheritdoc/>
-        public async Task<(string, EndpointModel)> FindPublisherEndpoint(
-            string endpointId, CancellationToken ct) {
-
-            // Get the endpoint and the endpoints supervisor
-            var device = await _iothub.GetAsync(endpointId, null, ct);
-            var registration = device.ToEndpointRegistration(false);
-
-            var endpoint = registration.ToServiceModel();
-            var supervisorId = endpoint?.Registration?.SupervisorId;
-
-            if (string.IsNullOrEmpty(supervisorId)) {
-                // No supervisor set for the retrieved endpoint
-                throw new ResourceInvalidStateException(
-                    $"Endpoint {endpointId} has no supervisor");
-            }
-
-            // Get iotedge device
-            var deviceId = SupervisorModelEx.ParseDeviceId(supervisorId, out _);
-
-            // Query for the publisher in the same edge device
-            var query = "SELECT * FROM devices.modules WHERE " +
-                $"properties.reported.{TwinProperty.Type} = '{IdentityType.Publisher}' " +
-                $"AND deviceId = '{deviceId}'";
-            var devices = await _iothub.QueryAllDeviceTwinsAsync(query, ct);
-
-            device = devices.SingleOrDefault();
-            if (device == null) {
-                throw new ResourceNotFoundException(
-                    $"No publisher found for {endpointId} in {deviceId}");
-            }
-            var publisherId = PublisherModelEx.CreatePublisherId(
-                device.Id, device.ModuleId);
-
-            return (publisherId, endpoint.Registration.Endpoint);
+            _gateways = gateways ?? throw new ArgumentNullException(nameof(gateways));
         }
 
         /// <inheritdoc/>
@@ -86,7 +59,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                 as PublisherRegistration;
             if (registration == null) {
                 throw new ResourceNotFoundException(
-                    $"{id} is not a supervisor registration.");
+                    $"{id} is not a publisher registration.");
             }
             return registration.ToServiceModel();
         }
@@ -117,48 +90,15 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                         throw new ResourceNotFoundException(
                             $"{publisherId} is not a publisher registration.");
                     }
+
                     // Update registration from update request
                     var patched = registration.ToServiceModel();
-                    if (request.SiteId != null) {
-                        patched.SiteId = string.IsNullOrEmpty(request.SiteId) ?
-                            null : request.SiteId;
-                    }
 
                     if (request.LogLevel != null) {
                         patched.LogLevel = request.LogLevel == TraceLogLevel.Information ?
                             null : request.LogLevel;
                     }
 
-                    if (request.Configuration != null) {
-                        if (patched.Configuration == null) {
-                            patched.Configuration = new PublisherConfigModel();
-                        }
-                        if (request.Configuration.JobOrchestratorUrl != null) {
-                            patched.Configuration.JobOrchestratorUrl =
-                                string.IsNullOrEmpty(
-                                    request.Configuration.JobOrchestratorUrl.Trim()) ?
-                                        null : request.Configuration.JobOrchestratorUrl;
-                        }
-                        if (request.Configuration.HeartbeatInterval != null) {
-                            patched.Configuration.HeartbeatInterval =
-                                request.Configuration.HeartbeatInterval;
-                        }
-                        if (request.Configuration.JobCheckInterval != null) {
-                            patched.Configuration.JobCheckInterval =
-                                request.Configuration.JobCheckInterval.Value.Ticks == 0 ?
-                                    null : request.Configuration.JobCheckInterval;
-                        }
-                        if (request.Configuration.MaxWorkers != null) {
-                            patched.Configuration.MaxWorkers =
-                                request.Configuration.MaxWorkers <= 0 ?
-                                    null : request.Configuration.MaxWorkers;
-                        }
-                        if (request.Configuration.Capabilities != null) {
-                            patched.Configuration.Capabilities =
-                                request.Configuration.Capabilities.Count == 0 ?
-                                    null : request.Configuration.Capabilities;
-                        }
-                    }
                     // Patch
                     twin = await _iothub.PatchAsync(registration.Patch(
                         patched.ToPublisherRegistration(), _serializer), false, ct);
@@ -170,7 +110,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                     return;
                 }
                 catch (ResourceOutOfDateException ex) {
-                    _logger.Debug(ex, "Retrying updating supervisor...");
+                    _logger.Debug(ex, "Retrying updating publisher...");
                     continue;
                 }
             }
@@ -182,7 +122,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             var query = "SELECT * FROM devices.modules WHERE " +
                 $"properties.reported.{TwinProperty.Type} = '{IdentityType.Publisher}' " +
                 $"AND NOT IS_DEFINED(tags.{nameof(EntityRegistration.NotSeenSince)})";
-            var devices = await _iothub.QueryDeviceTwinsAsync(query, continuation, pageSize, ct);
+            var devices = await _iothub.QueryDeviceTwinsAsync(continuation == null ? query : null,
+                continuation, pageSize, ct);
             return new PublisherListModel {
                 ContinuationToken = devices.ContinuationToken,
                 Items = devices.Items
@@ -199,22 +140,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             var query = "SELECT * FROM devices.modules WHERE " +
                 $"properties.reported.{TwinProperty.Type} = '{IdentityType.Publisher}'";
 
-            if (model?.SiteId != null) {
-                // If site id provided, include it in search
-                query += $"AND (properties.reported.{TwinProperty.SiteId} = " +
-                    $"'{model.SiteId}' OR properties.desired.{TwinProperty.SiteId} = " +
-                    $"'{model.SiteId}' OR deviceId = '{model.SiteId}') ";
-            }
-
             if (model?.Connected != null) {
                 // If flag provided, include it in search
                 if (model.Connected.Value) {
                     query += $"AND connectionState = 'Connected' ";
-                    // Do not use connected property as module might have exited before updating.
                 }
                 else {
-                    query += $"AND (connectionState = 'Disconnected' " +
-                        $"OR properties.reported.{TwinProperty.Connected} != true) ";
+                    query += $"AND connectionState != 'Connected' ";
                 }
             }
 
@@ -228,9 +160,281 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             };
         }
 
+        /// <inheritdoc/>
+        public async Task OnWriterGroupAddedAsync(PublisherOperationContextModel context,
+            WriterGroupInfoModel writerGroup) {
+
+            // Add new group
+            var group = writerGroup.ToWriterGroupRegistration();
+            await _iothub.CreateOrUpdateAsync(group.ToDeviceTwin(_serializer),
+                false, CancellationToken.None);
+
+            // Immediately try assign writer group to a publisher
+            await PlaceWriterGroupAsync(group, CancellationToken.None);
+        }
+
+        /// <inheritdoc/>
+        public async Task SynchronizeWriterGroupPlacementsAsync(CancellationToken ct) {
+            // Find all writer groups currently not connected
+            var query = $"SELECT * FROM devices WHERE " +
+                $"NOT IS_DEFINED(tags.{nameof(WriterGroupRegistration.IsDisabled)}) AND " +
+                $"connectionState != 'Connected' AND " +
+                $"tags.{nameof(EntityRegistration.DeviceType)} = '{IdentityType.WriterGroup}' ";
+
+            var result = new List<DeviceTwinModel>();
+            string continuation = null;
+            do {
+                var devices = await _iothub.QueryDeviceTwinsAsync(query, null, null, ct);
+                foreach (var writerGroup in devices.Items.Select(d => d.ToWriterGroupRegistration(false))) {
+                    await PlaceWriterGroupAsync(writerGroup, ct);
+                }
+                continuation = devices.ContinuationToken;
+            }
+            while (continuation != null);
+        }
+
+        /// <inheritdoc/>
+        public async Task<EntityActivationStatusListModel> ListWriterGroupActivationsAsync(
+            string continuation, bool onlyConnected, int? pageSize, CancellationToken ct) {
+            // Find all writer groups currently not connected
+            var query = $"SELECT * FROM devices WHERE " +
+                $"NOT IS_DEFINED(tags.{nameof(WriterGroupRegistration.IsDisabled)}) AND ";
+            if (onlyConnected) {
+                query += "connectionState = 'Connected' AND ";
+            }
+            query += $"tags.{nameof(EntityRegistration.DeviceType)} = '{IdentityType.WriterGroup}' ";
+
+            var devices = await _iothub.QueryDeviceTwinsAsync(query, continuation, pageSize, ct);
+            return new EntityActivationStatusListModel {
+                ContinuationToken = devices.ContinuationToken,
+                Items = devices.Items
+                    .Select(t => t.ToWriterGroupRegistration(false))
+                    .Select(s => s.ToServiceModel())
+                    .ToList()
+            };
+        }
+
+        /// <inheritdoc/>
+        public Task OnWriterGroupStateChangeAsync(PublisherOperationContextModel context,
+            WriterGroupInfoModel writerGroup) {
+            // Dont care - registry is the source of state changes
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public async Task OnWriterGroupUpdatedAsync(PublisherOperationContextModel context,
+            WriterGroupInfoModel writerGroup) {
+            if (writerGroup?.WriterGroupId == null) {
+                // Should not happen
+                throw new ArgumentNullException(nameof(writerGroup.WriterGroupId));
+            }
+            while (true) {
+                try {
+                    var twin = await _iothub.FindAsync(
+                        WriterGroupRegistryEx.ToDeviceId(writerGroup.WriterGroupId));
+                    if (twin == null) {
+                        _logger.Warning("Missed add group event - try recreating twin...");
+                        twin = await _iothub.CreateOrUpdateAsync(
+                            writerGroup.ToWriterGroupRegistration().ToDeviceTwin(_serializer),
+                            false, CancellationToken.None);
+                        return; // done
+                    }
+                    // Convert to writerGroup registration
+                    var registration = twin.ToEntityRegistration() as WriterGroupRegistration;
+                    if (registration == null) {
+                        _logger.Fatal("Unexpected - twin is not a writerGroup registration.");
+                        return; // nothing else to do other than delete and recreate.
+                    }
+                    twin = await _iothub.PatchAsync(registration.Patch(
+                        writerGroup.ToWriterGroupRegistration(), _serializer));
+                    break;
+                }
+                catch (ResourceOutOfDateException ex) {
+                    // Retry create/update
+                    _logger.Debug(ex, "Retry updating writerGroup...");
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task OnDataSetWriterAddedAsync(PublisherOperationContextModel context,
+            DataSetWriterInfoModel dataSetWriter) {
+            var writerGroupId = dataSetWriter?.WriterGroupId;
+            if (string.IsNullOrEmpty(writerGroupId)) {
+                // Should not happen
+                throw new ArgumentNullException(nameof(dataSetWriter.WriterGroupId));
+            }
+            await AddRemoveWriterFromWriterGroupTwinAsync(
+                WriterGroupRegistryEx.ToDeviceId(writerGroupId), dataSetWriter.DataSetWriterId);
+        }
+
+        /// <inheritdoc/>
+        public async Task OnDataSetWriterUpdatedAsync(PublisherOperationContextModel context,
+            string dataSetWriterId, DataSetWriterInfoModel dataSetWriter) {
+            var writerGroupId = dataSetWriter?.WriterGroupId;
+            if (string.IsNullOrEmpty(writerGroupId)) {
+                //
+                // The variable and event updates do not carry a full model but we can quickly
+                // get the missing information by finding twins where this dataset is defined
+                //      - should only be one -
+                // and patch them
+                //
+                var twins = await _iothub.QueryAllDeviceTwinsAsync(
+                    $"SELECT * FROM devices WHERE " +
+                    $"IS_DEFINED(properties.desired.{IdentityType.DataSet}_{dataSetWriterId}) AND " +
+                    $"tags.{nameof(EntityRegistration.DeviceType)} = '{IdentityType.WriterGroup}' ");
+                foreach (var twin in twins) {
+                    await AddRemoveWriterFromWriterGroupTwinAsync(twin.Id, dataSetWriterId);
+                }
+                return;
+            }
+            await AddRemoveWriterFromWriterGroupTwinAsync(
+                WriterGroupRegistryEx.ToDeviceId(writerGroupId), dataSetWriterId);
+        }
+
+        /// <inheritdoc/>
+        public Task OnDataSetWriterStateChangeAsync(PublisherOperationContextModel context,
+            string dataSetWriterId, DataSetWriterInfoModel writer) {
+            // Not interested
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public async Task OnDataSetWriterRemovedAsync(PublisherOperationContextModel context,
+            DataSetWriterInfoModel dataSetWriter) {
+            if (string.IsNullOrEmpty(dataSetWriter?.WriterGroupId)) {
+                // Should not happen
+                throw new ArgumentNullException(nameof(dataSetWriter.WriterGroupId));
+            }
+            await AddRemoveWriterFromWriterGroupTwinAsync(
+                WriterGroupRegistryEx.ToDeviceId(dataSetWriter.WriterGroupId),
+                dataSetWriter.DataSetWriterId, true);
+        }
+
+        /// <inheritdoc/>
+        public async Task OnWriterGroupRemovedAsync(PublisherOperationContextModel context,
+            string writerGroupId) {
+            try {
+                // Force delete
+                await _iothub.DeleteAsync(WriterGroupRegistryEx.ToDeviceId(writerGroupId));
+            }
+            catch (Exception ex) {
+                // Retry create/update
+                _logger.Error(ex, "Deleting writerGroup failed...");
+            }
+        }
+
+        /// <summary>
+        /// Add or remove the writer from the group
+        /// </summary>
+        /// <param name="deviceId"></param>
+        /// <param name="dataSetWriterId"></param>
+        /// <param name="remove"></param>
+        /// <returns></returns>
+        private async Task AddRemoveWriterFromWriterGroupTwinAsync(string deviceId,
+            string dataSetWriterId, bool remove = false) {
+            try {
+                await _iothub.PatchAsync(new DeviceTwinModel {
+                    Id = deviceId,
+                    Properties = new TwinPropertiesModel {
+                        Desired = new Dictionary<string, VariantValue> {
+                            [WriterGroupRegistryEx.ToPropertyName(dataSetWriterId)] =
+                                remove ? null : DateTime.UtcNow.ToString()
+                        }
+                    }
+                });
+            }
+            catch (Exception ex) {
+                // Retry create/update
+                _logger.Error(ex, "Updating writer table in writerGroup failed...");
+            }
+        }
+
+        /// <summary>
+        /// Try to activate endpoint on any supervisor in site
+        /// </summary>
+        /// <param name="writerGroup"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        private async Task<bool> PlaceWriterGroupAsync(WriterGroupRegistration writerGroup,
+            CancellationToken ct) {
+            try {
+                if (string.IsNullOrEmpty(writerGroup?.SiteId)) {
+                    _logger.Error(
+                        "Writer group {writerGroupId} is null or has no site assigned!",
+                        writerGroup?.WriterGroupId);
+                    return false;
+                }
+
+                // Get registration
+                var writerGroupDevice = await _iothub.GetRegistrationAsync(
+                    WriterGroupRegistryEx.ToDeviceId(writerGroup.WriterGroupId), null, ct);
+                if (string.IsNullOrEmpty(writerGroupDevice?.Authentication?.PrimaryKey)) {
+                    // No writer group registration
+                    return false;
+                }
+
+                if (writerGroupDevice.IsConnected() ?? false) {
+                    // Query state is delayed and writer group is already connected
+                    return true;
+                }
+
+                // Get all gateways in site
+                var gatewaysInSite = await _gateways.QueryAllGatewaysAsync(
+                    new GatewayQueryModel { SiteId = writerGroup.SiteId, Connected = true });
+                var candidateGateways = gatewaysInSite.Select(s => s.Id).ToList();
+                if (candidateGateways.Count == 0) {
+                    // No candidates found to assign to
+                    _logger.Warning(
+                        "Found no gateways in {SiteId} to assign writer group {writerGroupId}!",
+                        writerGroup.SiteId, writerGroup.WriterGroupId);
+
+                    // TODO: Consider Update writer group state to flag site has no gateways
+                    return false;
+                }
+
+                // Loop through all randomly and try to take one that works.
+                foreach (var gatewayId in candidateGateways.Shuffle()) {
+                    var gateway = await _gateways.FindGatewayAsync(gatewayId, false, ct);
+                    var publisherId = gateway?.Modules?.Publisher?.Id;
+                    if (string.IsNullOrEmpty(publisherId)) {
+                        // No publisher in gateway
+                        continue;
+                    }
+                    try {
+                        await _activation.ActivateAsync(new WriterGroupPlacementModel {
+                            // Writer group device id
+                            WriterGroupId = writerGroup.WriterGroupId,
+                            PublisherId = publisherId,
+                        }, writerGroupDevice.Authentication.PrimaryKey, ct);
+                        _logger.Information(
+                            "Activated writer group {writerGroupId} on publisher {publisherId}!",
+                             writerGroup.WriterGroupId, publisherId);
+
+                        // Done - writer group was assigned
+                        return true;
+                    }
+                    catch (Exception ex) {
+                        _logger.Debug(ex, "Failed to activate writer group" +
+                            " {writerGroupId} on Publisher {publisherId} - trying next...",
+                             writerGroup.WriterGroupId, publisherId);
+                    }
+                }
+                // Failed
+                return false;
+            }
+            catch (Exception ex) {
+                _logger.Debug(ex, "Failed to activate writer group {writerGroupId}. ",
+                    writerGroup.WriterGroupId);
+                return false;
+            }
+        }
+
         private readonly IIoTHubTwinServices _iothub;
         private readonly IJsonSerializer _serializer;
+        private readonly IGatewayRegistry _gateways;
         private readonly IRegistryEventBroker<IPublisherRegistryListener> _broker;
         private readonly ILogger _logger;
+        private readonly IActivationServices<WriterGroupPlacementModel> _activation;
     }
 }

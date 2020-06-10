@@ -21,13 +21,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
         public string Id { get; set; }
 
         /// <summary>
-        /// Site of the discoverer
-        /// </summary>
-        [DataMember(Name = "siteId", Order = 1,
-            EmitDefaultValue = false)]
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Whether the discoverer is in discovery mode
         /// </summary>
         [DataMember(Name = "discovery", Order = 2,
@@ -76,5 +69,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
         [DataMember(Name = "connected", Order = 8,
             EmitDefaultValue = false)]
         public bool? Connected { get; set; }
+
+        /// <summary>
+        /// The reported version of the discovery module
+        /// </summary>
+        [DataMember(Name = "version", Order = 9,
+            EmitDefaultValue = false)]
+        public string Version { get; set; }
     }
 }

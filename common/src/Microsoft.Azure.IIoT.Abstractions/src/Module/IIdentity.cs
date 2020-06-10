@@ -21,8 +21,8 @@ namespace Microsoft.Azure.IIoT.Module {
         string ModuleId { get; }
 
         /// <summary>
-        /// Site events
+        /// Module's host (gateway) hostname
         /// </summary>
-        string SiteId { get; }
+        string Gateway { get; }
     }
 }

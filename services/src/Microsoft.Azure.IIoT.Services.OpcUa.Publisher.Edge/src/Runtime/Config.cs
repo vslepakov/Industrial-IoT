@@ -11,26 +11,22 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime {
     using Microsoft.Azure.IIoT.AspNetCore.OpenApi.Runtime;
     using Microsoft.Azure.IIoT.AspNetCore.ForwardedHeaders;
     using Microsoft.Azure.IIoT.AspNetCore.ForwardedHeaders.Runtime;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs.Runtime;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Database;
     using Microsoft.Azure.IIoT.Hosting;
     using Microsoft.Azure.IIoT.Auth.Runtime;
     using Microsoft.Azure.IIoT.Diagnostics;
     using Microsoft.Azure.IIoT.Hub.Client;
     using Microsoft.Azure.IIoT.Hub.Client.Runtime;
+    using Microsoft.Azure.IIoT.Storage;
     using Microsoft.Azure.IIoT.Storage.CosmosDb;
     using Microsoft.Azure.IIoT.Storage.CosmosDb.Runtime;
     using Microsoft.Extensions.Configuration;
-    using System;
 
     /// <summary>
     /// Common web service configuration aggregation
     /// </summary>
     public class Config : DiagnosticsConfig, IWebHostConfig, IIoTHubConfig,
-        ICorsConfig, IOpenApiConfig, IJobOrchestratorConfig, ICosmosDbConfig,
-        IJobDatabaseConfig, IWorkerDatabaseConfig, IForwardedHeadersConfig,
-        IRoleConfig {
+        ICorsConfig, IOpenApiConfig, ICosmosDbConfig,
+        IItemContainerConfig, IForwardedHeadersConfig, IRoleConfig {
 
         /// <inheritdoc/>
         public string DbConnectionString => _cosmos.DbConnectionString;
@@ -52,9 +48,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime {
                 () => _host.ServicePathBase);
 
         /// <inheritdoc/>
-        public TimeSpan JobStaleTime => _jobs.JobStaleTime;
-
-        /// <inheritdoc/>
         public string CorsWhitelist => _cors.CorsWhitelist;
         /// <inheritdoc/>
         public bool CorsEnabled => _cors.CorsEnabled;
@@ -67,6 +60,8 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime {
         public string OpenApiAppId => _openApi.OpenApiAppId;
         /// <inheritdoc/>
         public string OpenApiAppSecret => _openApi.OpenApiAppSecret;
+        /// <inheritdoc/>
+        public string OpenApiAuthorizationUrl => _openApi.OpenApiAuthorizationUrl;
         /// <inheritdoc/>
         public bool UseV2 => _openApi.UseV2;
         /// <inheritdoc/>
@@ -94,7 +89,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime {
             _hub = new IoTHubConfig(configuration);
             _cors = new CorsConfig(configuration);
             _cosmos = new CosmosDbConfig(configuration);
-            _jobs = new JobOrchestratorConfig(configuration);
             _fh = new ForwardedHeadersConfig(configuration);
         }
 
@@ -102,7 +96,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime {
         private readonly WebHostConfig _host;
         private readonly CorsConfig _cors;
         private readonly CosmosDbConfig _cosmos;
-        private readonly JobOrchestratorConfig _jobs;
         private readonly IoTHubConfig _hub;
         private readonly ForwardedHeadersConfig _fh;
     }

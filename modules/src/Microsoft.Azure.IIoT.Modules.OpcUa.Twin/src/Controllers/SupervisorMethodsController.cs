@@ -332,7 +332,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
             if (!secret.IsBase64()) {
                 throw new ArgumentException("not base64", nameof(secret));
             }
-            await _activator.ActivateEndpointAsync(id, secret);
+            await _activator.ActivateAsync(id, secret);
             return true;
         }
 
@@ -345,7 +345,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Controllers {
             if (string.IsNullOrEmpty(id)) {
                 throw new ArgumentNullException(nameof(id));
             }
-            await _activator.DeactivateEndpointAsync(id);
+            await _activator.DeactivateAsync(id);
             return true;
         }
 

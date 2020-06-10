@@ -4,8 +4,9 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
+
     /// <summary>
-    /// Dataset writer model ex
+    /// Dataset writer model extensions
     /// </summary>
     public static class DataSetWriterModelEx {
 
@@ -24,6 +25,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
                 DataSetMetaDataSendInterval = model.DataSetMetaDataSendInterval,
                 DataSetWriterId = model.DataSetWriterId,
                 KeyFrameCount = model.KeyFrameCount,
+                GenerationId = model.GenerationId,
                 KeyFrameInterval = model.KeyFrameInterval,
                 MessageSettings = model.MessageSettings.Clone()
             };

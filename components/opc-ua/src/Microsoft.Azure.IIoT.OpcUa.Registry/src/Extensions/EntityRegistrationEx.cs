@@ -50,6 +50,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
             if (IdentityType.Discoverer.EqualsIgnoreCase(type)) {
                 return twin.ToDiscovererRegistration(onlyServerState);
             }
+            if (IdentityType.WriterGroup.EqualsIgnoreCase(type)) {
+                return twin.ToWriterGroupRegistration(onlyServerState);
+            }
             // ...
             return null;
         }

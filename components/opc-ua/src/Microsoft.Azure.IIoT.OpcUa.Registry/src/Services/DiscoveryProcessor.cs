@@ -44,12 +44,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                 return;
             }
 
-            var sites = events.Select(e => e.Application.SiteId).Distinct();
-            if (sites.Count() > 1) {
-                throw new ArgumentException("Unexpected number of sites in discovery");
-            }
-            var siteId = sites.SingleOrDefault() ?? gatewayId;
             var gateway = await _gateways.GetGatewayAsync(gatewayId);
+            var siteId = gateway?.Gateway?.SiteId ?? gatewayId;
 
             //
             // Merge in global discovery configuration into the one sent

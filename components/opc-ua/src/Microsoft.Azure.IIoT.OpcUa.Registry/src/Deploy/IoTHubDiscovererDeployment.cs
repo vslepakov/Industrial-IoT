@@ -5,8 +5,10 @@
 
 namespace Microsoft.Azure.IIoT.OpcUa.Registry.Deploy {
     using Microsoft.Azure.IIoT.Deploy;
+    using Microsoft.Azure.IIoT.Diagnostics;
     using Microsoft.Azure.IIoT.Hub;
     using Microsoft.Azure.IIoT.Hub.Models;
+    using Microsoft.Azure.IIoT.Hub.Services;
     using Microsoft.Azure.IIoT.Serializers;
     using Serilog;
     using System;
@@ -23,13 +25,16 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Deploy {
         /// </summary>
         /// <param name="service"></param>
         /// <param name="config"></param>
+        /// <param name="diagnostics"></param>
         /// <param name="serializer"></param>
         /// <param name="logger"></param>
         public IoTHubDiscovererDeployment(IIoTHubConfigurationServices service,
-            IContainerRegistryConfig config, IJsonSerializer serializer, ILogger logger) {
+            IContainerRegistryConfig config, ILogAnalyticsConfig diagnostics,
+            IJsonSerializer serializer, ILogger logger) {
+            _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
+            _diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
             _service = service ?? throw new ArgumentNullException(nameof(service));
             _config = config ?? throw new ArgumentNullException(nameof(service));
-            _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -42,7 +47,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Deploy {
                     ModulesContent = CreateLayeredDeployment(true)
                 },
                 SchemaVersion = kDefaultSchemaVersion,
-                TargetCondition = $"tags.__type__ = '{IdentityType.Gateway}' AND tags.os = 'Linux'",
+                TargetCondition = IoTHubEdgeBaseDeployment.TargetCondition +
+                    " AND tags.os = 'Linux'",
                 Priority = 1
             }, true);
 
@@ -52,7 +58,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Deploy {
                     ModulesContent = CreateLayeredDeployment(false)
                 },
                 SchemaVersion = kDefaultSchemaVersion,
-                TargetCondition = $"tags.__type__ = '{IdentityType.Gateway}' AND tags.os = 'Windows'",
+                TargetCondition = IoTHubEdgeBaseDeployment.TargetCondition +
+                    " AND tags.os = 'Windows'",
                 Priority = 1
             }, true);
         }
@@ -97,14 +104,13 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Deploy {
                     HostConfig = new {
                         NetworkMode = "host",
                         CapAdd = new[] { "NET_ADMIN" }
-                    }
+                    },
+                    Hostname = "discovery"
                 });
             }
             else {
                 // Windows
-                createOptions = _serializer.SerializeToString(new {
-                    User = "ContainerAdministrator"
-                });
+                createOptions = "{}";
             }
             createOptions = createOptions.Replace("\"", "\\\"");
 
@@ -136,6 +142,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Deploy {
                 },
                 ""$edgeHub"": {
                     ""properties.desired.routes.upstream"": ""FROM /messages/* INTO $upstream""
+                },
+                ""discovery"": {
+                    ""properties.desired"": {
+                        ""LogWorkspaceId"": """ + _diagnostics.LogWorkspaceId + @""",
+                        ""LogWorkspaceKey"": """ + _diagnostics.LogWorkspaceKey + @"""
+                    }
                 }
             }";
             return _serializer.Deserialize<IDictionary<string, IDictionary<string, object>>>(content);
@@ -143,6 +155,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Deploy {
 
         private const string kDefaultSchemaVersion = "1.0";
         private readonly IIoTHubConfigurationServices _service;
+        private readonly ILogAnalyticsConfig _diagnostics;
         private readonly IContainerRegistryConfig _config;
         private readonly IJsonSerializer _serializer;
         private readonly ILogger _logger;

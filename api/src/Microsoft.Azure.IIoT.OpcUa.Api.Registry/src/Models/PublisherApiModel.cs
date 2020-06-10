@@ -21,25 +21,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
         public string Id { get; set; }
 
         /// <summary>
-        /// Site of the publisher
-        /// </summary>
-        [DataMember(Name = "siteId", Order = 1,
-            EmitDefaultValue = false)]
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Current log level
         /// </summary>
         [DataMember(Name = "logLevel", Order = 2,
             EmitDefaultValue = false)]
         public TraceLogLevel? LogLevel { get; set; }
-
-        /// <summary>
-        /// Publisher agent configuration
-        /// </summary>
-        [DataMember(Name = "configuration", Order = 3,
-            EmitDefaultValue = false)]
-        public PublisherConfigApiModel Configuration { get; set; }
 
         /// <summary>
         /// Whether the registration is out of sync between
@@ -55,5 +41,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
         [DataMember(Name = "connected", Order = 5,
             EmitDefaultValue = false)]
         public bool? Connected { get; set; }
+
+        /// <summary>
+        /// The reported version of the publisher
+        /// </summary>
+        [DataMember(Name = "version", Order = 6,
+            EmitDefaultValue = false)]
+        public string Version { get; set; }
     }
 }

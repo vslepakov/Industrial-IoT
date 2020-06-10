@@ -42,7 +42,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
             if (request == null) {
                 throw new ArgumentNullException(nameof(request));
             }
-            var result = await CallServiceOnTwinAsync<ModelUploadStartRequestModel, ModelUploadStartResultModel>(
+            var result = await CallServiceOnEndpointTwinAsync<ModelUploadStartRequestModel, ModelUploadStartResultModel>(
                 "ModelUploadStart_V2", endpointId, request);
             return result;
         }
@@ -50,7 +50,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
         /// <inheritdoc/>
         public async Task<BrowseResultModel> NodeBrowseFirstAsync(string endpointId,
             BrowseRequestModel request) {
-            var result = await CallServiceOnTwinAsync<BrowseRequestModel, BrowseResultModel>(
+            var result = await CallServiceOnEndpointTwinAsync<BrowseRequestModel, BrowseResultModel>(
                 "Browse_V2", endpointId, request);
             return result;
         }
@@ -64,7 +64,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
             if (string.IsNullOrEmpty(request.ContinuationToken)) {
                 throw new ArgumentNullException(nameof(request.ContinuationToken));
             }
-            var result = await CallServiceOnTwinAsync<BrowseNextRequestModel, BrowseNextResultModel>(
+            var result = await CallServiceOnEndpointTwinAsync<BrowseNextRequestModel, BrowseNextResultModel>(
                 "BrowseNext_V2", endpointId, request);
             return result;
         }
@@ -79,7 +79,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
                 request.BrowsePaths.Any(p => p == null || p.Length == 0)) {
                 throw new ArgumentNullException(nameof(request.BrowsePaths));
             }
-            var result = await CallServiceOnTwinAsync<BrowsePathRequestModel, BrowsePathResultModel>(
+            var result = await CallServiceOnEndpointTwinAsync<BrowsePathRequestModel, BrowsePathResultModel>(
                 "BrowsePath_V2", endpointId, request);
             return result;
         }
@@ -90,7 +90,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
             if (request == null) {
                 throw new ArgumentNullException(nameof(request));
             }
-            var result = await CallServiceOnTwinAsync<ValueReadRequestModel, ValueReadResultModel>(
+            var result = await CallServiceOnEndpointTwinAsync<ValueReadRequestModel, ValueReadResultModel>(
                 "ValueRead_V2", endpointId, request);
             return result;
         }
@@ -104,7 +104,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
             if (request.Value is null) {
                 throw new ArgumentNullException(nameof(request.Value));
             }
-            var result = await CallServiceOnTwinAsync<ValueWriteRequestModel, ValueWriteResultModel>(
+            var result = await CallServiceOnEndpointTwinAsync<ValueWriteRequestModel, ValueWriteResultModel>(
                 "ValueWrite_V2", endpointId, request);
             return result;
         }
@@ -115,7 +115,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
             if (request == null) {
                 throw new ArgumentNullException(nameof(request));
             }
-            var result = await CallServiceOnTwinAsync<MethodMetadataRequestModel, MethodMetadataResultModel>(
+            var result = await CallServiceOnEndpointTwinAsync<MethodMetadataRequestModel, MethodMetadataResultModel>(
                 "MethodMetadata_V2", endpointId, request);
             return result;
         }
@@ -126,7 +126,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
             if (request == null) {
                 throw new ArgumentNullException(nameof(request));
             }
-            var result = await CallServiceOnTwinAsync<MethodCallRequestModel, MethodCallResultModel>(
+            var result = await CallServiceOnEndpointTwinAsync<MethodCallRequestModel, MethodCallResultModel>(
                 "MethodCall_V2", endpointId, request);
             return result;
         }
@@ -143,7 +143,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
             if (request.Attributes.Any(r => string.IsNullOrEmpty(r.NodeId))) {
                 throw new ArgumentException(nameof(request.Attributes));
             }
-            var result = await CallServiceOnTwinAsync<ReadRequestModel, ReadResultModel>(
+            var result = await CallServiceOnEndpointTwinAsync<ReadRequestModel, ReadResultModel>(
                 "NodeRead_V2", endpointId, request);
             return result;
         }
@@ -160,7 +160,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
             if (request.Attributes.Any(r => string.IsNullOrEmpty(r.NodeId))) {
                 throw new ArgumentException(nameof(request.Attributes));
             }
-            var result = await CallServiceOnTwinAsync<WriteRequestModel, WriteResultModel>(
+            var result = await CallServiceOnEndpointTwinAsync<WriteRequestModel, WriteResultModel>(
                 "NodeWrite_V2", endpointId, request);
             return result;
         }
@@ -171,7 +171,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
             if (request == null) {
                 throw new ArgumentNullException(nameof(request));
             }
-            var result = await CallServiceOnTwinAsync<HistoryReadRequestModel<VariantValue>, HistoryReadResultModel<VariantValue>>(
+            var result = await CallServiceOnEndpointTwinAsync<HistoryReadRequestModel<VariantValue>, HistoryReadResultModel<VariantValue>>(
                 "HistoryRead_V2", endpointId, request);
             return result;
         }
@@ -185,7 +185,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
             if (string.IsNullOrEmpty(request.ContinuationToken)) {
                 throw new ArgumentNullException(nameof(request.ContinuationToken));
             }
-            var result = await CallServiceOnTwinAsync<HistoryReadNextRequestModel, HistoryReadNextResultModel<VariantValue>>(
+            var result = await CallServiceOnEndpointTwinAsync<HistoryReadNextRequestModel, HistoryReadNextResultModel<VariantValue>>(
                 "HistoryReadNext_V2", endpointId, request);
             return result;
         }
@@ -199,7 +199,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
             if (request.Details == null) {
                 throw new ArgumentNullException(nameof(request.Details));
             }
-            var result = await CallServiceOnTwinAsync<HistoryUpdateRequestModel<VariantValue>, HistoryUpdateResultModel>(
+            var result = await CallServiceOnEndpointTwinAsync<HistoryUpdateRequestModel<VariantValue>, HistoryUpdateResultModel>(
                 "HistoryUpdate_V2", endpointId, request);
             return result;
         }
@@ -213,7 +213,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients {
         /// <param name="endpointId"></param>
         /// <param name="request"></param>
         /// <returns></returns>
-        private async Task<R> CallServiceOnTwinAsync<T, R>(string service,
+        private async Task<R> CallServiceOnEndpointTwinAsync<T, R>(string service,
             string endpointId, T request) {
             if (string.IsNullOrEmpty(endpointId)) {
                 throw new ArgumentNullException(nameof(endpointId));

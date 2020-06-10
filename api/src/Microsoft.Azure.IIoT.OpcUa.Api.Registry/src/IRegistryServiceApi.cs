@@ -338,24 +338,41 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry {
             CancellationToken ct = default);
 
         /// <summary>
+        /// Get publisher runtime status
+        /// </summary>
+        /// <param name="publisherId"></param>
+        /// <param name="ct"></param>
+        /// <returns>Supervisor diagnostics</returns>
+        Task<SupervisorStatusApiModel> GetPublisherStatusAsync(
+            string publisherId, CancellationToken ct = default);
+
+        /// <summary>
+        /// Reset and restart publisher module
+        /// </summary>
+        /// <param name="publisherId"></param>
+        /// <param name="ct"></param>
+        Task ResetPublisherAsync(string publisherId,
+            CancellationToken ct = default);
+
+        /// <summary>
         /// Get gateway
         /// </summary>
-        /// <param name="gatewayId"></param>
+        /// <param name="publisherId"></param>
         /// <param name="onlyServerState"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
         Task<PublisherApiModel> GetPublisherAsync(
-            string gatewayId, bool? onlyServerState = null,
+            string publisherId, bool? onlyServerState = null,
             CancellationToken ct = default);
 
         /// <summary>
         /// Update Publisher including config updates.
         /// </summary>
-        /// <param name="gatewayId"></param>
+        /// <param name="publisherId"></param>
         /// <param name="request"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        Task UpdatePublisherAsync(string gatewayId,
+        Task UpdatePublisherAsync(string publisherId,
             PublisherUpdateApiModel request,
             CancellationToken ct = default);
 

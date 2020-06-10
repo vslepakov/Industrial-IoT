@@ -7,6 +7,7 @@ namespace Microsoft.Azure.IIoT.Module.Framework {
     using Microsoft.Azure.IIoT.Module.Framework.Hosting;
     using Microsoft.Azure.IIoT.Module.Framework.Client;
     using Microsoft.Azure.IIoT.Module.Default;
+    using Microsoft.Azure.IIoT.Storage.Default;
     using Microsoft.Azure.IIoT.Diagnostics;
     using Microsoft.Azure.IIoT.Tasks.Default;
     using Microsoft.Azure.IIoT.Tasks;
@@ -27,6 +28,14 @@ namespace Microsoft.Azure.IIoT.Module.Framework {
                 .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<ModuleHost>()
                 .AsImplementedInterfaces().InstancePerLifetimeScope();
+
+            // Edge metrics collection
+            builder.RegisterType<PrometheusCollectorHost>()
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
+            builder.RegisterType<LogAnalyticsMetricsHandler>()
+                .AsImplementedInterfaces().InstancePerLifetimeScope()
+                .PropertiesAutowired(
+                    PropertyWiringOptions.AllowCircularDependencies);
 
             // Auto wire property for circular dependency resolution
             builder.RegisterType<MethodRouter>()
@@ -51,9 +60,13 @@ namespace Microsoft.Azure.IIoT.Module.Framework {
             // Register http (tunnel) client module
             builder.RegisterModule<HttpTunnelClient>();
 
-            // Register edgelet client (uses http)
+            // Registers edgelet client and token generators
             builder.RegisterType<EdgeletClient>()
-                .AsImplementedInterfaces().SingleInstance();
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
+            builder.RegisterType<TokenGenerator>()
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
+            builder.RegisterType<MemoryCache>()
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
 
             base.Load(builder);
         }

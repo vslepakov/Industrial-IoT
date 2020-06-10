@@ -13,13 +13,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
     public class SupervisorQueryApiModel {
 
         /// <summary>
-        /// Site for the supervisors
-        /// </summary>
-        [DataMember(Name = "siteId", Order = 0,
-            EmitDefaultValue = false)]
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Managing provided endpoint twin
         /// </summary>
         [DataMember(Name = "endpointId", Order = 1,

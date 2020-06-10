@@ -27,13 +27,14 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Tests {
     using Microsoft.Azure.IIoT.Utils;
     using Microsoft.Azure.IIoT.Serializers;
     using Microsoft.Azure.IIoT.Serializers.NewtonSoft;
+    using Microsoft.Extensions.Configuration;
     using Autofac;
     using System;
+    using System.IO;
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
     using Xunit;
-    using Microsoft.Extensions.Configuration;
     using System.Collections.Generic;
 
     /// <summary>
@@ -45,12 +46,22 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Tests {
         /// <summary>
         /// Device id
         /// </summary>
-        public string DeviceId { get; set; }
+        public string DeviceId { get; }
 
         /// <summary>
         /// Module id
         /// </summary>
-        public string ModuleId { get; set; }
+        public string ModuleId { get; }
+
+        /// <summary>
+        /// ServerPkiRootPath
+        /// </summary>
+        public string ServerPkiRootPath { get; }
+
+        /// <summary>
+        /// ClientPkiRootPath
+        /// </summary>
+        public string ClientPkiRootPath { get; }
 
         /// <summary>
         /// Hub container
@@ -61,14 +72,33 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Tests {
         /// Create fixture
         /// </summary>
         public TwinModuleFixture() {
-            HubContainer = CreateHubContainer();
-            _hub = HubContainer.Resolve<IIoTHubTwinServices>();
 
             DeviceId = Guid.NewGuid().ToString();
             ModuleId = Guid.NewGuid().ToString();
 
+            ServerPkiRootPath = Path.Combine(Directory.GetCurrentDirectory(), "pki",
+               Guid.NewGuid().ToByteArray().ToBase16String());
+            ClientPkiRootPath = Path.Combine(Directory.GetCurrentDirectory(), "pki",
+               Guid.NewGuid().ToByteArray().ToBase16String());
+
+            _config = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string> {
+                    { "PkiRootPath", ClientPkiRootPath }
+                })
+                .Build();
+            HubContainer = CreateHubContainer();
+            _hub = HubContainer.Resolve<IIoTHubTwinServices>();
+
+            // Create gateway identitity
+            var gw = _hub.CreateOrUpdateAsync(new DeviceTwinModel {
+                Id = DeviceId,
+                Tags = new Dictionary<string, VariantValue> {
+                    { TwinProperty.Type, IdentityType.Gateway }
+                }
+            }).Result;
+
             // Create module identitity
-            var twin = _hub.CreateAsync(new DeviceTwinModel {
+            var twin = _hub.CreateOrUpdateAsync(new DeviceTwinModel {
                 Id = DeviceId,
                 ModuleId = ModuleId
             }).Result;
@@ -77,10 +107,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Tests {
             // Get device registration and create module host with controller
             _device = _hub.GetRegistrationAsync(twin.Id, twin.ModuleId).Result;
             _running = false;
-            var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string> {{"EnableMetrics", "false"}})
-                .Build();
-            _module = new ModuleProcess(configuration, this);
+            _module = new ModuleProcess(_config, this);
             var tcs = new TaskCompletionSource<bool>();
             _module.OnRunning += (_, e) => tcs.TrySetResult(e);
             _process = Task.Run(() => _module.RunAsync());
@@ -96,6 +123,9 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Tests {
                 var result = _process.Result;
                 Assert.Equal(1, result);
                 _running = false;
+            }
+            if (Directory.Exists(ServerPkiRootPath)) {
+                Try.Op(() => Directory.Delete(ServerPkiRootPath, true));
             }
             HubContainer.Dispose();
         }
@@ -117,6 +147,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Tests {
             builder.RegisterModule<IoTHubMockModule>();
 
             // Override client config
+            builder.RegisterInstance(_config).AsImplementedInterfaces();
             builder.RegisterType<TestClientServicesConfig>()
                 .AsImplementedInterfaces();
         }
@@ -171,12 +202,9 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Tests {
         private void AssertStopped() {
             Assert.False(_running);
             var twin = _hub.GetAsync(DeviceId, ModuleId).Result;
-            // Assert
-            Assert.False((bool)twin.Properties.Reported[TwinProperty.Connected]);
-
             // TODO : Fix cleanup!!!
             // TODO :Assert.NotEqual("testType", twin.Properties.Reported[TwinProperty.kType]);
-            // TODO :Assert.Equal("disconnected", twin.ConnectionState);
+            // TODO :Assert.Equal("Disconnected", twin.ConnectionState);
             Assert.NotEqual(_etag, twin.Etag);
         }
 
@@ -187,10 +215,8 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Tests {
             Assert.True(_running);
             var twin = _hub.GetAsync(DeviceId, ModuleId).Result;
             // Assert
-            Assert.Equal("connected", twin.ConnectionState);
-            Assert.Equal(true, twin.Properties.Reported[TwinProperty.Connected]);
+            Assert.Equal("Connected", twin.ConnectionState);
             Assert.Equal(IdentityType.Supervisor, twin.Properties.Reported[TwinProperty.Type]);
-            Assert.False(twin.Properties.Reported.TryGetValue(TwinProperty.SiteId, out _));
         }
 
         /// <summary>
@@ -204,13 +230,13 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Tests {
                     Registration = endpoint,
                     ApplicationId = "uas" + Guid.NewGuid().ToString()
                 }.ToEndpointRegistration(_serializer).ToDeviceTwin(_serializer);
-            var result = _hub.CreateAsync(twin).Result;
+            var result = _hub.CreateOrUpdateAsync(twin).Result;
             var registry = HubContainer.Resolve<IEndpointRegistry>();
             var activate = HubContainer.Resolve<IEndpointActivation>();
             var endpoints = registry.ListAllEndpointsAsync().Result;
             var ep1 = endpoints.FirstOrDefault();
 
-            if (ep1.ActivationState == EndpointActivationState.Deactivated) {
+            if (ep1.ActivationState == EntityActivationState.Deactivated) {
                 // Activate
                 activate.ActivateEndpointAsync(ep1.Registration.Id).Wait();
             }
@@ -273,6 +299,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Tests {
 
             builder.RegisterModule<NewtonSoftJsonModule>();
             builder.RegisterInstance(this).AsImplementedInterfaces();
+            builder.RegisterInstance(_config).AsImplementedInterfaces();
             builder.AddDiagnostics();
             builder.RegisterModule<IoTHubMockService>();
             builder.RegisterType<TestIoTHubConfig>()
@@ -329,6 +356,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Twin.Tests {
         private readonly DeviceModel _device;
         private bool _running;
         private readonly ModuleProcess _module;
+        private readonly IConfiguration _config;
         private readonly Task<int> _process;
         private readonly IJsonSerializer _serializer = new NewtonSoftJsonSerializer();
     }

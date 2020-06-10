@@ -20,6 +20,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
     using Microsoft.Azure.IIoT.Auth.Clients.Default;
     using Microsoft.Azure.IIoT.Http.Default;
     using Microsoft.Azure.IIoT.Http.SignalR;
+    using Microsoft.Azure.IIoT.Diagnostics;
     using Microsoft.Azure.IIoT.Utils;
     using Microsoft.Azure.IIoT.Auth.Runtime;
     using Microsoft.Azure.IIoT.Serializers;
@@ -32,6 +33,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
+    using Prometheus;
 
     /// <summary>
     /// Api command line interface
@@ -59,6 +61,8 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
 
             // Register logger
             builder.AddDiagnostics(config, addConsole: false);
+            builder.RegisterModule<PrometheusCollector>();
+
             builder.RegisterModule<NewtonSoftJsonModule>();
             if (useMsgPack) {
                 builder.RegisterModule<MessagePackModule>();
@@ -68,7 +72,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
             builder.RegisterModule<HttpClientModule>();
             // ... as well as signalR client (needed for api)
             builder.RegisterType<SignalRHubClient>()
-                .AsImplementedInterfaces().SingleInstance();
+                .AsImplementedInterfaces().InstancePerLifetimeScope();
             // Use default token sources
             builder.RegisterModule<NativeClientAuthentication>();
 
@@ -80,8 +84,6 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
             builder.RegisterType<VaultServiceClient>()
                 .AsImplementedInterfaces();
             builder.RegisterType<PublisherServiceClient>()
-                .AsImplementedInterfaces();
-            builder.RegisterType<PublisherJobServiceClient>()
                 .AsImplementedInterfaces();
 
             // ... with client event callbacks
@@ -123,11 +125,14 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
             _registry = _scope.Resolve<IRegistryServiceApi>();
             _publisher = _scope.Resolve<IPublisherServiceApi>();
             _vault = _scope.Resolve<IVaultServiceApi>();
-            _jobs = _scope.Resolve<IPublisherJobServiceApi>();
+            if (_scope.TryResolve(out _metrics)) {
+                _metrics.Start();
+            }
         }
 
         /// <inheritdoc/>
         public void Dispose() {
+            _metrics?.Stop();
             _scope.Dispose();
         }
 
@@ -321,7 +326,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
                 var sw = Stopwatch.StartNew();
                 while (true) {
                     ep = await _registry.GetEndpointAsync(endpoint.Id);
-                    if (ep.ActivationState == EndpointActivationState.ActivatedAndConnected) {
+                    if (ep.ActivationState == EntityActivationState.ActivatedAndConnected) {
                         break;
                     }
                     if (sw.ElapsedMilliseconds > 60000) {
@@ -365,7 +370,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
                 sw.Restart();
                 while (true) {
                     ep = await _registry.GetEndpointAsync(endpoint.Id);
-                    if (ep.ActivationState == EndpointActivationState.Deactivated) {
+                    if (ep.ActivationState == EntityActivationState.Deactivated) {
                         break;
                     }
                     if (sw.ElapsedMilliseconds > 60000) {
@@ -391,7 +396,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
             var sw = Stopwatch.StartNew();
             while (true) {
                 ep = await _registry.GetEndpointAsync(endpoint.Id);
-                if (ep.ActivationState == EndpointActivationState.ActivatedAndConnected &&
+                if (ep.ActivationState == EntityActivationState.ActivatedAndConnected &&
                     ep.EndpointState == EndpointConnectivityState.Ready) {
                     break;
                 }
@@ -408,7 +413,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
 
             Console.WriteLine($"{endpoint.Id} has {nodes.Count} variables.");
             sw.Restart();
-            await _publisher.NodePublishBulkAsync(endpoint.Id, new PublishBulkRequestApiModel {
+            await _twin.NodePublishBulkAsync(endpoint.Id, new PublishBulkRequestApiModel {
                 NodesToAdd = nodes.Select(n => new PublishedItemApiModel {
                     NodeId = n
                 }).ToList()
@@ -416,7 +421,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
             Console.WriteLine($"{endpoint.Id} Publishing {nodes.Count} variables took {sw.Elapsed}.");
 
             sw.Restart();
-            await _publisher.NodePublishBulkAsync(endpoint.Id, new PublishBulkRequestApiModel {
+            await _twin.NodePublishBulkAsync(endpoint.Id, new PublishBulkRequestApiModel {
                 NodesToRemove = nodes.ToList()
             });
             Console.WriteLine($"{endpoint.Id} Unpublishing {nodes.Count} variables took {sw.Elapsed}.");
@@ -425,7 +430,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
             sw.Restart();
             while (true) {
                 ep = await _registry.GetEndpointAsync(endpoint.Id);
-                if (ep.ActivationState == EndpointActivationState.Deactivated) {
+                if (ep.ActivationState == EntityActivationState.Deactivated) {
                     break;
                 }
                 if (sw.ElapsedMilliseconds > 60000) {
@@ -450,7 +455,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
             var sw = Stopwatch.StartNew();
             while (true) {
                 ep = await _registry.GetEndpointAsync(endpoint.Id);
-                if (ep.ActivationState == EndpointActivationState.ActivatedAndConnected &&
+                if (ep.ActivationState == EntityActivationState.ActivatedAndConnected &&
                     ep.EndpointState == EndpointConnectivityState.Ready) {
                     break;
                 }
@@ -475,7 +480,7 @@ namespace Microsoft.Azure.IIoT.Test.Scenarios.Cli {
             sw.Restart();
             while (true) {
                 ep = await _registry.GetEndpointAsync(endpoint.Id);
-                if (ep.ActivationState == EndpointActivationState.Deactivated) {
+                if (ep.ActivationState == EntityActivationState.Deactivated) {
                     break;
                 }
                 if (sw.ElapsedMilliseconds > 60000) {
@@ -695,9 +700,9 @@ Commands and Options
         }
 
         private readonly Random _rand = new Random();
+        private readonly IMetricServer _metrics;
         private readonly ILifetimeScope _scope;
         private readonly ITwinServiceApi _twin;
-        private readonly IPublisherJobServiceApi _jobs;
         private readonly IPublisherServiceApi _publisher;
         private readonly IRegistryServiceApi _registry;
         private readonly IVaultServiceApi _vault;

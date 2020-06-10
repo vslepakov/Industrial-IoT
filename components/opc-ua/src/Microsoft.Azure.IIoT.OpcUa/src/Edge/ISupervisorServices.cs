@@ -22,19 +22,19 @@ namespace Microsoft.Azure.IIoT.OpcUa.Edge {
             CancellationToken ct = default);
 
         /// <summary>
-        /// Detach inactive endpoint
+        /// Detach inactive entity
         /// </summary>
-        /// <param name="endpointId"></param>
+        /// <param name="entityId"></param>
         /// <returns></returns>
-        Task DetachEndpointAsync(string endpointId);
+        Task DetachAsync(string entityId);
 
         /// <summary>
-        /// Attach endpoint
+        /// Attach entity
         /// </summary>
-        /// <param name="endpointId"></param>
+        /// <param name="entityId"></param>
         /// <param name="secret"></param>
         /// <returns></returns>
-        Task AttachEndpointAsync(string endpointId, string secret);
+        Task AttachAsync(string entityId, string secret);
 
         /// <summary>
         /// Reset supervisor

@@ -6,44 +6,134 @@
 namespace Microsoft.Azure.IIoT.OpcUa.Api.Publisher {
     using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Models;
     using System.Collections.Generic;
+    using System.Threading;
     using System.Threading.Tasks;
 
     /// <summary>
-    /// Publisher service api extensions
+    /// Extension methods for vault client to adapt to v1.
     /// </summary>
     public static class PublisherServiceApiEx {
 
         /// <summary>
-        /// Get list of published nodes
+        /// List all groups
         /// </summary>
         /// <param name="service"></param>
-        /// <param name="endpointId"></param>
+        /// <param name="ct"></param>
         /// <returns></returns>
-        public static async Task<IEnumerable<PublishedItemApiModel>> NodePublishListAllAsync(
-            this IPublisherServiceApi service, string endpointId) {
-            var nodes = new List<PublishedItemApiModel>();
-            var result = await service.NodePublishListAsync(endpointId);
-            nodes.AddRange(result.Items);
+        public static async Task<IEnumerable<WriterGroupInfoApiModel>> ListAllWriterGroupsAsync(
+            this IPublisherServiceApi service, CancellationToken ct = default) {
+            var groups = new List<WriterGroupInfoApiModel>();
+            var result = await service.ListWriterGroupsAsync(null, null, ct);
+            groups.AddRange(result.WriterGroups);
             while (result.ContinuationToken != null) {
-                result = await service.NodePublishListAsync(endpointId,
-                    result.ContinuationToken);
-                nodes.AddRange(result.Items);
+                result = await service.ListWriterGroupsAsync(result.ContinuationToken,
+                    null, ct);
+                groups.AddRange(result.WriterGroups);
             }
-            return nodes;
+            return groups;
         }
 
         /// <summary>
-        /// Get list of published nodes
+        /// Find groups
         /// </summary>
         /// <param name="service"></param>
-        /// <param name="endpointId"></param>
-        /// <param name="continuation"></param>
+        /// <param name="query"></param>
+        /// <param name="ct"></param>
         /// <returns></returns>
-        public static Task<PublishedItemListResponseApiModel> NodePublishListAsync(
-            this IPublisherServiceApi service, string endpointId, string continuation = null) {
-            return service.NodePublishListAsync(endpointId, new PublishedItemListRequestApiModel {
-                ContinuationToken = continuation
-            });
+        public static async Task<IEnumerable<WriterGroupInfoApiModel>> QueryAllWriterGroupsAsync(
+            this IPublisherServiceApi service, WriterGroupInfoQueryApiModel query,
+            CancellationToken ct = default) {
+            var groups = new List<WriterGroupInfoApiModel>();
+            var result = await service.QueryWriterGroupsAsync(query, null, ct);
+            groups.AddRange(result.WriterGroups);
+            while (result.ContinuationToken != null) {
+                result = await service.ListWriterGroupsAsync(result.ContinuationToken,
+                    null, ct);
+                groups.AddRange(result.WriterGroups);
+            }
+            return groups;
+        }
+
+        /// <summary>
+        /// List all writers
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        public static async Task<IEnumerable<DataSetWriterInfoApiModel>> ListAllDataSetWritersAsync(
+            this IPublisherServiceApi service, CancellationToken ct = default) {
+            var writers = new List<DataSetWriterInfoApiModel>();
+            var result = await service.ListDataSetWritersAsync(null, null, ct);
+            writers.AddRange(result.DataSetWriters);
+            while (result.ContinuationToken != null) {
+                result = await service.ListDataSetWritersAsync(result.ContinuationToken,
+                    null, ct);
+                writers.AddRange(result.DataSetWriters);
+            }
+            return writers;
+        }
+
+        /// <summary>
+        /// Find writers
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="query"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        public static async Task<IEnumerable<DataSetWriterInfoApiModel>> QueryAllDataSetWritersAsync(
+            this IPublisherServiceApi service, DataSetWriterInfoQueryApiModel query,
+            CancellationToken ct = default) {
+            var writers = new List<DataSetWriterInfoApiModel>();
+            var result = await service.QueryDataSetWritersAsync(query, null, ct);
+            writers.AddRange(result.DataSetWriters);
+            while (result.ContinuationToken != null) {
+                result = await service.ListDataSetWritersAsync(result.ContinuationToken,
+                    null, ct);
+                writers.AddRange(result.DataSetWriters);
+            }
+            return writers;
+        }
+
+        /// <summary>
+        /// List all variables
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="dataSetWriterId"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        public static async Task<IEnumerable<PublishedDataSetVariableApiModel>> ListAllDataSetVariablesAsync(
+            this IPublisherServiceApi service, string dataSetWriterId, CancellationToken ct = default) {
+            var writers = new List<PublishedDataSetVariableApiModel>();
+            var result = await service.ListDataSetVariablesAsync(dataSetWriterId, null, null, ct);
+            writers.AddRange(result.Variables);
+            while (result.ContinuationToken != null) {
+                result = await service.ListDataSetVariablesAsync(dataSetWriterId, result.ContinuationToken,
+                    null, ct);
+                writers.AddRange(result.Variables);
+            }
+            return writers;
+        }
+
+        /// <summary>
+        /// Find writers
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="dataSetWriterId"></param>
+        /// <param name="query"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        public static async Task<IEnumerable<PublishedDataSetVariableApiModel>> QueryAllDataSetVariablesAsync(
+            this IPublisherServiceApi service, string dataSetWriterId, PublishedDataSetVariableQueryApiModel query,
+            CancellationToken ct = default) {
+            var writers = new List<PublishedDataSetVariableApiModel>();
+            var result = await service.QueryDataSetVariablesAsync(dataSetWriterId, query, null, ct);
+            writers.AddRange(result.Variables);
+            while (result.ContinuationToken != null) {
+                result = await service.ListDataSetVariablesAsync(dataSetWriterId, result.ContinuationToken,
+                    null, ct);
+                writers.AddRange(result.Variables);
+            }
+            return writers;
         }
     }
 }

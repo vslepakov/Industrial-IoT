@@ -97,8 +97,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
                 DiscoveryConfig = model.DiscoveryConfig.Clone(),
                 RequestedConfig = model.RequestedConfig.Clone(),
                 Id = model.Id,
-                OutOfSync = model.OutOfSync,
-                SiteId = model.SiteId
+                OutOfSync = model.OutOfSync
             };
         }
     }

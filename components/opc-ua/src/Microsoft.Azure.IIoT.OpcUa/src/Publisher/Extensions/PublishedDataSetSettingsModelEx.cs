@@ -14,11 +14,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
-        public static PublishedDataSetSettingsModel Clone(this PublishedDataSetSettingsModel model) {
+        public static PublishedDataSetSourceSettingsModel Clone(this PublishedDataSetSourceSettingsModel model) {
             if (model == null) {
                 return null;
             }
-            return new PublishedDataSetSettingsModel {
+            return new PublishedDataSetSourceSettingsModel {
                 LifeTimeCount = model.LifeTimeCount,
                 MaxKeepAliveCount = model.MaxKeepAliveCount,
                 MaxNotificationsPerPublish = model.MaxNotificationsPerPublish,

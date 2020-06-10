@@ -13,12 +13,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
     public class PublishedDataSetEventsModel {
 
         /// <summary>
-        /// Identifier of event in the dataset.
+        /// Identifier of the data set which is always the dataset writer id
         /// </summary>
         public string Id { get; set; }
 
         /// <summary>
-        /// Event notifier to subscribe to (or start node)
+        /// Event notifier node to subscribe to (or start node)
         /// </summary>
         public string EventNotifier { get; set; }
 
@@ -57,5 +57,25 @@ namespace Microsoft.Azure.IIoT.OpcUa.Publisher.Models {
         /// (Publisher extension)
         /// </summary>
         public string TriggerId { get; set; }
+
+        /// <summary>
+        /// Generation id
+        /// </summary>
+        public string GenerationId { get; set; }
+
+        /// <summary>
+        /// Events state
+        /// </summary>
+        public PublishedDataSetItemStateModel State { get; set; }
+
+        /// <summary>
+        /// Last updated
+        /// </summary>
+        public PublisherOperationContextModel Updated { get; set; }
+
+        /// <summary>
+        /// Created
+        /// </summary>
+        public PublisherOperationContextModel Created { get; set; }
     }
 }

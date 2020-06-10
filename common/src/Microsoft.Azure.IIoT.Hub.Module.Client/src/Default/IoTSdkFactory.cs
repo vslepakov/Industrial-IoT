@@ -34,6 +34,9 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
         public string ModuleId { get; }
 
         /// <inheritdoc />
+        public string Gateway { get; }
+
+        /// <inheritdoc />
         public IRetryPolicy RetryPolicy { get; set; }
 
         /// <summary>
@@ -69,7 +72,7 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
 
                     deviceId = _cs.DeviceId;
                     moduleId = _cs.ModuleId;
-                    ehubHost = _cs.GatewayHostName;
+                    ehubHost = _cs.GatewayHostName ?? ehubHost;
                 }
             }
             catch (Exception e) {
@@ -78,6 +81,7 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
 
             ModuleId = moduleId;
             DeviceId = deviceId;
+            Gateway = ehubHost;
 
             if (string.IsNullOrEmpty(DeviceId)) {
                 var ex = new InvalidConfigurationException(
@@ -249,7 +253,6 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
                 if (retry != null) {
                     client.SetRetryPolicy(retry);
                 }
-                client.DiagnosticSamplingPercentage = 5;
                 client.ProductInfo = product;
                 await client.OpenAsync();
                 return adapter;
@@ -267,19 +270,20 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
             }
 
             /// <inheritdoc />
-            public async Task SendEventAsync(Message message) {
+            public async Task SendEventAsync(Message message, CancellationToken ct) {
                 if (IsClosed) {
                     return;
                 }
-                await _client.SendEventAsync(message);
+                await _client.SendEventAsync(message, ct);
             }
 
             /// <inheritdoc />
-            public async Task SendEventBatchAsync(IEnumerable<Message> messages) {
+            public async Task SendEventBatchAsync(IEnumerable<Message> messages,
+                CancellationToken ct) {
                 if (IsClosed) {
                     return;
                 }
-                await _client.SendEventBatchAsync(messages);
+                await _client.SendEventBatchAsync(messages, ct);
             }
 
             /// <inheritdoc />
@@ -301,28 +305,29 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
             }
 
             /// <inheritdoc />
-            public Task<Twin> GetTwinAsync() {
-                return _client.GetTwinAsync();
+            public Task<Twin> GetTwinAsync(CancellationToken ct) {
+                return _client.GetTwinAsync(ct);
             }
 
             /// <inheritdoc />
-            public async Task UpdateReportedPropertiesAsync(TwinCollection reportedProperties) {
+            public async Task UpdateReportedPropertiesAsync(TwinCollection reportedProperties,
+                CancellationToken ct) {
                 if (IsClosed) {
                     return;
                 }
-                await _client.UpdateReportedPropertiesAsync(reportedProperties);
+                await _client.UpdateReportedPropertiesAsync(reportedProperties, ct);
             }
 
             /// <inheritdoc />
             public Task<MethodResponse> InvokeMethodAsync(string deviceId, string moduleId,
-                MethodRequest methodRequest, CancellationToken cancellationToken) {
-                return _client.InvokeMethodAsync(deviceId, moduleId, methodRequest, cancellationToken);
+                MethodRequest methodRequest, CancellationToken ct) {
+                return _client.InvokeMethodAsync(deviceId, moduleId, methodRequest, ct);
             }
 
             /// <inheritdoc />
             public Task<MethodResponse> InvokeMethodAsync(string deviceId,
-                MethodRequest methodRequest, CancellationToken cancellationToken) {
-                return _client.InvokeMethodAsync(deviceId, methodRequest, cancellationToken);
+                MethodRequest methodRequest, CancellationToken ct) {
+                return _client.InvokeMethodAsync(deviceId, methodRequest, ct);
             }
 
             /// <inheritdoc />
@@ -390,15 +395,16 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
 
             private readonly ModuleClient _client;
             private int _reconnectCounter;
-            private static readonly Gauge kReconnectionStatus = Metrics.CreateGauge("iiot_edge_reconnected", "reconnected count",
-                new GaugeConfiguration {
-                    LabelNames = new[] { "module", "device", "timestamp_utc"}
-                });
-            private static readonly Gauge kDisconnectionStatus = Metrics.CreateGauge("iiot_edge_disconnected", "reconnected count",
-                new GaugeConfiguration {
-                    LabelNames = new[] { "module", "device", "timestamp_utc"}
-                });
-
+            private static readonly Gauge kReconnectionStatus = Metrics
+                .CreateGauge("iiot_edge_reconnected", "reconnected count",
+                    new GaugeConfiguration {
+                        LabelNames = new[] { "module", "device", "timestamp_utc"}
+                    });
+            private static readonly Gauge kDisconnectionStatus = Metrics
+                .CreateGauge("iiot_edge_disconnected", "reconnected count",
+                    new GaugeConfiguration {
+                        LabelNames = new[] { "module", "device", "timestamp_utc"}
+                    });
         }
 
         /// <summary>
@@ -446,7 +452,6 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
                 if (retry != null) {
                     client.SetRetryPolicy(retry);
                 }
-                client.DiagnosticSamplingPercentage = 5;
                 client.ProductInfo = product;
 
                 await client.OpenAsync();
@@ -465,19 +470,20 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
             }
 
             /// <inheritdoc />
-            public async Task SendEventAsync(Message message) {
+            public async Task SendEventAsync(Message message, CancellationToken ct) {
                 if (IsClosed) {
                     return;
                 }
-                await _client.SendEventAsync(message);
+                await _client.SendEventAsync(message, ct);
             }
 
             /// <inheritdoc />
-            public async Task SendEventBatchAsync(IEnumerable<Message> messages) {
+            public async Task SendEventBatchAsync(IEnumerable<Message> messages,
+                CancellationToken ct) {
                 if (IsClosed) {
                     return;
                 }
-                await _client.SendEventBatchAsync(messages);
+                await _client.SendEventBatchAsync(messages, ct);
             }
 
             /// <inheritdoc />
@@ -499,27 +505,28 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
             }
 
             /// <inheritdoc />
-            public Task<Twin> GetTwinAsync() {
-                return _client.GetTwinAsync();
+            public Task<Twin> GetTwinAsync(CancellationToken ct) {
+                return _client.GetTwinAsync(ct);
             }
 
             /// <inheritdoc />
-            public async Task UpdateReportedPropertiesAsync(TwinCollection reportedProperties) {
+            public async Task UpdateReportedPropertiesAsync(TwinCollection reportedProperties,
+                CancellationToken ct) {
                 if (IsClosed) {
                     return;
                 }
-                await _client.UpdateReportedPropertiesAsync(reportedProperties);
+                await _client.UpdateReportedPropertiesAsync(reportedProperties, ct);
             }
 
             /// <inheritdoc />
             public Task<MethodResponse> InvokeMethodAsync(string deviceId, string moduleId,
-                MethodRequest methodRequest, CancellationToken cancellationToken) {
+                MethodRequest methodRequest, CancellationToken ct) {
                 throw new NotSupportedException("Device client does not support methods");
             }
 
             /// <inheritdoc />
             public Task<MethodResponse> InvokeMethodAsync(string deviceId,
-                MethodRequest methodRequest, CancellationToken cancellationToken) {
+                MethodRequest methodRequest, CancellationToken ct) {
                 throw new NotSupportedException("Device client does not support methods");
             }
 
@@ -584,14 +591,16 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Client {
 
             private readonly DeviceClient _client;
             private int _reconnectCounter;
-            private static readonly Gauge kReconnectionStatus = Metrics.CreateGauge("iiot_edge_device_reconnected", "reconnected count",
+            private static readonly Gauge kReconnectionStatus = Metrics
+                .CreateGauge("iiot_edge_device_reconnected", "reconnected count",
                     new GaugeConfiguration {
                         LabelNames = new[] { "device", "timestamp_utc" }
                     });
-            private static readonly Gauge kDisconnectionStatus = Metrics.CreateGauge("iiot_edge_device_disconnected", "disconnected count",
-                new GaugeConfiguration {
-                    LabelNames = new[] { "device", "timestamp_utc" }
-                });
+            private static readonly Gauge kDisconnectionStatus = Metrics
+                .CreateGauge("iiot_edge_device_disconnected", "disconnected count",
+                    new GaugeConfiguration {
+                        LabelNames = new[] { "device", "timestamp_utc" }
+                    });
         }
 
         /// <summary>

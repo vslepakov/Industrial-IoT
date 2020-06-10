@@ -28,12 +28,12 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
             discoverer.Id = update.Id;
             discoverer.LogLevel = update.LogLevel;
             discoverer.OutOfSync = update.OutOfSync;
-            discoverer.SiteId = update.SiteId;
             discoverer.RequestedMode = update.RequestedMode;
             discoverer.RequestedConfig = (update.RequestedConfig ?? new DiscoveryConfigApiModel())
                 .Patch(discoverer.RequestedConfig);
             discoverer.DiscoveryConfig = (update.DiscoveryConfig ?? new DiscoveryConfigApiModel())
                 .Patch(discoverer.DiscoveryConfig);
+            discoverer.Version = update.Version;
             return discoverer;
         }
     }

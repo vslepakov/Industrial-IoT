@@ -5,11 +5,8 @@
 
 namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge {
     using Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge.Runtime;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Storage.Database;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher;
     using Microsoft.Azure.IIoT.OpcUa.Publisher.Services;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients;
-    using Microsoft.Azure.IIoT.OpcUa.Api.Registry;
     using Microsoft.Azure.IIoT.OpcUa.Api.Registry.Clients;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Services;
     using Microsoft.Azure.IIoT.AspNetCore.Storage;
@@ -18,7 +15,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge {
     using Microsoft.Azure.IIoT.AspNetCore.Auth;
     using Microsoft.Azure.IIoT.AspNetCore.Auth.Clients;
     using Microsoft.Azure.IIoT.Hub.Client;
-    using Microsoft.Azure.IIoT.Hub.Auth;
     using Microsoft.Azure.IIoT.Http.Default;
     using Microsoft.Azure.IIoT.Http.Ssl;
     using Microsoft.Azure.IIoT.Serializers;
@@ -99,20 +95,19 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge {
             services.AddHealthChecks();
             services.AddDistributedMemoryCache();
             services.AddHttpsRedirect();
-            // services.AddJwtBearerAuthentication(); // TODO
+
+            services.AddAuthentication("SharedAccessSignature")
+                .AddScheme<AuthenticationSchemeOptions, SasTokenAuthHandler>(
+                    "SharedAccessSignature", null);
             services.AddAuthorizationPolicies();
 
             // TODO: Remove http client factory and use
             // services.AddHttpClient();
-
             services.AddHttpContextAccessor();
-            services.AddAuthentication("DeviceTokenAuth")
-                .AddScheme<AuthenticationSchemeOptions, IdentityTokenAuthHandler>(
-                    "DeviceTokenAuth", null);
 
             // Add controllers as services so they'll be resolved.
             services.AddControllers().AddSerializers();
-            services.AddSwagger(Config, ServiceInfo.Name, ServiceInfo.Description);
+            services.AddSwagger(ServiceInfo.Name, ServiceInfo.Description);
         }
 
         /// <summary>
@@ -129,16 +124,18 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge {
             app.UseHeaderForwarding();
 
             app.UseRouting();
+            app.UseHttpMetrics();
             app.EnableCors();
 
-            // app.UseJwtBearerAuthentication(); // TODO
+            app.UseAuthentication();
             app.UseAuthorization();
             app.UseHttpsRedirect();
 
             app.UseCorrelation();
             app.UseSwagger();
-            app.UseMetricServer();
+
             app.UseEndpoints(endpoints => {
+                endpoints.MapMetrics();
                 endpoints.MapControllers();
                 endpoints.MapHealthChecks("/healthz");
             });
@@ -185,45 +182,26 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Publisher.Edge {
             builder.RegisterType<CorsSetup>()
                 .AsImplementedInterfaces();
 
+            // ... Publisher services
+            builder.RegisterModule<PublisherServices>();
+            builder.RegisterType<CosmosDbServiceClient>()
+                .AsImplementedInterfaces();
+
             // Registry services to lookup endpoints.
             builder.RegisterType<RegistryServicesApiAdapter>()
                 .AsImplementedInterfaces();
             builder.RegisterType<RegistryServiceClient>()
                 .AsImplementedInterfaces();
 
-            // Create Publish jobs using ...
-            builder.RegisterType<PublisherJobService>()
-                .AsImplementedInterfaces();
-            builder.RegisterType<PublisherJobSerializer>()
-                .AsImplementedInterfaces();
-
-            // ... job services and dependencies
-            builder.RegisterType<DefaultJobService>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<JobDatabase>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<WorkerDatabase>()
-                .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<CosmosDbServiceClient>()
-                .AsImplementedInterfaces();
-            builder.RegisterType<DefaultJobService>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<IoTHubJobConfigurationHandler>()
                 .AsImplementedInterfaces();
             builder.RegisterType<IoTHubServiceHttpClient>()
                 .AsImplementedInterfaces();
 
-            // Orchestrator
-            builder.RegisterType<DefaultJobOrchestrator>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<DefaultDemandMatcher>()
-                .AsImplementedInterfaces();
-            builder.RegisterType<IdentityTokenValidator>()
+            builder.RegisterType<IoTHubSasTokenValidator>()
                 .AsImplementedInterfaces();
             builder.RegisterType<DistributedProtectedCache>()
                 .AsImplementedInterfaces();
-            builder.RegisterType<TwinIdentityTokenStore>()
-                .AsImplementedInterfaces().SingleInstance();
 
             // Bulk loading from edge
             builder.RegisterType<NodeSetProcessor>()

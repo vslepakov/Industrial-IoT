@@ -126,51 +126,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             }
         }
 
-        [Fact]
-        public void QueryDiscoverersBySiteId() {
-            CreateDiscovererFixtures(out var site, out var discoverers, out var modules);
-
-            using (var mock = AutoMock.GetLoose(builder => {
-                var hub = IoTHubServices.Create(modules);
-                builder.RegisterType<NewtonSoftJsonConverters>().As<IJsonSerializerConverterProvider>();
-                builder.RegisterType<NewtonSoftJsonSerializer>().As<IJsonSerializer>();
-                builder.RegisterInstance(hub).As<IIoTHubTwinServices>();
-            })) {
-                IDiscovererRegistry service = mock.Create<DiscovererRegistry>();
-
-                // Run
-                var records = service.QueryDiscoverersAsync(new DiscovererQueryModel {
-                    SiteId = site
-                }, null).Result;
-
-                // Assert
-                Assert.True(discoverers.IsSameAs(records.Items));
-            }
-        }
-
-        [Fact]
-        public void QueryDiscoverersByNoneExistantSiteId() {
-            CreateDiscovererFixtures(out _, out _, out var modules, true);
-
-            using (var mock = AutoMock.GetLoose(builder => {
-                var hub = IoTHubServices.Create(modules);
-                builder.RegisterType<NewtonSoftJsonConverters>().As<IJsonSerializerConverterProvider>();
-                builder.RegisterType<NewtonSoftJsonSerializer>().As<IJsonSerializer>();
-                builder.RegisterInstance(hub).As<IIoTHubTwinServices>();
-            })) {
-                IDiscovererRegistry service = mock.Create<DiscovererRegistry>();
-
-                // Run
-                var records = service.QueryDiscoverersAsync(new DiscovererQueryModel {
-                    SiteId = "test"
-                }, null).Result;
-
-                // Assert
-                Assert.True(records.Items.Count == 0);
-            }
-        }
-
-
         /// <summary>
         /// Helper to create app fixtures
         /// </summary>
@@ -188,7 +143,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             var sitex = site = noSite ? null : fix.Create<string>();
             discoverers = fix
                 .Build<DiscovererModel>()
-                .With(x => x.SiteId, sitex)
                 .Without(x => x.Id)
                 .Do(x => x.Id = DiscovererModelEx.CreateDiscovererId(
                     fix.Create<string>(), fix.Create<string>()))

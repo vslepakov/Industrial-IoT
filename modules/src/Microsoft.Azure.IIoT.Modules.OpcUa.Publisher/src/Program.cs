@@ -8,28 +8,42 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher {
     using Microsoft.Extensions.Configuration;
     using System;
     using System.IO;
+    using System.Diagnostics;
+    using System.Threading;
+    using System.Linq;
 
     /// <summary>
-    /// Module
+    /// Main entry point
     /// </summary>
     public static class Program {
 
         /// <summary>
-        /// Main entry point
+        /// Module entry point
         /// </summary>
-        /// <param name="args"></param>
         public static void Main(string[] args) {
 
+            // Load hosting configuration
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", true)
                 .AddEnvironmentVariables()
                 .AddEnvironmentVariables(EnvironmentVariableTarget.User)
+                .AddFromDotEnvFile()
                 .AddLegacyPublisherCommandLine(args)
+                .AddCommandLine(args)
                 .Build();
-
-            var module = new ModuleProcess(config);
-            module.RunAsync().Wait();
+#if DEBUG
+            if (args.Any(a => a.ToLowerInvariant().Contains("wfd") ||
+                    a.ToLowerInvariant().Contains("waitfordebugger"))) {
+                Console.WriteLine("Waiting for debugger being attached...");
+                while (!Debugger.IsAttached) {
+                    Thread.Sleep(1000);
+                }
+                Console.WriteLine("Debugger attached.");
+            }
+#endif
+            var process = new ModuleProcess(config);
+            process.RunAsync().Wait();
         }
     }
 }

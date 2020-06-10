@@ -31,11 +31,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events.Api {
 
             var expected = new PublisherEventModel {
                 Publisher = new PublisherModel {
-                    SiteId = "TestSite",
                     Connected = null,
-                    Configuration = new PublisherConfigModel {
-                        HeartbeatInterval = TimeSpan.FromSeconds(5)
-                    },
                     LogLevel = IIoT.OpcUa.Registry.Models.TraceLogLevel.Verbose
                 }
             };
@@ -50,11 +46,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events.Api {
 
                 Assert.True(result.Task.IsCompleted);
                 var received = result.Task.Result;
-                Assert.NotNull(received?.Publisher?.Configuration);
                 Assert.Null(received?.Publisher?.Connected);
-                Assert.Equal(TimeSpan.FromSeconds(5),
-                    expected.Publisher.Configuration.HeartbeatInterval);
-                Assert.Equal(expected.Publisher.SiteId, received.Publisher.SiteId);
                 Assert.Equal(expected.Publisher.LogLevel,
                     (IIoT.OpcUa.Registry.Models.TraceLogLevel)received.Publisher.LogLevel);
             }
@@ -71,7 +63,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events.Api {
 
             var expected = new PublisherEventModel {
                 Publisher = new PublisherModel {
-                    SiteId = "TestSite",
                     LogLevel = IIoT.OpcUa.Registry.Models.TraceLogLevel.Verbose
                 }
             };
@@ -102,7 +93,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events.Api {
 
             var expected = new DiscovererEventModel {
                 Discoverer = new DiscovererModel {
-                    SiteId = "TestSite4",
                     Connected = true,
                     Discovery = IIoT.OpcUa.Registry.Models.DiscoveryMode.Local,
                     DiscoveryConfig = new DiscoveryConfigModel {
@@ -126,7 +116,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events.Api {
                 Assert.Equal(true, received?.Discoverer?.Connected);
                 Assert.Equal(TimeSpan.FromSeconds(5),
                     expected.Discoverer.DiscoveryConfig.IdleTimeBetweenScans);
-                Assert.Equal(expected.Discoverer.SiteId, received.Discoverer.SiteId);
                 Assert.Equal(expected.Discoverer.LogLevel,
                     (IIoT.OpcUa.Registry.Models.TraceLogLevel)received.Discoverer.LogLevel);
             }
@@ -143,7 +132,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events.Api {
 
             var expected = new DiscovererEventModel {
                 Discoverer = new DiscovererModel {
-                    SiteId = "TestSite",
                     LogLevel = IIoT.OpcUa.Registry.Models.TraceLogLevel.Verbose
                 }
             };
@@ -175,7 +163,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events.Api {
 
             var expected = new SupervisorEventModel {
                 Supervisor = new SupervisorModel {
-                    SiteId = "TestSigfsdfg  ff",
                     Connected = true,
                     LogLevel = IIoT.OpcUa.Registry.Models.TraceLogLevel.Verbose
                 }
@@ -193,7 +180,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events.Api {
                 var received = result.Task.Result;
                 Assert.NotNull(received?.Supervisor);
                 Assert.Equal(true, received?.Supervisor?.Connected);
-                Assert.Equal(expected.Supervisor.SiteId, received.Supervisor.SiteId);
                 Assert.Equal(expected.Supervisor.LogLevel,
                     (IIoT.OpcUa.Registry.Models.TraceLogLevel)received.Supervisor.LogLevel);
             }
@@ -210,7 +196,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events.Api {
 
             var expected = new SupervisorEventModel {
                 Supervisor = new SupervisorModel {
-                    SiteId = "azagfff",
                     LogLevel = IIoT.OpcUa.Registry.Models.TraceLogLevel.Verbose
                 }
             };
@@ -314,7 +299,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events.Api {
             var expected = new EndpointEventModel {
                 Endpoint = new EndpointInfoModel {
                     ApplicationId = "TestSigfsdfg  ff",
-                    ActivationState = IIoT.OpcUa.Registry.Models.EndpointActivationState.ActivatedAndConnected,
+                    ActivationState = IIoT.OpcUa.Registry.Models.EntityActivationState.ActivatedAndConnected,
                     NotSeenSince = DateTime.UtcNow
                 }
             };
@@ -333,7 +318,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events.Api {
                 Assert.Equal(expected.Endpoint.NotSeenSince, received.Endpoint.NotSeenSince);
                 Assert.Equal(expected.Endpoint.ApplicationId, received.Endpoint.ApplicationId);
                 Assert.Equal(expected.Endpoint.ActivationState,
-                    (IIoT.OpcUa.Registry.Models.EndpointActivationState)received.Endpoint.ActivationState);
+                    (IIoT.OpcUa.Registry.Models.EntityActivationState)received.Endpoint.ActivationState);
             }
         }
 
@@ -349,7 +334,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events.Api {
             var expected = new EndpointEventModel {
                 Endpoint = new EndpointInfoModel {
                     ApplicationId = "TestSigfsdfg  ff",
-                    ActivationState = IIoT.OpcUa.Registry.Models.EndpointActivationState.ActivatedAndConnected,
+                    ActivationState = IIoT.OpcUa.Registry.Models.EntityActivationState.ActivatedAndConnected,
                     NotSeenSince = DateTime.UtcNow
                 }
             };

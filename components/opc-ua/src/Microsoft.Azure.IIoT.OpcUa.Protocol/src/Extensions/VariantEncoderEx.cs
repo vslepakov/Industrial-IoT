@@ -62,8 +62,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Protocol {
         /// <param name="codec"></param>
         /// <returns></returns>
         public static ServiceResultModel Encode(this IVariantEncoder codec,
-            DiagnosticInfo diagnostics,
-            StatusCode code, string operation, DiagnosticsModel config) {
+            DiagnosticInfo diagnostics, StatusCode code, string operation, DiagnosticsModel config) {
             if (code == StatusCodes.Good) {
                 return null;
             }

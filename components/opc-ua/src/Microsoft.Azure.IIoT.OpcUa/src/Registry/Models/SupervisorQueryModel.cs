@@ -11,11 +11,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
     public class SupervisorQueryModel {
 
         /// <summary>
-        /// Site for the supervisors
-        /// </summary>
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Managing provided endpoint twin
         /// </summary>
         public string EndpointId { get; set; }

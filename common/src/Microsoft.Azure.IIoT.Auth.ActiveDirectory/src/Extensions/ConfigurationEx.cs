@@ -39,6 +39,13 @@ namespace Microsoft.Extensions.Configuration {
             ConfigurationProviderPriority providerPriority = ConfigurationProviderPriority.Lowest,
             bool allowInteractiveLogon = false, bool singleton = true, string keyVaultUrlVarName = null) {
             var configuration = builder.Build();
+
+            // Check if configuration should be loaded from KeyVault, default to true.
+            var keyVaultConfigEnabled = configuration.GetValue(PcsVariable.PCS_KEYVAULT_CONFIG_ENABLED, true);
+            if (!keyVaultConfigEnabled) {
+                return builder;
+            }
+
             var provider = KeyVaultConfigurationProvider.CreateInstanceAsync(
                 allowInteractiveLogon, singleton, configuration, keyVaultUrlVarName).Result;
             if (provider != null) {
@@ -184,16 +191,18 @@ namespace Microsoft.Extensions.Configuration {
                         return null;
                     }
                 }
-
                 var provider = new KeyVaultConfigurationProvider(configuration, vaultUri,
                     allowInteractiveLogon);
-                if (!await provider.TryReadSecretAsync(keyVaultUrlVarName)) {
+                try {
+                    await provider.ValidateReadSecretAsync(keyVaultUrlVarName);
+                }
+                catch (Exception ex) {
                     throw new InvalidConfigurationException(
                         "A keyvault uri was provided could not access keyvault at the address. " +
                         "If you want to read configuration from keyvault, make sure " +
                         "the keyvault is reachable, the required permissions are configured " +
                         "on keyvault and authentication provider information is available. " +
-                        "Sign into Visual Studio or Azure CLI on this machine and try again.");
+                        "Sign into Visual Studio or Azure CLI on this machine and try again.", ex);
                 }
                 if (!lazyLoad) {
                     while (true) {
@@ -217,27 +226,19 @@ namespace Microsoft.Extensions.Configuration {
             /// </summary>
             /// <param name="secretName"></param>
             /// <returns></returns>
-            private async Task<bool> TryReadSecretAsync(string secretName) {
+            private async Task ValidateReadSecretAsync(string secretName) {
                 for (var retries = 0; ; retries++) {
                     try {
                         var secret = await _keyVault.Client.GetSecretAsync(_keyVaultUri,
                             GetSecretNameForKey(secretName)).ConfigureAwait(false);
-
                         // Worked - we have a working keyvault client.
-                        return true;
+                        return;
                     }
                     catch (TaskCanceledException) { }
                     catch (SocketException) { }
-                    catch (Exception ex) {
-                        Log.Logger.Error(ex, "Failed to access keyvault {url}.",
-                            _keyVaultUri);
-                        return false;
-                    }
                     if (retries > 3) {
-                        Log.Logger.Error(
-                            "Failed to access keyvault due to timeout or network {url}.",
-                            _keyVaultUri);
-                        return false;
+                        throw new TimeoutException(
+                            $"Failed to access keyvault due to timeout or network {_keyVaultUri}.");
                     }
                     await Task.Delay(TimeSpan.FromSeconds(5));
                 }

@@ -21,49 +21,61 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
     /// </summary>
     public sealed class EdgeletClient : ISecureElement {
 
+        /// <inheritdoc/>
+        public bool IsPresent => WorkloadUri != null;
+
         /// <summary>
-        /// Create client
+        /// Workload uri
         /// </summary>
-        /// <param name="client"></param>
-        /// <param name="serializer"></param>
-        /// <param name="logger"></param>
-        public EdgeletClient(IHttpClient client, IJsonSerializer serializer,
-            ILogger logger) : this(client, serializer,
-            Environment.GetEnvironmentVariable("IOTEDGE_WORKLOADURI")?.TrimEnd('/'),
-            Environment.GetEnvironmentVariable("IOTEDGE_MODULEGENERATIONID"),
-            Environment.GetEnvironmentVariable("IOTEDGE_MODULEID"),
-            Environment.GetEnvironmentVariable("IOTEDGE_APIVERSION"),
-            logger) {
-        }
+        internal string WorkloadUri =>
+            Environment.GetEnvironmentVariable("IOTEDGE_WORKLOADURI")?.TrimEnd('/');
+
+        /// <summary>
+        /// Module generation
+        /// </summary>
+        internal string ModuleGenerationId =>
+            Environment.GetEnvironmentVariable("IOTEDGE_MODULEGENERATIONID");
+
+        /// <summary>
+        /// Module identifier
+        /// </summary>
+        internal string ModuleId =>
+            Environment.GetEnvironmentVariable("IOTEDGE_MODULEID");
+
+        /// <summary>
+        /// Api to use
+        /// </summary>
+        internal string ApiVersion =>
+            Environment.GetEnvironmentVariable("IOTEDGE_APIVERSION") ?? "2019-01-30";
+
+        /// <summary>
+        /// Uri of the security daemon.
+        /// </summary>
+        internal string ModuleWorkloadUri =>
+            $"{WorkloadUri}/modules/{ModuleId}/genid/{ModuleGenerationId}";
 
         /// <summary>
         /// Create client
         /// </summary>
         /// <param name="client"></param>
         /// <param name="serializer"></param>
-        /// <param name="workloaduri"></param>
-        /// <param name="genId"></param>
-        /// <param name="moduleId"></param>
-        /// <param name="apiVersion"></param>
         /// <param name="logger"></param>
-        public EdgeletClient(IHttpClient client, IJsonSerializer serializer,
-            string workloaduri, string genId, string moduleId, string apiVersion,
-            ILogger logger) {
+        public EdgeletClient(IHttpClient client, IJsonSerializer serializer, ILogger logger) {
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
             _client = client ?? throw new ArgumentNullException(nameof(client));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _workloaduri = workloaduri;
-            _moduleGenerationId = genId;
-            _moduleId = moduleId;
-            _apiVersion = apiVersion ?? "2019-01-30";
+
+            if (IsPresent) {
+                _logger.Information("Hsm present at {uri}", WorkloadUri);
+            }
         }
 
         /// <inheritdoc/>
         public async Task<X509Certificate2Collection> CreateServerCertificateAsync(
             string commonName, DateTime expiration, CancellationToken ct) {
+            EnsureHsmIsPresent();
             var request = _client.NewRequest(
-                $"{_workloaduri}/modules/{_moduleId}/genid/{_moduleGenerationId}/" +
-                $"certificate/server?api-version={_apiVersion}");
+                $"{ModuleWorkloadUri}/certificate/server?api-version={ApiVersion}", Resource.Local);
             _serializer.SerializeToRequest(request, new { commonName, expiration });
             return await Retry.WithExponentialBackoff(_logger, ct, async () => {
                 var response = await _client.PostAsync(request, ct);
@@ -76,11 +88,11 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
         }
 
         /// <inheritdoc/>
-        public async Task<byte[]> EncryptAsync(
-            string initializationVector, byte[] plaintext, CancellationToken ct) {
+        public async Task<byte[]> EncryptAsync(string initializationVector,
+            byte[] plaintext, CancellationToken ct) {
+            EnsureHsmIsPresent();
             var request = _client.NewRequest(
-                $"{_workloaduri}/modules/{_moduleId}/genid/{_moduleGenerationId}/" +
-                $"encrypt?api-version={_apiVersion}");
+                $"{ModuleWorkloadUri}/encrypt?api-version={ApiVersion}", Resource.Local);
             _serializer.SerializeToRequest(request, new { initializationVector, plaintext });
             return await Retry.WithExponentialBackoff(_logger, ct, async () => {
                 var response = await _client.PostAsync(request, ct);
@@ -90,17 +102,57 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
         }
 
         /// <inheritdoc/>
-        public async Task<byte[]> DecryptAsync(
-            string initializationVector, byte[] ciphertext, CancellationToken ct) {
+        public async Task<byte[]> DecryptAsync(string initializationVector,
+            byte[] ciphertext, CancellationToken ct) {
+            EnsureHsmIsPresent();
             var request = _client.NewRequest(
-                $"{_workloaduri}/modules/{_moduleId}/genid/{_moduleGenerationId}/" +
-                $"decrypt?api-version={_apiVersion}");
+                $"{ModuleWorkloadUri}/decrypt?api-version={ApiVersion}", Resource.Local);
             _serializer.SerializeToRequest(request, new { initializationVector, ciphertext });
             return await Retry.WithExponentialBackoff(_logger, ct, async () => {
                 var response = await _client.PostAsync(request, ct);
                 response.Validate();
                 return _serializer.DeserializeResponse<DecryptResponse>(response).Plaintext;
             }, kMaxRetryCount);
+        }
+
+        /// <inheritdoc/>
+        public async Task<byte[]> SignAsync(byte[] data, string keyId, string algo,
+            CancellationToken ct) {
+            EnsureHsmIsPresent();
+            if (algo == null) {
+                algo = "HMACSHA256";
+            }
+            if (keyId == null) {
+                keyId = "primary";
+            }
+            var request = _client.NewRequest(
+                $"{ModuleWorkloadUri}/sign?api-version={ApiVersion}", Resource.Local);
+            _serializer.SerializeToRequest(request, new { keyId, algo, data });
+            return await Retry.WithExponentialBackoff(_logger, ct, async () => {
+                var response = await _client.PostAsync(request, ct);
+                response.Validate();
+                return _serializer.DeserializeResponse<SignResponse>(response).Digest;
+            }, kMaxRetryCount);
+        }
+
+        /// <summary>
+        /// Test presence of hsm
+        /// </summary>
+        private void EnsureHsmIsPresent() {
+            if (!IsPresent) {
+                throw new InvalidOperationException("Hsm not present.");
+            }
+        }
+
+        /// <summary>
+        /// Sign response
+        /// </summary>
+        [DataContract]
+        public class SignResponse {
+
+            /// <summary>Signature of the data.</summary>
+            [DataMember(Name = "digest")]
+            public byte[] Digest { get; set; }
         }
 
         /// <summary>
@@ -161,10 +213,6 @@ namespace Microsoft.Azure.IIoT.Module.Framework.Hosting {
         private readonly IHttpClient _client;
         private readonly IJsonSerializer _serializer;
         private readonly ILogger _logger;
-        private readonly string _workloaduri;
-        private readonly string _moduleGenerationId;
-        private readonly string _moduleId;
-        private readonly string _apiVersion;
         private const int kMaxRetryCount = 3;
     }
 }

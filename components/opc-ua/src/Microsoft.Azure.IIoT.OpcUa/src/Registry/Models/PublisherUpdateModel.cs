@@ -4,20 +4,11 @@
 // ------------------------------------------------------------
 
 namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
+
     /// <summary>
     /// Publisher update request
     /// </summary>
     public class PublisherUpdateModel {
-
-        /// <summary>
-        /// Site of the publisher
-        /// </summary>
-        public string SiteId { get; set; }
-
-        /// <summary>
-        /// Publisher configuration
-        /// </summary>
-        public PublisherConfigModel Configuration { get; set; }
 
         /// <summary>
         /// Current log level

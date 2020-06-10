@@ -11,11 +11,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Models {
     public class PublisherQueryModel {
 
         /// <summary>
-        /// Site for the supervisors
-        /// </summary>
-        public string SiteId { get; set; }
-
-        /// <summary>
         /// Included connected or disconnected
         /// </summary>
         public bool? Connected { get; set; }

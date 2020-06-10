@@ -10,6 +10,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry.Sync {
     using Microsoft.Azure.IIoT.OpcUa.Registry;
     using Microsoft.Azure.IIoT.OpcUa.Api.Registry.Clients;
     using Microsoft.Azure.IIoT.OpcUa.Api.Twin.Clients;
+    using Microsoft.Azure.IIoT.OpcUa.Api.Publisher.Clients;
     using Microsoft.Azure.IIoT.Http.Default;
     using Microsoft.Azure.IIoT.Http.Ssl;
     using Microsoft.Azure.IIoT.Hub.Client;
@@ -17,10 +18,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry.Sync {
     using Microsoft.Azure.IIoT.Exceptions;
     using Microsoft.Azure.IIoT.Utils;
     using Microsoft.Azure.IIoT.Tasks.Default;
-    using Microsoft.Azure.IIoT.Crypto.Default;
     using Microsoft.Azure.IIoT.Auth.Clients;
-    using Microsoft.Azure.IIoT.Auth.IoTHub;
-    using Microsoft.Azure.IIoT.OpcUa.Publisher.Jobs;
     using Microsoft.Azure.IIoT.Module.Default;
     using Microsoft.Azure.IIoT.Messaging.Default;
     using Microsoft.Azure.IIoT.Messaging.ServiceBus.Services;
@@ -154,24 +152,21 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Registry.Sync {
             builder.RegisterType<DiscoveryMultiplexer>()
                 .AsImplementedInterfaces().SingleInstance();
 
-            // Identity token updater
-            builder.RegisterType<PasswordGenerator>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<TwinIdentityTokenUpdater>()
-                .AsImplementedInterfaces().SingleInstance();
-
-            // and service endpoint sync
-            builder.RegisterType<JobOrchestratorEndpointSync>()
-                .AsImplementedInterfaces().SingleInstance();
-
-            // Activation sync
+            // Supervisor Activation and Settings sync
             builder.RegisterType<TwinModuleActivationClient>()
                 .AsImplementedInterfaces();
             builder.RegisterType<TwinModuleCertificateClient>()
                 .AsImplementedInterfaces();
             builder.RegisterType<TwinModuleDiagnosticsClient>()
                 .AsImplementedInterfaces();
+            builder.RegisterType<PublisherModuleActivationClient>()
+                .AsImplementedInterfaces();
+
             builder.RegisterType<ActivationSyncHost>()
+                .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<SettingsSyncHost>()
+                .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<OrchestrationHost>()
                 .AsImplementedInterfaces().SingleInstance();
 
             // ... and auto start

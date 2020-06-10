@@ -54,7 +54,7 @@ namespace Microsoft.Azure.IIoT {
             "PCS_ADLSG2_ACCOUNT_KEY";
         /// <summary> ADLS Gen2 endpoint suffix </summary>
         public const string PCS_ADLSG2_ENDPOINTSUFFIX =
-            "PCS_ADLSG2_CONNSTRING";
+            "PCS_ADLSG2_ENDPOINTSUFFIX";
         /// <summary> CDM storage drive </summary>
         public const string PCS_CDM_DRIVE_NAME =
             "PCS_ADLSG2_CONTAINER_CDM";
@@ -91,6 +91,9 @@ namespace Microsoft.Azure.IIoT {
         /// <summary> Instrumentation key </summary>
         public const string PCS_APPINSIGHTS_INSTRUMENTATIONKEY =
             "PCS_APPINSIGHTS_INSTRUMENTATIONKEY";
+        /// <summary> Diagnostics level </summary>
+        public const string PCS_DIAGNOSTICS_LEVEL =
+            "PCS_DIAGNOSTICS_LEVEL";
         /// <summary> Keyvault client application id </summary>
         public const string PCS_KEYVAULT_APPID =
             "PCS_KEYVAULT_APPID";
@@ -106,6 +109,9 @@ namespace Microsoft.Azure.IIoT {
         /// <summary> Key (in KeyVault) to be used for encription of keys </summary>
         public const string PCS_KEYVAULT_KEY_DATAPROTECTION =
             "PCS_KEYVAULT_KEY_DATAPROTECTION";
+        /// <summary> Determines whether configuratoin should be loaded from KeyVault </summary>
+        public const string PCS_KEYVAULT_CONFIG_ENABLED =
+            "PCS_KEYVAULT_CONFIG_ENABLED";
         /// <summary> Managed service identity application id </summary>
         public const string PCS_MSI_APPID =
             "PCS_MSI_APPID";
@@ -199,9 +205,9 @@ namespace Microsoft.Azure.IIoT {
         /// <summary> OPC publisher service endpoint url </summary>
         public const string PCS_PUBLISHER_SERVICE_URL =
             "PCS_PUBLISHER_SERVICE_URL";
-        /// <summary> Publisher orchestrator service endpoint url </summary>
-        public const string PCS_PUBLISHER_ORCHESTRATOR_SERVICE_URL =
-            "PCS_PUBLISHER_ORCHESTRATOR_SERVICE_URL";
+        /// <summary> Edge service endpoint url </summary>
+        public const string PCS_EDGE_SERVICE_URL =
+            "PCS_EDGE_SERVICE_URL";
         /// <summary> OPC history service endpoint url </summary>
         public const string PCS_HISTORY_SERVICE_URL =
             "PCS_HISTORY_SERVICE_URL";
@@ -274,5 +280,14 @@ namespace Microsoft.Azure.IIoT {
         /// <summary> URL path base for TSI query </summary>
         public const string PCS_TSI_URL =
             "PCS_TSI_URL";
+        /// <summary> Log Analytics workbook id </summary>
+        public const string PCS_WORKBOOK_ID =
+            "PCS_WORKBOOK_ID";
+        /// <summary> Subscription id </summary>
+        public const string PCS_SUBSCRIPTION_ID =
+            "PCS_SUBSCRIPTION_ID";
+        /// <summary> Resource group </summary>
+        public const string PCS_RESOURCE_GROUP =
+            "PCS_RESOURCE_GROUP";
     }
 }

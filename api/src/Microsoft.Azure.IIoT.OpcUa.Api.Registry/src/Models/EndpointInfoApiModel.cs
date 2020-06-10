@@ -33,7 +33,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
         /// </summary>
         [DataMember(Name = "activationState", Order = 2,
             EmitDefaultValue = false)]
-        public EndpointActivationState? ActivationState { get; set; }
+        public EntityActivationState? ActivationState { get; set; }
 
         /// <summary>
         /// Last state of the activated endpoint
@@ -62,7 +62,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
         [Obsolete("Use ActivationState")]
         [IgnoreDataMember]
         public bool? Activated =>
-            ActivationState == EndpointActivationState.Activated || Connected == true;
+            ActivationState == EntityActivationState.Activated || Connected == true;
 
         /// <summary>
         /// Legacy connectivity state
@@ -70,6 +70,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Api.Registry.Models {
         [Obsolete("Use ActivationState")]
         [IgnoreDataMember]
         public bool? Connected =>
-            ActivationState == EndpointActivationState.ActivatedAndConnected;
+            ActivationState == EntityActivationState.ActivatedAndConnected;
     }
 }

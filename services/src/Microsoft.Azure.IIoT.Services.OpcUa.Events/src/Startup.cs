@@ -65,6 +65,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events {
         /// <param name="configuration"></param>
         public Startup(IWebHostEnvironment env, IConfiguration configuration) :
             this(env, new Config(new ConfigurationBuilder()
+                .AddConfiguration(configuration)
                 .AddFromDotEnvFile()
                 .AddEnvironmentVariables()
                 .AddEnvironmentVariables(EnvironmentVariableTarget.User)
@@ -118,7 +119,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events {
                 .AddMessagePackSerializer()
                 .AddAzureSignalRService(Config);
 
-            services.AddSwagger(Config, ServiceInfo.Name, ServiceInfo.Description);
+            services.AddSwagger(ServiceInfo.Name, ServiceInfo.Description);
         }
 
         /// <summary>
@@ -134,6 +135,7 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events {
             app.UseHeaderForwarding();
 
             app.UseRouting();
+            app.UseHttpMetrics();
             app.EnableCors();
 
             app.UseJwtBearerAuthentication();
@@ -142,8 +144,9 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events {
 
             app.UseCorrelation();
             app.UseSwagger();
-            app.UseMetricServer();
+
             app.UseEndpoints(endpoints => {
+                endpoints.MapMetrics();
                 endpoints.MapHubs();
                 endpoints.MapControllers();
                 endpoints.MapHealthChecks("/healthz");
@@ -195,13 +198,6 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events {
                 ApplicationEventForwarder<ApplicationsHub>>()
                 .AsImplementedInterfaces().SingleInstance();
 
-            // Endpoints event hub
-            builder.RegisterType<SignalRHub<EndpointsHub>>()
-                .AsImplementedInterfaces().SingleInstance();
-            builder.RegisterType<
-                EndpointEventForwarder<EndpointsHub>>()
-                .AsImplementedInterfaces().SingleInstance();
-
             // Gateways event hub
             builder.RegisterType<SignalRHub<GatewaysHub>>()
                 .AsImplementedInterfaces().SingleInstance();
@@ -209,11 +205,18 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events {
                 GatewayEventForwarder<GatewaysHub>>()
                 .AsImplementedInterfaces().SingleInstance();
 
-            // Twin event hub
+            // Twin supervisor event hub
             builder.RegisterType<SignalRHub<SupervisorsHub>>()
                 .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<
                 SupervisorEventForwarder<SupervisorsHub>>()
+                .AsImplementedInterfaces().SingleInstance();
+
+            // Endpoint twins event hub
+            builder.RegisterType<SignalRHub<EndpointsHub>>()
+                .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<
+                EndpointEventForwarder<EndpointsHub>>()
                 .AsImplementedInterfaces().SingleInstance();
 
             // Publishers event hub
@@ -224,6 +227,26 @@ namespace Microsoft.Azure.IIoT.Services.OpcUa.Events {
                 .AsImplementedInterfaces().SingleInstance();
             builder.RegisterType<
                 MonitoredItemMessagePublisher<PublishersHub>>()
+                .AsImplementedInterfaces().SingleInstance();
+
+            // DataSet Writers event hub
+            builder.RegisterType<SignalRHub<DataSetWritersHub>>()
+                .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<
+                PublishedDataSetEventForwarder<DataSetWritersHub>>()
+                .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<
+                DataSetWriterEventForwarder<DataSetWritersHub>>()
+                .AsImplementedInterfaces().SingleInstance();
+
+            // Writer groups event hub
+            builder.RegisterType<SignalRHub<WriterGroupsHub>>()
+                .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<
+                DataSetWriterMessagePublisher<WriterGroupsHub>>()
+                .AsImplementedInterfaces().SingleInstance();
+            builder.RegisterType<
+                WriterGroupEventForwarder<WriterGroupsHub>>()
                 .AsImplementedInterfaces().SingleInstance();
 
             // Discovery event hub

@@ -36,9 +36,10 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
         /// <param name="certificates"></param>
         /// <param name="supervisors"></param>
         /// <param name="serializer"></param>
+        /// <param name="gateways"></param>
         /// <param name="events"></param>
         public EndpointRegistry(IIoTHubTwinServices iothub, IJsonSerializer serializer,
-            IRegistryEventBroker<IEndpointRegistryListener> broker,
+            IGatewayRegistry gateways, IRegistryEventBroker<IEndpointRegistryListener> broker,
             IActivationServices<EndpointRegistrationModel> activator,
             ICertificateServices<EndpointRegistrationModel> certificates,
             ISupervisorRegistry supervisors, ILogger logger,
@@ -51,6 +52,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             _activator = activator ?? throw new ArgumentNullException(nameof(activator));
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
             _broker = broker ?? throw new ArgumentNullException(nameof(broker));
+            _gateways = gateways ?? throw new ArgumentNullException(nameof(gateways));
 
             // Register for application registry events
             _unregister = events?.Register(this);
@@ -122,7 +124,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             }
             if (model?.SiteOrGatewayId != null) {
                 // If site or gateway provided, include it in search
-                query += $"AND tags.{nameof(EntityRegistration.SiteOrGatewayId)} = " +
+                query += $"AND tags.{nameof(EndpointRegistration.SiteOrGatewayId)} = " +
                     $"'{model.SiteOrGatewayId}' ";
             }
             if (model?.Certificate != null) {
@@ -162,11 +164,9 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                 // If flag provided, include it in search
                 if (model.Connected.Value) {
                     query += $"AND connectionState = 'Connected' ";
-                    // Do not use connected property as module might have exited before updating.
                 }
                 else {
-                    query += $"AND (connectionState = 'Disconnected' " +
-                        $"OR properties.reported.{TwinProperty.Connected} != true) ";
+                    query += $"AND connectionState != 'Connected' ";
                 }
             }
             var result = await _iothub.QueryDeviceTwinsAsync(query, null, pageSize, ct);
@@ -244,7 +244,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                 }
                 catch (Exception ex) {
                     // Try other supervisors as candidates
-                    if (!await ActivateAsync(registration, null, context, ct)) {
+                    if (!await ActivateAnyAsync(registration, context, ct)) {
                         throw ex;
                     }
                 }
@@ -392,8 +392,8 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
 
         /// <inheritdoc/>
         public async Task ProcessDiscoveryEventsAsync(IEnumerable<EndpointInfoModel> newEndpoints,
-            DiscoveryResultModel result, string discovererId, string supervisorId,
-            string applicationId, bool hardDelete) {
+            DiscoveryResultModel result, string discovererId, string supervisorId, string siteId, string applicationId,
+            bool hardDelete) {
 
             if (newEndpoints == null) {
                 throw new ArgumentNullException(nameof(newEndpoints));
@@ -403,7 +403,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
 
             var found = newEndpoints
                 .Select(e => e.ToEndpointRegistration(_serializer, false,
-                    discovererId, supervisorId))
+                    discovererId, supervisorId, applicationId, siteId))
                 .ToList();
 
             var existing = Enumerable.Empty<EndpointRegistration>();
@@ -517,7 +517,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                 try {
                     await ApplyActivationFilterAsync(result.DiscoveryConfig?.ActivationFilter,
                         item, context);
-                    await _iothub.CreateAsync(item.ToDeviceTwin(_serializer), true);
+                    await _iothub.CreateOrUpdateAsync(item.ToDeviceTwin(_serializer), true);
 
                     var endpoint = item.ToServiceModel();
                     await _broker.NotifyAllAsync(l => l.OnEndpointNewAsync(context, endpoint));
@@ -544,7 +544,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             var query = $"SELECT * FROM devices WHERE " +
                 $"tags.{nameof(EndpointRegistration.Activated)} = true AND " +
                 $"NOT IS_DEFINED(tags.{nameof(EndpointRegistration.IsDisabled)}) AND " +
-                $"connectionState = 'Disconnected' AND " +
+                $"connectionState != 'Connected' AND " +
                 $"tags.{nameof(EntityRegistration.DeviceType)} = '{IdentityType.Endpoint}' ";
 
             var result = new List<DeviceTwinModel>();
@@ -569,7 +569,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                         ClearSupervisorTwinSecretAsync(endpoint.Id, endpoint.SupervisorId, ct));
 
                     // Try activate and assign a new supervisor
-                    await ActivateAsync(endpoint, supervisorsThatWereManagingEndpoint, null, ct);
+                    await ActivateAnyAsync(endpoint, null, ct);
                 }
                 continuation = devices.ContinuationToken;
             }
@@ -640,7 +640,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                 var secret = await _iothub.GetPrimaryKeyAsync(registration.DeviceId, null, ct);
 
                 // Try activate endpoint - if possible...
-                await _activator.ActivateEndpointAsync(endpoint.Registration, secret, ct);
+                await _activator.ActivateAsync(endpoint.Registration, secret, ct);
 
                 // Mark in supervisor
                 await SetSupervisorTwinSecretAsync(registration.SupervisorId,
@@ -663,13 +663,11 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
         /// Try to activate endpoint on any supervisor in site
         /// </summary>
         /// <param name="endpoint"></param>
-        /// <param name="additional"></param>
         /// <param name="context"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        private async Task<bool> ActivateAsync(EndpointRegistration endpoint,
-            IEnumerable<string> additional, RegistryOperationContextModel context,
-            CancellationToken ct) {
+        private async Task<bool> ActivateAnyAsync(EndpointRegistration endpoint,
+            RegistryOperationContextModel context, CancellationToken ct) {
             // Get site of this endpoint
             var site = endpoint.SiteId;
             if (string.IsNullOrEmpty(site)) {
@@ -681,23 +679,33 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                 }
             }
 
-            // Get all supervisors in site
+            // Get all gateways in site
             endpoint.SiteId = site;
-            var supervisorsInSite = await _supervisors.QueryAllSupervisorsAsync(
-                new SupervisorQueryModel { SiteId = site });
-            var candidateSupervisors = supervisorsInSite.Select(s => s.Id)
-                .ToList().Shuffle();
+            var gatewaysInSite = await _gateways.QueryAllGatewaysAsync(
+                new GatewayQueryModel { SiteId = site, Connected = true });
+            var candidateGateways = gatewaysInSite.Select(s => s.Id).ToList();
+            if (candidateGateways.Count == 0) {
+                // No candidates found to assign the endpoint to
+                _logger.Warning(
+                    "Found no gateways in {SiteId} to assign endpoint {endpointId}!",
+                        endpoint.SiteId, endpoint.Id);
 
-            // Add all supervisors that managed this endpoint before.
-            // TODO: Consider removing as it is a source of bugs
-            if (additional != null) {
-                candidateSupervisors.AddRange(additional);
+                // TODO: Consider updating state
+                return false;
             }
 
             // Remove previously failing one
-            candidateSupervisors.Remove(endpoint.SupervisorId);
-            // Loop through all randomly and try to take one that works.
-            foreach (var supervisorId in candidateSupervisors) {
+            var failedSupervisor = endpoint.SupervisorId;
+            // Loop through all randomly and try to pick a gateway that works.
+            foreach (var gatewayId in candidateGateways.Shuffle()) {
+
+                var gateway = await _gateways.FindGatewayAsync(gatewayId, false, ct);
+                var supervisorId = gateway?.Modules?.Supervisor?.Id;
+                if (string.IsNullOrEmpty(supervisorId) ||
+                    supervisorId == failedSupervisor) {
+                    continue;
+                }
+
                 endpoint.SupervisorId = supervisorId;
                 endpoint.Activated = false;
                 try {
@@ -731,7 +739,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             var endpoint = registration.ToServiceModel();
             try {
                 // Call down to supervisor to activate - this can fail
-                await _activator.ActivateEndpointAsync(endpoint.Registration, secret, ct);
+                await _activator.ActivateAsync(endpoint.Registration, secret, ct);
 
                 // Update supervisor desired properties
                 await SetSupervisorTwinSecretAsync(registration.SupervisorId,
@@ -751,7 +759,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
             }
             catch (Exception ex) {
                 // Undo activation
-                await Try.Async(() => _activator.DeactivateEndpointAsync(
+                await Try.Async(() => _activator.DeactivateAsync(
                     endpoint.Registration));
                 await Try.Async(() => ClearSupervisorTwinSecretAsync(
                     registration.DeviceId, registration.SupervisorId));
@@ -777,7 +785,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
                 registration.SupervisorId, ct);
 
             // Call down to supervisor to ensure deactivation is complete - do no matter what
-            await Try.Async(() => _activator.DeactivateEndpointAsync(endpoint.Registration));
+            await Try.Async(() => _activator.DeactivateAsync(endpoint.Registration));
 
             try {
                 // Mark as deactivated
@@ -889,6 +897,7 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry.Services {
         private readonly ICertificateServices<EndpointRegistrationModel> _certificates;
         private readonly ISupervisorRegistry _supervisors;
         private readonly IRegistryEventBroker<IEndpointRegistryListener> _broker;
+        private readonly IGatewayRegistry _gateways;
         private readonly IJsonSerializer _serializer;
         private readonly Action _unregister;
         private readonly IIoTHubTwinServices _iothub;

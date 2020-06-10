@@ -7,7 +7,6 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry {
     using Microsoft.Azure.IIoT.Exceptions;
     using Microsoft.Azure.IIoT.OpcUa.Registry.Models;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -43,34 +42,36 @@ namespace Microsoft.Azure.IIoT.OpcUa.Registry {
         /// <returns></returns>
         public static async Task<List<GatewayModel>> ListAllGatewaysAsync(
             this IGatewayRegistry service, CancellationToken ct = default) {
-            var publishers = new List<GatewayModel>();
+            var gateways = new List<GatewayModel>();
             var result = await service.ListGatewaysAsync(null, null, ct);
-            publishers.AddRange(result.Items);
+            gateways.AddRange(result.Items);
             while (result.ContinuationToken != null) {
                 result = await service.ListGatewaysAsync(result.ContinuationToken,
                     null, ct);
-                publishers.AddRange(result.Items);
+                gateways.AddRange(result.Items);
             }
-            return publishers;
+            return gateways;
         }
 
         /// <summary>
-        /// Returns all edge gateway ids from the registry
+        /// Query all edge gateways
         /// </summary>
         /// <param name="service"></param>
+        /// <param name="query"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        public static async Task<List<string>> ListAllGatewayIdsAsync(
-            this IGatewayRegistry service, CancellationToken ct = default) {
-            var publishers = new List<string>();
-            var result = await service.ListGatewaysAsync(null, null, ct);
-            publishers.AddRange(result.Items.Select(s => s.Id));
+        public static async Task<List<GatewayModel>> QueryAllGatewaysAsync(
+            this IGatewayRegistry service, GatewayQueryModel query,
+            CancellationToken ct = default) {
+            var gateways = new List<GatewayModel>();
+            var result = await service.QueryGatewaysAsync(query, null, ct);
+            gateways.AddRange(result.Items);
             while (result.ContinuationToken != null) {
                 result = await service.ListGatewaysAsync(result.ContinuationToken,
                     null, ct);
-                publishers.AddRange(result.Items.Select(s => s.Id));
+                gateways.AddRange(result.Items);
             }
-            return publishers;
+            return gateways;
         }
     }
 }

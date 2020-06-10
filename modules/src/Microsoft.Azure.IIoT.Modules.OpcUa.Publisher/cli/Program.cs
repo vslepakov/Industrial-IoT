@@ -6,8 +6,12 @@
 namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Cli {
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Sample;
     using Microsoft.Azure.IIoT.OpcUa.Protocol.Services;
-    using Microsoft.Azure.IIoT.Utils;
+    using Microsoft.Azure.IIoT.OpcUa.Publisher.Models;
+    using Microsoft.Azure.IIoT.OpcUa.Edge.Publisher.Services;
+    using Microsoft.Azure.IIoT.OpcUa.Core.Models;
+    using Microsoft.Azure.IIoT.Diagnostics.Runtime;
     using Microsoft.Azure.IIoT.Diagnostics;
+    using Microsoft.Azure.IIoT.Utils;
     using Microsoft.Azure.IIoT.Http.Default;
     using Microsoft.Azure.IIoT.Hub;
     using Microsoft.Azure.IIoT.Hub.Client;
@@ -23,9 +27,9 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Cli {
     using System.Diagnostics.Tracing;
     using System.Linq;
     using System.Net;
-    using System.Runtime.InteropServices;
     using System.Threading;
     using System.Threading.Tasks;
+    using System.IO;
 
     /// <summary>
     /// Publisher module host process
@@ -37,8 +41,10 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Cli {
         /// </summary>
         public static void Main(string[] args) {
             var checkTrust = false;
+            var legacyTest = false;
             var withServer = false;
             var verbose = false;
+            var scale = 1;
             string deviceId = null, moduleId = null;
             Console.WriteLine("Publisher module command line interface.");
             var configuration = new ConfigurationBuilder()
@@ -53,6 +59,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Cli {
             if (string.IsNullOrEmpty(cs)) {
                 cs = configuration.GetValue<string>("_HUB_CS", null);
             }
+            var diagnostics = new LogAnalyticsConfig(configuration);
             IIoTHubConfig config = null;
             var unknownArgs = new List<string>();
             try {
@@ -79,6 +86,18 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Cli {
                         case "--with-server":
                             withServer = true;
                             break;
+                        case "-l":
+                        case "--legacy-test":
+                        case "--scale-test":
+                            legacyTest = true;
+                            withServer = true;
+                            i++;
+                            if (i < args.Length) {
+                                if (!int.TryParse(args[i], out scale)) {
+                                    i--;
+                                }
+                            }
+                            break;
                         case "-v":
                         case "--verbose":
                             verbose = true;
@@ -101,7 +120,7 @@ namespace Microsoft.Azure.IIoT.Modules.OpcUa.Publisher.Cli {
                     Console.WriteLine($"Using <deviceId> '{deviceId}'");
                 }
                 if (moduleId == null) {
-                    moduleId = "opcpublisher";
+                    moduleId = "publisher";
                     Console.WriteLine($"Using <moduleId> '{moduleId}'");
                 }
 
@@ -119,6 +138,12 @@ Options:
              IoT Hub owner connection string to use to connect to IoT hub for
              operations on the registry.  If not provided, read from environment.
 
+     -l
+    --legacy-test
+    --scale-test <scale-count>
+            Spins up a test server and subscribes to clock on server
+            <scale-count> times.
+
     --help
      -?
      -h      Prints out this help.
@@ -135,10 +160,12 @@ Options:
 
             try {
                 if (!withServer) {
-                    HostAsync(config, logger, deviceId, moduleId, args, verbose, !checkTrust).Wait();
+                    HostAsync(config, diagnostics, logger, deviceId,
+                        moduleId, args, verbose, !checkTrust).Wait();
                 }
                 else {
-                    WithServerAsync(config, logger, deviceId, moduleId, args, verbose).Wait();
+                    WithServerAsync(config, diagnostics, logger, deviceId,
+                        moduleId, args, legacyTest, scale, verbose).Wait();
                 }
             }
             catch (Exception e) {
@@ -149,13 +176,12 @@ Options:
         /// <summary>
         /// Host the module giving it its connection string.
         /// </summary>
-        private static async Task HostAsync(IIoTHubConfig config, ILogger logger,
-            string deviceId, string moduleId, string[] args, bool verbose = false,
-            bool acceptAll = false) {
+        private static async Task HostAsync(IIoTHubConfig config, ILogAnalyticsConfig diagnostics,
+            ILogger logger, string deviceId, string moduleId, string[] args, bool verbose, bool acceptAll) {
             Console.WriteLine("Create or retrieve connection string...");
 
             var cs = await Retry.WithExponentialBackoff(logger,
-                () => AddOrGetAsync(config, deviceId, moduleId));
+                () => AddOrGetAsync(config, diagnostics, deviceId, moduleId));
 
             // Hook event source
             using (var broker = new EventSourceBroker()) {
@@ -166,12 +192,9 @@ Options:
                 broker.Subscribe(IoTSdkLogger.EventSource, new IoTSdkLogger(logger));
                 var arguments = args.ToList();
                 arguments.Add($"--ec={cs}");
-                arguments.Add($"--si=0");
+                arguments.Add($"--di=10");
                 if (acceptAll) {
                     arguments.Add("--aa");
-                }
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-                    arguments.Add("--at=X509Store");
                 }
                 Publisher.Program.Main(arguments.ToArray());
                 Console.WriteLine("Publisher module exited.");
@@ -181,14 +204,49 @@ Options:
         /// <summary>
         /// setup publishing from sample server
         /// </summary>
-        private static async Task WithServerAsync(IIoTHubConfig config, ILogger logger,
-            string deviceId, string moduleId, string[] args, bool verbose = false) {
+        private static async Task WithServerAsync(IIoTHubConfig config, ILogAnalyticsConfig diagnostics,
+            ILogger logger, string deviceId, string moduleId, string[] args, bool startLegacy, int scale,
+            bool verbose) {
+            var fileName = Path.GetRandomFileName() + ".json";
             try {
                 using (var cts = new CancellationTokenSource())
                 using (var server = new ServerWrapper(logger)) { // Start test server
+
+                    var arguments = args.ToList();
+                    if (startLegacy) {
+                        // Write publishing
+                        var pf = new PublishedNodesFile(fileName, new NewtonSoftJsonSerializer(), logger);
+                        pf.Write(new WriterGroupModel {
+                            DataSetWriters = new List<DataSetWriterModel> {
+                                new DataSetWriterModel {
+                                    DataSet = new PublishedDataSetModel {
+                                        DataSetSource = new PublishedDataSetSourceModel {
+                                            Connection = new ConnectionModel {
+                                                Endpoint = new EndpointModel {
+                                                    Url = server.EndpointUrl
+                                                }
+                                            },
+                                            PublishedVariables = new PublishedDataItemsModel {
+                                                PublishedData = new List<PublishedDataSetVariableModel> {
+                                                    new PublishedDataSetVariableModel {
+                                                        PublishedVariableNodeId = "i=2258"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        arguments.Add($"--pf={fileName}");
+                        if (scale > 1) {
+                            arguments.Add($"--sc={scale}");
+                        }
+                    }
+
                     // Start publisher module
-                    var host = Task.Run(() => HostAsync(config, logger, deviceId,
-                        moduleId, args, verbose, true), cts.Token);
+                    var host = Task.Run(() => HostAsync(config, diagnostics, logger, deviceId,
+                        moduleId, arguments.ToArray(), verbose, true), cts.Token);
 
                     Console.WriteLine("Press key to cancel...");
                     Console.ReadKey();
@@ -200,18 +258,21 @@ Options:
                 }
             }
             catch (OperationCanceledException) { }
+            finally {
+                Try.Op(() => File.Delete(fileName));
+            }
         }
 
         /// <summary>
         /// Add or get module identity
         /// </summary>
         private static async Task<ConnectionString> AddOrGetAsync(IIoTHubConfig config,
-            string deviceId, string moduleId) {
+            ILogAnalyticsConfig diagnostics, string deviceId, string moduleId) {
             var logger = ConsoleLogger.Create(LogEventLevel.Error);
             var registry = new IoTHubServiceHttpClient(new HttpClient(logger),
                 config, new NewtonSoftJsonSerializer(), logger);
             try {
-                await registry.CreateAsync(new DeviceTwinModel {
+                await registry.CreateOrUpdateAsync(new DeviceTwinModel {
                     Id = deviceId,
                     Tags = new Dictionary<string, VariantValue> {
                         [TwinProperty.Type] = IdentityType.Gateway
@@ -225,10 +286,16 @@ Options:
                 logger.Information("Gateway {deviceId} exists.", deviceId);
             }
             try {
-                await registry.CreateAsync(new DeviceTwinModel {
+                await registry.CreateOrUpdateAsync(new DeviceTwinModel {
                     Id = deviceId,
-                    ModuleId = moduleId
-                }, false, CancellationToken.None);
+                    ModuleId = moduleId,
+                    Properties = new TwinPropertiesModel {
+                        Desired = new Dictionary<string, VariantValue> {
+                            [nameof(diagnostics.LogWorkspaceId)] = diagnostics?.LogWorkspaceId,
+                            [nameof(diagnostics.LogWorkspaceKey)] = diagnostics?.LogWorkspaceKey
+                        }
+                    }
+                }, true, CancellationToken.None);
             }
             catch (ConflictingResourceException) {
                 logger.Information("Module {moduleId} exists...", moduleId);
@@ -260,7 +327,7 @@ Options:
             public ServerWrapper(ILogger logger) {
                 _cts = new CancellationTokenSource();
                 _server = RunSampleServerAsync(_cts.Token, logger);
-                EndpointUrl = "opc.tcp://" + Opc.Ua.Utils.GetHostName() +
+                EndpointUrl = "opc.tcp://" + Dns.GetHostName() +
                     ":51210/UA/SampleServer";
             }
 
